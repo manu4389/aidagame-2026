@@ -47,11 +47,20 @@
     width:64px;height:64px;box-shadow:0 4px 0 #8a6a10;
   }
   #jump-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10;}
+  #mute-btn{
+    position:absolute;top:8px;right:8px;z-index:10;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(12,13,14,.7);border:2px solid var(--yellow);
+    color:var(--yellow);font-size:16px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+  }
 </style>
 </head>
 <body>
 <div id="wrap">
-  <div id="game-holder"></div>
+  <div id="game-holder">
+    <button id="mute-btn">🔊</button>
+  </div>
   <div id="controls">
     <div id="move-btns">
       <button class="ctrl" id="btnLeft">◀</button>
@@ -72,6 +81,12 @@ const W = 378, H = 546; // 9:13-ish, escala con CSS
 
 const keys = { left:false, right:false };
 let jumpRequested = false;
+let bgMusic = null;
+function startMusic(scene){
+  if(bgMusic) return;
+  bgMusic = scene.sound.add('march', {loop:true, volume:0.45});
+  bgMusic.play();
+}
 
 /* ---------- BOOT / PRELOAD ---------- */
 class Boot extends Phaser.Scene {
@@ -79,6 +94,7 @@ class Boot extends Phaser.Scene {
   preload(){
     this.load.image('aidaFace', 'fotos/aida_face_surf.jpg');   // recorte cuadrado, ya centrado en su cara
     this.load.image('aidaGoal', 'fotos/aida_flamenca.jpg');    // foto de Corpus, para la meta
+    this.load.audio('march', ['audio/march_loop.mp3', 'audio/march_loop.ogg']); // Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
   }
   create(){
     this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 220);
@@ -128,7 +144,10 @@ class Title extends Phaser.Scene {
       fontFamily:'Arial', fontSize:'20px', color:'#141617', backgroundColor:'#f2c749',
       padding:{left:20,right:20,top:10,bottom:10}
     }).setOrigin(0.5).setInteractive({useHandCursor:true});
-    btn.on('pointerdown', ()=> this.scene.start('Chapter1'));
+    btn.on('pointerdown', ()=> {
+      startMusic(this);
+      this.scene.start('Chapter1');
+    });
   }
 }
 
@@ -360,6 +379,12 @@ function wireHold(id, onDown, onUp){
 wireHold('btnLeft', ()=>keys.left=true, ()=>keys.left=false);
 wireHold('btnRight', ()=>keys.right=true, ()=>keys.right=false);
 wireHold('jump-btn', ()=>jumpRequested=true);
+
+document.getElementById('mute-btn').addEventListener('click', ()=>{
+  if(!bgMusic) return;
+  bgMusic.setMute(!bgMusic.mute);
+  document.getElementById('mute-btn').textContent = bgMusic.mute ? '🔇' : '🔊';
+});
 
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') keys.left=true;
