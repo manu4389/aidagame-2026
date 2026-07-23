@@ -9,11 +9,12 @@
 - Cabezón con la cara real de Aida (foto de flamenca)
 - Coleccionable principal: 🦄 unicornios (su símbolo)
 - Coleccionable bonus: ⚡ "instantes" (guiño al nombre de su agencia)
-- Enemigos (2 tipos, confirmados): 😤 **cliente pesado** y 📋 **brief imposible**
+- Enemigos: 📋 **burocracia** y 🕴️ **machirulos** — no se esquivan, **se cortan con la katana** (ver mecánica).
+- ⚔️ **Katana**: botón de ataque dedicado. Sin ella, tocar a un enemigo cuesta una vida (como antes); con el tajo activado, el enemigo revienta en confeti/papel — sin sangre ni violencia real, solo la actitud Kill Bill.
 
 ## Capítulos (uno por pasión suya)
 
-**Vol. 1 — Playa** (surf): olas de fondo, tabla de surf como power-up para cruzar tramos de agua. Ambientación Ori Surf School.
+**Vol. 1 — El Contrato** (Instante, revisado 23 jul tras 1/10 de Manuel): conseguir firmar el contrato esquivando y **cortando** burocracia y machirulos. Ambientación Granada al atardecer (silueta de la Alhambra + skyline), paleta roja/negra tipo Kill Bill. Meta: un contrato gigante sellado "FIRMADO" junto a ella de cuerpo entero (foto real, sin distorsionar). *(La playa/surf queda aparcada — preguntar a Manuel si la quiere reubicar en otro volumen o descartarla del todo.)*
 
 **Vol. 2 — Corpus** (flamenco): farolillos y calles de Granada engalanadas, plataformas entre balcones con mantones.
 

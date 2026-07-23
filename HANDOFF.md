@@ -29,7 +29,13 @@ Construido y funcionando **Vol. 1 — La Ola** (capítulo del surf) en Phaser 3,
 2. Pidió música: Verdi (por el nombre) + rollo Tarantino/Kill Bill → añadido (ver arriba).
 3. Pidió el traje tipo Kill Bill con colores de Instante y logo → hecho.
 4. Pidió que Brenda apareciera de aliada → hecho.
-5. Ahora: "no puedo verlo" — sin resolver todavía, prioridad para la próxima sesión.
+5. "No puedo verlo" (23 jul) → probado en escritorio y móvil (viewport emulado), carga perfecto en ambos, sin errores fatales. Diagnóstico: caché de GitHub Pages justo tras el deploy, o algo puntual de su dispositivo. No se pudo reproducir el fallo.
+6. **23 jul, 1/10 — RECHAZO FRONTAL DEL CONCEPTO "LA OLA":** "No me gusta nada de nada de nada, muchísimo menos que el de Samara." Quiere el Vol. 1 reescrito por completo:
+   - Tema: Aida en Instante (marketing) tiene que **conseguir firmar el contrato**, esquivando **burocracia** y **machirulos** (no clientes pesados genéricos de antes — esto es más específico y con más mala leche).
+   - Kill Bill **mucho más potente** — no solo el traje, quiere sensación de combate real (katana) y **sonido de Kill Bill** (silbido/tensión tipo spaghetti western, no el western genérico que había).
+   - Entorno: **Granada de fondo**, no playa/surf.
+   - **Acción tomada:** reescrito el Vol. 1 entero con este concepto (ver abajo, "Estado"). Vol. 1 "La Ola" (surf) pasa a ser candidato para más adelante (Vol. 4 running ya cubre Granada corriendo; el surf podría recolocarse en otro volumen si Manuel lo quiere conservar — preguntar, no asumir que se descarta el surf del todo).
+7. **23 jul, mismo golpe — "ni siquiera se ve su imagen":** la cara no se leía como ELLA, y punto. **Causa raíz encontrada:** el personaje usaba `aida_face_surf.jpg` — una selfie de playa, torcida, con la cara descentrada y pelo por medio; al recortarla en un círculo pequeño no se reconocía nada. **Arreglado:** recorte nuevo `fotos/aida_face_hero.jpg` sacado de `aida_flamenca.jpg` (foto nítida, frontal, bien iluminada — la única de las 4 con calidad de sobra para ampliar), cabezón mucho más grande en el sprite (116px cara vs 92px antes, proporción cabezón/cuerpo mucho más marcada) y portada del título a 224px. Además la meta ya NO aplasta `aida_portada.jpg` en un círculo (mismo bug que el punto 1, pero sin arreglar ahí) — ahora se ve entera, sin distorsionar, de cuerpo completo, junto al contrato firmado. **Pendiente de que Manuel lo vea y confirme si YA se reconoce bien.**
 
 ## Próximos pasos (por orden, según el plan aprobado)
 1. **Resolver por qué Manuel no ve el juego** (bloqueante).

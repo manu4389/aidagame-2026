@@ -47,6 +47,14 @@
     width:64px;height:64px;box-shadow:0 4px 0 #8a6a10;
   }
   #jump-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10;}
+  #attack-btn{
+    background:linear-gradient(145deg,var(--red),#8f1417);
+    border:2px solid #ffd7d7;border-radius:50%;
+    color:#fff;font-size:22px;font-weight:900;
+    width:64px;height:64px;box-shadow:0 4px 0 #5c0d0f;
+    margin-right:8px;
+  }
+  #attack-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c0d0f;}
   #mute-btn{
     position:absolute;top:8px;right:8px;z-index:10;
     width:34px;height:34px;border-radius:50%;
@@ -66,6 +74,7 @@
       <button class="ctrl" id="btnLeft">◀</button>
       <button class="ctrl" id="btnRight">▶</button>
     </div>
+    <button id="attack-btn">⚔️</button>
     <button id="jump-btn">SALTAR</button>
   </div>
 </div>
@@ -81,6 +90,38 @@ const W = 378, H = 546; // 9:13-ish, escala con CSS
 
 const keys = { left:false, right:false };
 let jumpRequested = false;
+let attackRequested = false;
+
+/* ---------- SONIDO DE ESPADA (sintetizado, sin licencias de por medio) ---------- */
+function playSwoosh(scene){
+  const ctx = scene.sound.context;
+  if(!ctx) return;
+  const dur = 0.22;
+  const buffer = ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = (Math.random()*2-1) * (1-i/data.length);
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(2600, ctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime+dur);
+  filter.Q.value = 1.1;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.5, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
+  noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+  noise.start();
+  // "clang" agudo justo detrás del silbido, para el golpe seco tipo katana
+  const clang = ctx.createOscillator();
+  clang.type = 'triangle'; clang.frequency.setValueAtTime(1800, ctx.currentTime+0.03);
+  clang.frequency.exponentialRampToValueAtTime(300, ctx.currentTime+0.14);
+  const clangGain = ctx.createGain();
+  clangGain.gain.setValueAtTime(0.35, ctx.currentTime+0.03);
+  clangGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.16);
+  clang.connect(clangGain); clangGain.connect(ctx.destination);
+  clang.start(ctx.currentTime+0.03); clang.stop(ctx.currentTime+0.16);
+}
 
 /* ---------- MÚSICA ---------- */
 let currentMusic = null;
@@ -105,15 +146,14 @@ function toggleMute(){
 class Boot extends Phaser.Scene {
   constructor(){ super('Boot'); }
   preload(){
-    this.load.image('aidaFace', 'fotos/aida_face_surf.jpg');   // recorte cuadrado, ya centrado en su cara
-    this.load.image('aidaGoal', 'fotos/aida_flamenca.jpg');    // foto de Corpus, para la meta
+    this.load.image('aidaFace', 'fotos/aida_face_hero.jpg');   // recorte cuadrado nítido, centrado en su cara (de aida_flamenca.jpg, foto nítida y frontal — no la selfie de playa torcida de antes)
+    this.load.image('aidaGoal', 'fotos/aida_portada.jpg');     // cuerpo entero, para la revelación final — SIN recortar en círculo, se ve entera
     this.load.audio('marchIntro', ['audio/march_intro.mp3']); // fanfarria Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
-    this.load.audio('western', ['audio/western_loop.mp3', 'audio/western_loop.ogg']); // "Martian Cowboy" — Kevin MacLeod (incompetech.com), CC BY 3.0
+    this.load.audio('tension', ['audio/tension_western.mp3']); // "In The West" — Kevin MacLeod (incompetech.com), CC BY 4.0 — silbido de spaghetti western, la raíz musical del propio Kill Bill
   }
   create(){
-    this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 220);
-    this.makeCircleTexture('aidaGoal', 'aidaGoalCircle', 220);
-    this.scene.start('Title', {chapter:1, name:'La Ola', sub:'donde todo empieza a coger forma'});
+    this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 300);
+    this.scene.start('Title', {chapter:1, name:'El Contrato', sub:'que no se te escape entre papeleo y machirulos'});
   }
   // recorta una textura ya cuadrada en un círculo nítido, a tamaño grande
   makeCircleTexture(srcKey, outKey, size){
@@ -138,19 +178,19 @@ class Title extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0c0d0e');
     const cx = W/2;
 
-    // fondo con acento de color detrás de la foto
-    this.add.circle(cx, H*0.27, 108, Phaser.Display.Color.HexStringToColor('#e4378c').color, 0.25);
-    this.add.circle(cx, H*0.27, 92, 0xf2c749, 1).setStrokeStyle(0);
-    const photo = this.add.image(cx, H*0.27, 'aidaFaceCircle').setDisplaySize(172,172);
-    this.add.circle(cx, H*0.27, 86, 0, 0).setStrokeStyle(5, 0xf2c749);
+    // imagen POTENTE y grande de Aida — protagonista absoluta de la pantalla, nada de círculo diminuto
+    this.add.circle(cx, H*0.26, 140, Phaser.Display.Color.HexStringToColor('#d83335').color, 0.30);
+    this.add.circle(cx, H*0.26, 120, 0xf2c749, 1).setStrokeStyle(0);
+    const photo = this.add.image(cx, H*0.26, 'aidaFaceCircle').setDisplaySize(224,224);
+    this.add.circle(cx, H*0.26, 112, 0, 0).setStrokeStyle(6, 0xf2c749);
 
-    this.add.text(cx, H*0.46, 'AIDA', {
+    this.add.text(cx, H*0.475, 'AIDA', {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'52px', color:'#ffffff', fontStyle:'bold'
     }).setOrigin(0.5);
     this.add.text(cx, H*0.545, `VOL. ${this.data.get('chapter')} — ${this.data.get('name').toUpperCase()}`, {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#f2c749'
     }).setOrigin(0.5);
-    this.add.text(cx, H*0.60, this.data.get('sub'), {
+    this.add.text(cx, H*0.59, this.data.get('sub'), {
       fontFamily:'Georgia, serif', fontSize:'13px', color:'#40ada9', fontStyle:'italic'
     }).setOrigin(0.5);
 
@@ -165,9 +205,9 @@ class Title extends Phaser.Scene {
   }
 }
 
-/* ---------- VOL. 1 — LA OLA ---------- */
+/* ---------- VOL. 1 — EL CONTRATO ---------- */
 const WORLD_W = 2600, GROUND_Y = 460;
-const ENEMY_ICON = { cliente:'😤', brief:'📋' };
+const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️' };
 
 class Chapter1 extends Phaser.Scene {
   constructor(){ super('Chapter1'); }
@@ -175,13 +215,13 @@ class Chapter1 extends Phaser.Scene {
   create(){
     this.physics.world.setBounds(0,0,WORLD_W,H);
     this.cameras.main.setBounds(0,0,WORLD_W,H);
-    this.cameras.main.setBackgroundColor('#bdeaff');
+    this.cameras.main.setBackgroundColor('#2a0f10');
 
-    this.score = 0; this.lives = 3;
+    this.score = 0; this.lives = 3; this.attacking = false;
     this.drawBackground();
 
-    // tras la fanfarria de Verdi, entra la música de acción (western)
-    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'western', {loop:true, volume:0.4}); });
+    // tras la fanfarria de Verdi, entra el silbido de spaghetti western (la raíz musical de Kill Bill)
+    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.4}); });
 
     this.platforms = this.physics.add.staticGroup();
     const segs = [
@@ -189,13 +229,13 @@ class Chapter1 extends Phaser.Scene {
     ];
     this.segs = segs;
     segs.forEach(s=>{
-      const p = this.add.rectangle(s.x + s.w/2, GROUND_Y+30, s.w, 60, 0xeddcaa);
+      const p = this.add.rectangle(s.x + s.w/2, GROUND_Y+30, s.w, 60, 0x8a7256);
       this.physics.add.existing(p, true);
       this.platforms.add(p);
-      const edge = this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 8, 0xd6bd80);
+      const edge = this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 8, 0xc9a86b);
     });
     // pequeña plataforma elevada con bonus
-    const ledge = this.add.rectangle(700, GROUND_Y-110, 140, 24, 0xeddcaa);
+    const ledge = this.add.rectangle(700, GROUND_Y-110, 140, 24, 0x8a7256);
     this.physics.add.existing(ledge, true);
     this.platforms.add(ledge);
 
@@ -207,24 +247,32 @@ class Chapter1 extends Phaser.Scene {
     this.player.setDragX(1200);
 
     // "traje Kill Bill" con los colores de Instante: mono turquesa + raya lateral negra + logo
-    this.bodyRect = this.add.rectangle(0,28,38,48,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.bodyStripeL = this.add.rectangle(-13,28,7,48,0x141617,1);
-    this.bodyStripeR = this.add.rectangle(13,28,7,48,0x141617,1);
-    this.logoBadge = this.add.circle(0,18,7,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.pink);
-    this.faceRing = this.add.circle(0,-30,50,0xf2c749,1);
-    this.faceSprite = this.add.image(0,-30,'aidaFaceCircle').setDisplaySize(92,92);
+    this.bodyRect = this.add.rectangle(0,42,34,40,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.bodyStripeL = this.add.rectangle(-12,42,6,40,0x141617,1);
+    this.bodyStripeR = this.add.rectangle(12,42,6,40,0x141617,1);
+    this.logoBadge = this.add.circle(0,32,6,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.pink);
+    // katana — hoja plateada + puño rojo, en reposo pegada al costado; se lanza en el tajo
+    this.katanaBlade = this.add.rectangle(16,10,7,74,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katanaHilt = this.add.rectangle(16,48,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaHilt]);
+    this.katana.setRotation(Phaser.Math.DegToRad(18));
+    // CABEZÓN — su cara real, GRANDE y nítida: es lo primero que se ve, siempre
+    this.faceGlow = this.add.circle(0,-42,68,PALETTE.red,0.35);
+    this.faceRing = this.add.circle(0,-42,62,0xf2c749,1);
+    this.faceSprite = this.add.image(0,-42,'aidaFaceCircle').setDisplaySize(116,116);
+    this.faceEdge = this.add.circle(0,-42,58,0,0).setStrokeStyle(4,PALETTE.pink);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
-      [this.bodyRect, this.bodyStripeL, this.bodyStripeR, this.logoBadge, this.faceRing, this.faceSprite]);
+      [this.katana, this.bodyRect, this.bodyStripeL, this.bodyStripeR, this.logoBadge, this.faceGlow, this.faceRing, this.faceSprite, this.faceEdge]);
 
     this.physics.add.collider(this.player, this.platforms);
 
-    // enemigos
+    // enemigos: burocracia (papeleo) y machirulos (jefazos con aires) — se cargan con la katana, no se esquivan
     this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
-    this.spawnEnemy(760, GROUND_Y-40, 'cliente', 620, 920);
-    this.spawnEnemy(1560, GROUND_Y-40, 'brief', 1460, 1780);
-    this.spawnEnemy(2050, GROUND_Y-40, 'cliente', 1900, 2280);
+    this.spawnEnemy(760, GROUND_Y-40, 'burocracia', 620, 920);
+    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1780);
+    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2280);
 
-    this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.hitEnemy(en), null, this);
+    this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
 
     // Brenda — su mejor amiga y socia, aparece como aliada
     this.brenda = this.add.text(1150, GROUND_Y-46, '💁‍♀️', {fontSize:'34px'}).setOrigin(0.5);
@@ -243,14 +291,20 @@ class Chapter1 extends Phaser.Scene {
       this.spawnCollectible(x,y,icon);
     });
 
-    // meta: foto circular grande de Aida (Corpus), como un cartel de "llegada"
-    this.goalZone = this.add.zone(WORLD_W-140, GROUND_Y-110, 100, 160);
+    // meta: EL CONTRATO — un documento gigante sellado "FIRMADO", y ella entera, de cuerpo entero, potente, al lado
+    const gx = WORLD_W-170, gy = GROUND_Y-120;
+    this.goalZone = this.add.zone(gx, gy, 140, 220);
     this.physics.add.existing(this.goalZone);
     this.goalZone.body.setAllowGravity(false);
-    this.add.circle(WORLD_W-140, GROUND_Y-110, 66, PALETTE.pink, 0.25);
-    this.add.image(WORLD_W-140, GROUND_Y-110, 'aidaGoalCircle').setDisplaySize(110,110);
-    this.add.circle(WORLD_W-140, GROUND_Y-110, 55, 0, 0).setStrokeStyle(5, PALETTE.yellow);
-    this.add.text(WORLD_W-140, GROUND_Y-180, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
+    // el papel del contrato
+    this.add.rectangle(gx-58, gy+10, 96, 130, 0xf3ecd8).setStrokeStyle(3,0x141617).setAngle(-4);
+    for(let i=0;i<5;i++) this.add.rectangle(gx-58, gy-32+i*16, 70, 4, 0xbdb190).setAngle(-4);
+    this.add.circle(gx-40, gy+48, 13, PALETTE.red,1).setStrokeStyle(2,0x8a0f12).setAngle(-4);
+    this.add.text(gx-58, gy-8, 'FIRMADO', {fontFamily:'Impact', fontSize:'15px', color:'#d83335'}).setOrigin(0.5).setAngle(-16);
+    // ella, entera, sin recortes ni distorsión — proporción real de la foto
+    this.add.rectangle(gx+42, gy-10, 118, 158, PALETTE.yellow, 1).setStrokeStyle(4, PALETTE.ink);
+    this.add.image(gx+42, gy-10, 'aidaGoal').setDisplaySize(108,144);
+    this.add.text(gx+42, gy-108, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
     this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
 
     this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
@@ -266,23 +320,40 @@ class Chapter1 extends Phaser.Scene {
   }
 
   drawBackground(){
+    // atardecer de Granada, rojo/negro — la paleta de la escena de la Casa de las Hojas Azules
     const g = this.add.graphics();
-    g.fillGradientStyle(0xbdeaff,0xbdeaff,0xfff3cf,0xfff3cf,1);
-    g.fillRect(0,0,WORLD_W,H).setScrollFactor(0.15);
-    for(let i=0;i<14;i++){
-      const x = i*220+80;
-      this.add.ellipse(x, 60+((i%3)*20), 60,26, 0xffffff, 0.85).setScrollFactor(0.25);
+    g.fillGradientStyle(0x3a1113,0x3a1113,0x140a0a,0x140a0a,1);
+    g.fillRect(0,0,WORLD_W,H).setScrollFactor(0.1);
+    // sol/luna grande y bajo, muy Tarantino
+    for(let i=0;i<3;i++){
+      const x = i*900+300;
+      this.add.circle(x, 150, 80, PALETTE.yellow, 0.5).setScrollFactor(0.15);
     }
-    for(let i=0;i<10;i++){
-      const x = i*280+120;
-      this.add.ellipse(x, GROUND_Y+40, 200, 30, 0x5fb8dd, 0.35).setScrollFactor(0.5);
+    // silueta de la Alhambra: torres almenadas, a lo lejos
+    for(let i=0;i<9;i++){
+      const x = i*300+40;
+      const th = 90 + (i%3)*30;
+      this.add.rectangle(x, GROUND_Y - th/2 + 30, 46, th, 0x1c0d0d).setScrollFactor(0.35);
+      for(let m=0;m<4;m++) this.add.rectangle(x-17+m*11, GROUND_Y-th+22, 8, 12, 0x1c0d0d).setScrollFactor(0.35);
     }
-    // marca "AIDA" grande de fondo, repetida — es su mundo
+    // skyline de Granada más cerca, más denso
+    for(let i=0;i<16;i++){
+      const x = i*170+90;
+      const th = 60 + ((i*37)%70);
+      this.add.rectangle(x, GROUND_Y - th/2 + 10, 90, th, 0x24100f).setScrollFactor(0.55);
+      for(let wRow=0;wRow<Math.floor(th/22);wRow++){
+        this.add.rectangle(x-24+((i)%3)*20, GROUND_Y-th+16+wRow*22, 10, 12, PALETTE.yellow, 0.55).setScrollFactor(0.55);
+      }
+    }
+    // marca "INSTANTE" y "AIDA" de fondo, repetida — es su mundo, ganado a pulso
     for(let i=0;i<6;i++){
       const x = i*480+260;
-      this.add.text(x, 220, 'AIDA', {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'90px', color:'#68416c'
-      }).setOrigin(0.5).setAlpha(0.16).setScrollFactor(0.3);
+      this.add.text(x, 190, 'INSTANTE', {
+        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#e4378c'
+      }).setOrigin(0.5).setAlpha(0.20).setScrollFactor(0.3);
+      this.add.text(x+240, 260, 'AIDA', {
+        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'80px', color:'#f2c749'
+      }).setOrigin(0.5).setAlpha(0.14).setScrollFactor(0.3);
     }
   }
 
@@ -309,6 +380,46 @@ class Chapter1 extends Phaser.Scene {
     t.destroy();
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
+  }
+
+  onEnemyTouch(en){
+    if(this.attacking) this.defeatEnemy(en);
+    else this.hitEnemy(en);
+  }
+
+  performAttack(){
+    if(this.win || this.lives<=0 || this.attackCooldown) return;
+    this.attackCooldown = true;
+    this.attacking = true;
+    playSwoosh(this);
+    const from = this.player.flipX ? -18 : 18;
+    const to = this.player.flipX ? 150 : -150;
+    this.katana.setRotation(Phaser.Math.DegToRad(from));
+    this.tweens.add({
+      targets:this.katana, rotation:Phaser.Math.DegToRad(to), duration:140, yoyo:true, ease:'Cubic.easeOut',
+      onComplete: ()=> this.katana.setRotation(Phaser.Math.DegToRad(from))
+    });
+    this.time.delayedCall(160, ()=> this.attacking=false);
+    this.time.delayedCall(360, ()=> this.attackCooldown=false);
+  }
+
+  defeatEnemy(en){
+    if(!en.active) return;
+    const x=en.x, y=en.y, label = en.type==='machirulo' ? '¡A TU SITIO!' : '¡PAPELEO FUERA!';
+    en.destroy();
+    this.score += 2;
+    this.updateHud();
+    // ráfaga de confeti/papel, sin sangre ni violencia real — solo la actitud
+    for(let i=0;i<8;i++){
+      const p = this.add.rectangle(x,y, 6,6, [PALETTE.yellow,PALETTE.pink,PALETTE.turquoise,0xffffff][i%4]);
+      this.tweens.add({
+        targets:p, x:x+Phaser.Math.Between(-50,50), y:y+Phaser.Math.Between(-60,10),
+        alpha:0, rotation:Phaser.Math.Between(-4,4), duration:500, onComplete:()=>p.destroy()
+      });
+    }
+    const t = this.add.text(x, y-30, label, {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:3,bottom:3}}).setOrigin(0.5);
+    this.tweens.add({targets:t, y:t.y-24, alpha:0, duration:600, onComplete:()=>t.destroy()});
+    this.cameras.main.shake(90, 0.005);
   }
 
   hitEnemy(en){
@@ -347,7 +458,7 @@ class Chapter1 extends Phaser.Scene {
     this.win = true;
     this.physics.pause();
     this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
-    this.add.text(W/2, H*0.4, '¡VOL. 1 COMPLETADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.4, '¡CONTRATO FIRMADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
     this.add.text(W/2, H*0.5, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
     this.add.text(W/2, H*0.58, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'14px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
   }
@@ -375,6 +486,10 @@ class Chapter1 extends Phaser.Scene {
       }
       jumpRequested = false;
     }
+    if(attackRequested){
+      this.performAttack();
+      attackRequested = false;
+    }
     if(this.player.body.blocked.down || this.player.body.touching.down){
       const seg = this.segs.find(s=> this.player.x >= s.x+30 && this.player.x <= s.x+s.w-30);
       if(seg) this.respawnX = Phaser.Math.Clamp(this.player.x, seg.x+40, seg.x+seg.w-40);
@@ -385,9 +500,10 @@ class Chapter1 extends Phaser.Scene {
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
     this.faceSprite.setFlipX(this.player.flipX);
+    this.katana.x = this.player.flipX ? -16 : 16;
 
     this.enemies.getChildren().forEach(e=>{
-      e.x += e.dir * (e.type==='cliente'? 1.0:0.7);
+      e.x += e.dir * (e.type==='machirulo'? 1.0:0.7);
       if(e.x<e.min){ e.x=e.min; e.dir=1; }
       if(e.x>e.max){ e.x=e.max; e.dir=-1; }
       e.setFlipX(e.dir>0);
@@ -419,6 +535,7 @@ function wireHold(id, onDown, onUp){
 wireHold('btnLeft', ()=>keys.left=true, ()=>keys.left=false);
 wireHold('btnRight', ()=>keys.right=true, ()=>keys.right=false);
 wireHold('jump-btn', ()=>jumpRequested=true);
+wireHold('attack-btn', ()=>attackRequested=true);
 
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
 
@@ -426,6 +543,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') keys.left=true;
   if(e.key==='ArrowRight') keys.right=true;
   if(e.key==='ArrowUp' || e.key===' ') jumpRequested=true;
+  if(e.key==='x' || e.key==='X' || e.key==='Control') attackRequested=true;
 });
 document.addEventListener('keyup', e=>{
   if(e.key==='ArrowLeft') keys.left=false;
