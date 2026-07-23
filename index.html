@@ -77,25 +77,26 @@ let jumpRequested = false;
 class Boot extends Phaser.Scene {
   constructor(){ super('Boot'); }
   preload(){
-    this.load.image('aidaFace', 'fotos/aida_cara.jpg');
-    this.load.image('aidaPortada', 'fotos/aida_portada.jpg');
+    this.load.image('aidaFace', 'fotos/aida_face_surf.jpg');   // recorte cuadrado, ya centrado en su cara
+    this.load.image('aidaGoal', 'fotos/aida_flamenca.jpg');    // foto de Corpus, para la meta
   }
   create(){
-    // textura circular para la cara del personaje (cabezón)
-    const src = this.textures.get('aidaFace').getSourceImage();
-    const size = 96;
+    this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 220);
+    this.makeCircleTexture('aidaGoal', 'aidaGoalCircle', 220);
+    this.scene.start('Title', {chapter:1, name:'La Ola', sub:'donde todo empieza a coger forma'});
+  }
+  // recorta una textura ya cuadrada en un círculo nítido, a tamaño grande
+  makeCircleTexture(srcKey, outKey, size){
     const rt = this.make.renderTexture({width:size, height:size}, false);
     const maskShape = this.make.graphics({add:false});
     maskShape.fillStyle(0xffffff); maskShape.fillCircle(size/2, size/2, size/2);
-    const tempImg = this.add.image(size/2, size/2, 'aidaFace').setDisplaySize(size, size);
+    const tempImg = this.add.image(size/2, size/2, srcKey).setDisplaySize(size, size);
     const mask = maskShape.createGeometryMask();
     tempImg.setMask(mask);
     rt.draw(tempImg, 0, 0);
     tempImg.destroy(); maskShape.destroy();
-    rt.saveTexture('aidaFaceCircle');
+    rt.saveTexture(outKey);
     rt.destroy();
-
-    this.scene.start('Title', {chapter:1, name:'La Ola', sub:'donde todo empieza a coger forma'});
   }
 }
 
@@ -106,18 +107,21 @@ class Title extends Phaser.Scene {
   create(){
     this.cameras.main.setBackgroundColor('#0c0d0e');
     const cx = W/2;
-    this.add.rectangle(cx, H/2, W, H, 0x0c0d0e);
-    this.add.text(cx, H*0.32, 'AIDA', {
-      fontFamily:'Georgia, serif', fontSize:'26px', color:'#68416c'
-    }).setOrigin(0.5).setAlpha(0.7);
-    this.add.text(cx, H*0.45, `VOL. ${this.data.get('chapter')}`, {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'64px', color:'#f2c749', fontStyle:'bold'
+
+    // fondo con acento de color detrás de la foto
+    this.add.circle(cx, H*0.27, 108, Phaser.Display.Color.HexStringToColor('#e4378c').color, 0.25);
+    this.add.circle(cx, H*0.27, 92, 0xf2c749, 1).setStrokeStyle(0);
+    const photo = this.add.image(cx, H*0.27, 'aidaFaceCircle').setDisplaySize(172,172);
+    this.add.circle(cx, H*0.27, 86, 0, 0).setStrokeStyle(5, 0xf2c749);
+
+    this.add.text(cx, H*0.46, 'AIDA', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'52px', color:'#ffffff', fontStyle:'bold'
     }).setOrigin(0.5);
-    this.add.text(cx, H*0.55, this.data.get('name').toUpperCase(), {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#ffffff'
+    this.add.text(cx, H*0.545, `VOL. ${this.data.get('chapter')} — ${this.data.get('name').toUpperCase()}`, {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#f2c749'
     }).setOrigin(0.5);
-    this.add.text(cx, H*0.62, this.data.get('sub'), {
-      fontFamily:'Georgia, serif', fontSize:'14px', color:'#40ada9', fontStyle:'italic'
+    this.add.text(cx, H*0.60, this.data.get('sub'), {
+      fontFamily:'Georgia, serif', fontSize:'13px', color:'#40ada9', fontStyle:'italic'
     }).setOrigin(0.5);
 
     const btn = this.add.text(cx, H*0.82, '▶ EMPEZAR', {
@@ -161,15 +165,16 @@ class Chapter1 extends Phaser.Scene {
 
     // jugador
     this.player = this.physics.add.sprite(80, GROUND_Y-80, null);
-    this.player.body.setSize(34,64).setOffset(-17,-32);
+    this.player.body.setSize(40,74).setOffset(-20,-37);
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
-    this.faceSprite = this.add.image(0,0,'aidaFaceCircle').setDisplaySize(58,58);
-    this.bodyRect = this.add.rectangle(0,20,26,34,PALETTE.pink,1).setStrokeStyle(2,PALETTE.ink);
-    this.playerVisual = this.add.container(this.player.x, this.player.y, [this.bodyRect, this.faceSprite]);
-    this.faceSprite.setY(-28);
+    this.bodyRect = this.add.rectangle(0,28,38,48,PALETTE.pink,1).setStrokeStyle(3,PALETTE.ink);
+    this.bodyStripe = this.add.rectangle(0,20,38,8,PALETTE.turquoise,1);
+    this.faceRing = this.add.circle(0,-30,50,0xf2c749,1);
+    this.faceSprite = this.add.image(0,-30,'aidaFaceCircle').setDisplaySize(92,92);
+    this.playerVisual = this.add.container(this.player.x, this.player.y, [this.bodyRect, this.bodyStripe, this.faceRing, this.faceSprite]);
 
     this.physics.add.collider(this.player, this.platforms);
 
@@ -190,14 +195,14 @@ class Chapter1 extends Phaser.Scene {
       this.spawnCollectible(x,y,icon);
     });
 
-    // meta
-    this.goalZone = this.add.zone(WORLD_W-120, GROUND_Y-90, 80, 140);
+    // meta: foto circular grande de Aida (Corpus), como un cartel de "llegada"
+    this.goalZone = this.add.zone(WORLD_W-140, GROUND_Y-110, 100, 160);
     this.physics.add.existing(this.goalZone);
     this.goalZone.body.setAllowGravity(false);
-    this.goalImg = this.add.image(WORLD_W-120, GROUND_Y-90, 'aidaPortada').setDisplaySize(90,120).setAlpha(0.95)
-      .setStrokeStyle && null;
-    this.add.rectangle(WORLD_W-120, GROUND_Y-90, 94, 124, 0, 0).setStrokeStyle(4, PALETTE.yellow);
-    this.add.text(WORLD_W-120, GROUND_Y-160, 'META', {fontFamily:'Impact', fontSize:'18px', color:'#f2c749'}).setOrigin(0.5);
+    this.add.circle(WORLD_W-140, GROUND_Y-110, 66, PALETTE.pink, 0.25);
+    this.add.image(WORLD_W-140, GROUND_Y-110, 'aidaGoalCircle').setDisplaySize(110,110);
+    this.add.circle(WORLD_W-140, GROUND_Y-110, 55, 0, 0).setStrokeStyle(5, PALETTE.yellow);
+    this.add.text(WORLD_W-140, GROUND_Y-180, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
     this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
 
     this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
@@ -223,6 +228,13 @@ class Chapter1 extends Phaser.Scene {
     for(let i=0;i<10;i++){
       const x = i*280+120;
       this.add.ellipse(x, GROUND_Y+40, 200, 30, 0x5fb8dd, 0.35).setScrollFactor(0.5);
+    }
+    // marca "AIDA" grande de fondo, repetida — es su mundo
+    for(let i=0;i<6;i++){
+      const x = i*480+260;
+      this.add.text(x, 220, 'AIDA', {
+        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'90px', color:'#68416c'
+      }).setOrigin(0.5).setAlpha(0.16).setScrollFactor(0.3);
     }
   }
 
