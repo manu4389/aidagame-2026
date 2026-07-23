@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>AIDA</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#141617">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AIDA">
+<style>
+  :root{
+    --turquoise:#40ada9; --pink:#e4378c; --yellow:#f2c749; --purple:#68416c; --red:#d83335;
+    --ink:#141617;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;height:100%;background:#0c0d0e;
+    font-family:'Arial Narrow',Arial,sans-serif;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;touch-action:none;user-select:none;
+  }
+  #wrap{
+    position:relative;width:min(420px,100vw);
+    display:flex;flex-direction:column;align-items:center;
+  }
+  #game-holder{
+    width:100%;aspect-ratio:9/13;position:relative;
+    box-shadow:0 10px 40px rgba(0,0,0,.6);
+  }
+  #controls{
+    display:flex;justify-content:space-between;align-items:center;
+    width:100%;padding:12px 16px;background:#0c0d0e;
+  }
+  #move-btns{display:flex;gap:10px;}
+  .ctrl{
+    background:linear-gradient(145deg,#26282b,#141617);
+    border:2px solid var(--yellow);border-radius:14px;
+    color:var(--yellow);font-size:24px;width:56px;height:54px;
+    box-shadow:0 3px 0 #000;
+  }
+  .ctrl:active{transform:translateY(2px);box-shadow:0 1px 0 #000;}
+  #jump-btn{
+    background:linear-gradient(145deg,var(--yellow),#c99a1f);
+    border:2px solid #fff8d0;border-radius:50%;
+    color:#2a1e00;font-size:12px;font-weight:900;
+    width:64px;height:64px;box-shadow:0 4px 0 #8a6a10;
+  }
+  #jump-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="game-holder"></div>
+  <div id="controls">
+    <div id="move-btns">
+      <button class="ctrl" id="btnLeft">◀</button>
+      <button class="ctrl" id="btnRight">▶</button>
+    </div>
+    <button id="jump-btn">SALTAR</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════
+   AIDA — Vol. 1: La Ola
+   Motor: Phaser 3 (Arcade Physics)
+   ════════════════════════════════════════════════════════ */
+const PALETTE = { turquoise:0x40ada9, pink:0xe4378c, yellow:0xf2c749, purple:0x68416c, red:0xd83335, ink:0x141617 };
+const W = 378, H = 546; // 9:13-ish, escala con CSS
+
+const keys = { left:false, right:false };
+let jumpRequested = false;
+
+/* ---------- BOOT / PRELOAD ---------- */
+class Boot extends Phaser.Scene {
+  constructor(){ super('Boot'); }
+  preload(){
+    this.load.image('aidaFace', 'fotos/aida_cara.jpg');
+    this.load.image('aidaPortada', 'fotos/aida_portada.jpg');
+  }
+  create(){
+    // textura circular para la cara del personaje (cabezón)
+    const src = this.textures.get('aidaFace').getSourceImage();
+    const size = 96;
+    const rt = this.make.renderTexture({width:size, height:size}, false);
+    const maskShape = this.make.graphics({add:false});
+    maskShape.fillStyle(0xffffff); maskShape.fillCircle(size/2, size/2, size/2);
+    const tempImg = this.add.image(size/2, size/2, 'aidaFace').setDisplaySize(size, size);
+    const mask = maskShape.createGeometryMask();
+    tempImg.setMask(mask);
+    rt.draw(tempImg, 0, 0);
+    tempImg.destroy(); maskShape.destroy();
+    rt.saveTexture('aidaFaceCircle');
+    rt.destroy();
+
+    this.scene.start('Title', {chapter:1, name:'La Ola', sub:'donde todo empieza a coger forma'});
+  }
+}
+
+/* ---------- CARTELA DE CAPÍTULO (estilo Tarantino) ---------- */
+class Title extends Phaser.Scene {
+  constructor(){ super('Title'); }
+  init(data){ this.data.set(data); }
+  create(){
+    this.cameras.main.setBackgroundColor('#0c0d0e');
+    const cx = W/2;
+    this.add.rectangle(cx, H/2, W, H, 0x0c0d0e);
+    this.add.text(cx, H*0.32, 'AIDA', {
+      fontFamily:'Georgia, serif', fontSize:'26px', color:'#68416c'
+    }).setOrigin(0.5).setAlpha(0.7);
+    this.add.text(cx, H*0.45, `VOL. ${this.data.get('chapter')}`, {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'64px', color:'#f2c749', fontStyle:'bold'
+    }).setOrigin(0.5);
+    this.add.text(cx, H*0.55, this.data.get('name').toUpperCase(), {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#ffffff'
+    }).setOrigin(0.5);
+    this.add.text(cx, H*0.62, this.data.get('sub'), {
+      fontFamily:'Georgia, serif', fontSize:'14px', color:'#40ada9', fontStyle:'italic'
+    }).setOrigin(0.5);
+
+    const btn = this.add.text(cx, H*0.82, '▶ EMPEZAR', {
+      fontFamily:'Arial', fontSize:'20px', color:'#141617', backgroundColor:'#f2c749',
+      padding:{left:20,right:20,top:10,bottom:10}
+    }).setOrigin(0.5).setInteractive({useHandCursor:true});
+    btn.on('pointerdown', ()=> this.scene.start('Chapter1'));
+  }
+}
+
+/* ---------- VOL. 1 — LA OLA ---------- */
+const WORLD_W = 2600, GROUND_Y = 460;
+const ENEMY_ICON = { cliente:'😤', brief:'📋' };
+
+class Chapter1 extends Phaser.Scene {
+  constructor(){ super('Chapter1'); }
+
+  create(){
+    this.physics.world.setBounds(0,0,WORLD_W,H);
+    this.cameras.main.setBounds(0,0,WORLD_W,H);
+    this.cameras.main.setBackgroundColor('#bdeaff');
+
+    this.score = 0; this.lives = 3;
+    this.drawBackground();
+
+    this.platforms = this.physics.add.staticGroup();
+    const segs = [
+      {x:0,w:420}, {x:520,w:340}, {x:940,w:420}, {x:1440,w:340}, {x:1860,w:420}, {x:2360,w:240},
+    ];
+    this.segs = segs;
+    segs.forEach(s=>{
+      const p = this.add.rectangle(s.x + s.w/2, GROUND_Y+30, s.w, 60, 0xeddcaa);
+      this.physics.add.existing(p, true);
+      this.platforms.add(p);
+      const edge = this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 8, 0xd6bd80);
+    });
+    // pequeña plataforma elevada con bonus
+    const ledge = this.add.rectangle(700, GROUND_Y-110, 140, 24, 0xeddcaa);
+    this.physics.add.existing(ledge, true);
+    this.platforms.add(ledge);
+
+    // jugador
+    this.player = this.physics.add.sprite(80, GROUND_Y-80, null);
+    this.player.body.setSize(34,64).setOffset(-17,-32);
+    this.player.setCollideWorldBounds(true);
+    this.player.setMaxVelocity(220, 900);
+    this.player.setDragX(1200);
+
+    this.faceSprite = this.add.image(0,0,'aidaFaceCircle').setDisplaySize(58,58);
+    this.bodyRect = this.add.rectangle(0,20,26,34,PALETTE.pink,1).setStrokeStyle(2,PALETTE.ink);
+    this.playerVisual = this.add.container(this.player.x, this.player.y, [this.bodyRect, this.faceSprite]);
+    this.faceSprite.setY(-28);
+
+    this.physics.add.collider(this.player, this.platforms);
+
+    // enemigos
+    this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
+    this.spawnEnemy(760, GROUND_Y-40, 'cliente', 620, 920);
+    this.spawnEnemy(1560, GROUND_Y-40, 'brief', 1460, 1780);
+    this.spawnEnemy(2050, GROUND_Y-40, 'cliente', 1900, 2280);
+
+    this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.hitEnemy(en), null, this);
+
+    // coleccionables
+    this.collectibles = this.physics.add.group({ allowGravity:false });
+    const coinXs = [180,240,300, 700, 980,1040,1100,1160, 1480,1540,1600, 1900,1960,2020,2080, 2420,2460];
+    coinXs.forEach((x,i)=>{
+      const icon = (i%6===5) ? '⚡' : '🦄';
+      const y = (x===700)? GROUND_Y-150 : GROUND_Y-60;
+      this.spawnCollectible(x,y,icon);
+    });
+
+    // meta
+    this.goalZone = this.add.zone(WORLD_W-120, GROUND_Y-90, 80, 140);
+    this.physics.add.existing(this.goalZone);
+    this.goalZone.body.setAllowGravity(false);
+    this.goalImg = this.add.image(WORLD_W-120, GROUND_Y-90, 'aidaPortada').setDisplaySize(90,120).setAlpha(0.95)
+      .setStrokeStyle && null;
+    this.add.rectangle(WORLD_W-120, GROUND_Y-90, 94, 124, 0, 0).setStrokeStyle(4, PALETTE.yellow);
+    this.add.text(WORLD_W-120, GROUND_Y-160, 'META', {fontFamily:'Impact', fontSize:'18px', color:'#f2c749'}).setOrigin(0.5);
+    this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
+
+    this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
+    this.cameras.main.setDeadzone(80, 200);
+
+    // HUD (fijo en pantalla)
+    this.hud = this.add.text(10,10, '', {fontFamily:'Arial', fontSize:'16px', color:'#141617', backgroundColor:'#ffffffaa', padding:{left:8,right:8,top:4,bottom:4}})
+      .setScrollFactor(0);
+    this.updateHud();
+
+    this.win = false;
+    this.respawnX = 80;
+  }
+
+  drawBackground(){
+    const g = this.add.graphics();
+    g.fillGradientStyle(0xbdeaff,0xbdeaff,0xfff3cf,0xfff3cf,1);
+    g.fillRect(0,0,WORLD_W,H).setScrollFactor(0.15);
+    for(let i=0;i<14;i++){
+      const x = i*220+80;
+      this.add.ellipse(x, 60+((i%3)*20), 60,26, 0xffffff, 0.85).setScrollFactor(0.25);
+    }
+    for(let i=0;i<10;i++){
+      const x = i*280+120;
+      this.add.ellipse(x, GROUND_Y+40, 200, 30, 0x5fb8dd, 0.35).setScrollFactor(0.5);
+    }
+  }
+
+  spawnEnemy(x,y,type,min,max){
+    const t = this.add.text(x,y, ENEMY_ICON[type], {fontSize:'30px'}).setOrigin(0.5);
+    this.physics.add.existing(t);
+    t.body.setAllowGravity(false);
+    t.dir = -1; t.min = min; t.max = max; t.type = type;
+    t.body.setVelocityX(-60);
+    this.enemies.add(t);
+  }
+
+  spawnCollectible(x,y,icon){
+    const t = this.add.text(x,y, icon, {fontSize:'26px'}).setOrigin(0.5);
+    this.physics.add.existing(t);
+    t.body.setAllowGravity(false);
+    t.icon = icon;
+    this.collectibles.add(t);
+    this.physics.add.overlap(this.player, t, ()=>this.collect(t), null, this);
+  }
+
+  collect(t){
+    if(!t.active) return;
+    t.destroy();
+    this.score += (t.icon==='⚡') ? 2 : 1;
+    this.updateHud();
+  }
+
+  hitEnemy(en){
+    if(this.invuln) return;
+    this.lives--; this.invuln = true;
+    this.player.setVelocity(this.player.flipX? 160:-160, -260);
+    this.time.delayedCall(1200, ()=> this.invuln=false);
+    this.updateHud();
+    if(this.lives<=0) this.gameOver();
+  }
+
+  fallInPit(){
+    if(this.invuln || this.win) return;
+    this.lives--; this.invuln = true;
+    this.player.setPosition(this.respawnX, GROUND_Y-80);
+    this.player.setVelocity(0,0);
+    this.time.delayedCall(1200, ()=> this.invuln=false);
+    this.updateHud();
+    if(this.lives<=0) this.gameOver();
+  }
+
+  reachGoal(){
+    if(this.win) return;
+    this.win = true;
+    this.physics.pause();
+    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
+    this.add.text(W/2, H*0.4, '¡VOL. 1 COMPLETADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.5, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.58, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'14px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
+  }
+
+  gameOver(){
+    this.physics.pause();
+    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
+    const t = this.add.text(W/2, H*0.45, '¡CASI!', {fontFamily:'Impact', fontSize:'28px', color:'#d83335'}).setOrigin(0.5).setScrollFactor(0);
+    const btn = this.add.text(W/2, H*0.58, '🔄 REINTENTAR', {fontFamily:'Arial', fontSize:'18px', color:'#141617', backgroundColor:'#f2c749', padding:{left:16,right:16,top:8,bottom:8}}).setOrigin(0.5).setScrollFactor(0).setInteractive({useHandCursor:true});
+    btn.on('pointerdown', ()=> this.scene.restart());
+  }
+
+  updateHud(){
+    this.hud.setText(`♥ ${'❤'.repeat(Math.max(0,this.lives))}   🦄 ${this.score}`);
+  }
+
+  update(){
+    if(this.win || this.lives<=0) return;
+    const speed = 200;
+    if(keys.left){ this.player.setVelocityX(-speed); this.player.flipX = true; }
+    else if(keys.right){ this.player.setVelocityX(speed); this.player.flipX = false; }
+    if(jumpRequested){
+      if(this.player.body.blocked.down || this.player.body.touching.down){
+        this.player.setVelocityY(-480);
+      }
+      jumpRequested = false;
+    }
+    if(this.player.body.blocked.down || this.player.body.touching.down){
+      const seg = this.segs.find(s=> this.player.x >= s.x+30 && this.player.x <= s.x+s.w-30);
+      if(seg) this.respawnX = Phaser.Math.Clamp(this.player.x, seg.x+40, seg.x+seg.w-40);
+    }
+    if(this.player.y > GROUND_Y + 50){
+      this.fallInPit();
+    }
+    this.playerVisual.x = this.player.x;
+    this.playerVisual.y = this.player.y;
+    this.bodyRect.setFillStyle(PALETTE.pink);
+    this.faceSprite.setFlipX(this.player.flipX);
+
+    this.enemies.getChildren().forEach(e=>{
+      e.x += e.dir * (e.type==='cliente'? 1.0:0.7);
+      if(e.x<e.min){ e.x=e.min; e.dir=1; }
+      if(e.x>e.max){ e.x=e.max; e.dir=-1; }
+      e.setFlipX(e.dir>0);
+    });
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  parent: 'game-holder',
+  width: W, height: H,
+  backgroundColor: '#0c0d0e',
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  physics: { default:'arcade', arcade:{ gravity:{y:1500}, debug:false } },
+  scene: [Boot, Title, Chapter1],
+};
+const game = new Phaser.Game(config);
+
+/* ---------- CONTROLES ---------- */
+function wireHold(id, onDown, onUp){
+  const btn = document.getElementById(id);
+  const down = ev=>{ ev.preventDefault(); onDown(); };
+  const up = ()=>{ onUp && onUp(); };
+  btn.addEventListener('touchstart', down, {passive:false});
+  btn.addEventListener('mousedown', down);
+  ['touchend','touchcancel'].forEach(e=>btn.addEventListener(e, up));
+  ['mouseup','mouseleave'].forEach(e=>btn.addEventListener(e, up));
+}
+wireHold('btnLeft', ()=>keys.left=true, ()=>keys.left=false);
+wireHold('btnRight', ()=>keys.right=true, ()=>keys.right=false);
+wireHold('jump-btn', ()=>jumpRequested=true);
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowLeft') keys.left=true;
+  if(e.key==='ArrowRight') keys.right=true;
+  if(e.key==='ArrowUp' || e.key===' ') jumpRequested=true;
+});
+document.addEventListener('keyup', e=>{
+  if(e.key==='ArrowLeft') keys.left=false;
+  if(e.key==='ArrowRight') keys.right=false;
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(console.warn);
+  });
+}
+</script>
+</body>
+</html>
