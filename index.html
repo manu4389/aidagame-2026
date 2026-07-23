@@ -146,27 +146,14 @@ function toggleMute(){
 class Boot extends Phaser.Scene {
   constructor(){ super('Boot'); }
   preload(){
-    this.load.image('aidaFace', 'fotos/aida_face_hero.jpg');   // recorte cuadrado nítido, centrado en su cara (de aida_flamenca.jpg, foto nítida y frontal — no la selfie de playa torcida de antes)
+    this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
     this.load.image('aidaGoal', 'fotos/aida_portada.jpg');     // cuerpo entero, para la revelación final — SIN recortar en círculo, se ve entera
+    this.load.image('instanteLogo', 'fotos/instante_logo.png'); // el logo REAL de Instante (el ojo), sacado de agenciainstante.com
     this.load.audio('marchIntro', ['audio/march_intro.mp3']); // fanfarria Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
     this.load.audio('tension', ['audio/tension_western.mp3']); // "In The West" — Kevin MacLeod (incompetech.com), CC BY 4.0 — silbido de spaghetti western, la raíz musical del propio Kill Bill
   }
   create(){
-    this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 300);
     this.scene.start('Title', {chapter:1, name:'El Contrato', sub:'que no se te escape entre papeleo y machirulos'});
-  }
-  // recorta una textura ya cuadrada en un círculo nítido, a tamaño grande
-  makeCircleTexture(srcKey, outKey, size){
-    const rt = this.make.renderTexture({width:size, height:size}, false);
-    const maskShape = this.make.graphics({add:false});
-    maskShape.fillStyle(0xffffff); maskShape.fillCircle(size/2, size/2, size/2);
-    const tempImg = this.add.image(size/2, size/2, srcKey).setDisplaySize(size, size);
-    const mask = maskShape.createGeometryMask();
-    tempImg.setMask(mask);
-    rt.draw(tempImg, 0, 0);
-    tempImg.destroy(); maskShape.destroy();
-    rt.saveTexture(outKey);
-    rt.destroy();
   }
 }
 
@@ -181,8 +168,10 @@ class Title extends Phaser.Scene {
     // imagen POTENTE y grande de Aida — protagonista absoluta de la pantalla, nada de círculo diminuto
     this.add.circle(cx, H*0.26, 140, Phaser.Display.Color.HexStringToColor('#d83335').color, 0.30);
     this.add.circle(cx, H*0.26, 120, 0xf2c749, 1).setStrokeStyle(0);
-    const photo = this.add.image(cx, H*0.26, 'aidaFaceCircle').setDisplaySize(224,224);
+    const photo = this.add.image(cx, H*0.26, 'aidaFace').setDisplaySize(232,232);
     this.add.circle(cx, H*0.26, 112, 0, 0).setStrokeStyle(6, 0xf2c749);
+    // el logo real de Instante, con ella — es SU agencia
+    this.add.image(cx, H*0.395, 'instanteLogo').setDisplaySize(56,36).setAlpha(0.95);
 
     this.add.text(cx, H*0.475, 'AIDA', {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'52px', color:'#ffffff', fontStyle:'bold'
@@ -240,29 +229,44 @@ class Chapter1 extends Phaser.Scene {
     this.platforms.add(ledge);
 
     // jugador
-    this.player = this.physics.add.sprite(80, GROUND_Y-80, null);
-    this.player.body.setSize(40,74).setOffset(-20,-37);
+    this.player = this.physics.add.sprite(80, GROUND_Y-110, null);
+    this.player.body.setSize(48,112).setOffset(-24,-70);
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
-    // "traje Kill Bill" con los colores de Instante: mono turquesa + raya lateral negra + logo
-    this.bodyRect = this.add.rectangle(0,42,34,40,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.bodyStripeL = this.add.rectangle(-12,42,6,40,0x141617,1);
-    this.bodyStripeR = this.add.rectangle(12,42,6,40,0x141617,1);
-    this.logoBadge = this.add.circle(0,32,6,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.pink);
+    // "traje Kill Bill" con los colores de Instante — figura entera, más grande y con volumen real
+    const skin = 0xb97a5c;
+    this.neck = this.add.rectangle(0,-14,16,22,skin,1);
+    this.shoulderL = this.add.ellipse(-24,10,26,24,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.shoulderR = this.add.ellipse(24,10,26,24,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.armL = this.add.rectangle(-30,42,15,46,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink).setAngle(-8);
+    this.armR = this.add.rectangle(30,42,15,46,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink).setAngle(8);
+    this.gloveL = this.add.circle(-33,68,9,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.ink);
+    this.gloveR = this.add.circle(33,68,9,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.ink);
+    this.bodyRect = this.add.rectangle(0,26,46,58,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.bodyShade = this.add.rectangle(14,26,16,58,0x141617,0.18);
+    this.bodyStripeL = this.add.rectangle(-16,26,8,58,0x141617,1);
+    this.bodyStripeR = this.add.rectangle(16,26,8,58,0x141617,1);
+    this.legL = this.add.rectangle(-12,74,17,42,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.legR = this.add.rectangle(12,74,17,42,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.bootL = this.add.rectangle(-12,98,20,16,0x141617,1);
+    this.bootR = this.add.rectangle(12,98,20,16,0x141617,1);
+    // el logo REAL de Instante, en el pecho — no un dibujo inventado
+    this.logoBadge = this.add.image(0,16,'instanteLogo').setDisplaySize(28,18);
     // katana — hoja plateada + puño rojo, en reposo pegada al costado; se lanza en el tajo
-    this.katanaBlade = this.add.rectangle(16,10,7,74,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
-    this.katanaHilt = this.add.rectangle(16,48,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    this.katanaBlade = this.add.rectangle(34,-6,9,96,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katanaHilt = this.add.rectangle(34,44,13,20,PALETTE.red,1).setStrokeStyle(2,0x141617);
     this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(18));
-    // CABEZÓN — su cara real, GRANDE y nítida: es lo primero que se ve, siempre
-    this.faceGlow = this.add.circle(0,-42,68,PALETTE.red,0.35);
-    this.faceRing = this.add.circle(0,-42,62,0xf2c749,1);
-    this.faceSprite = this.add.image(0,-42,'aidaFaceCircle').setDisplaySize(116,116);
-    this.faceEdge = this.add.circle(0,-42,58,0,0).setStrokeStyle(4,PALETTE.pink);
+    // CABEZÓN — su cara real, GRANDE y con el borde difuminado de verdad (alpha real, no un círculo duro pegado)
+    this.faceGlow = this.add.circle(0,-72,86,PALETTE.red,0.30);
+    this.faceRing = this.add.circle(0,-72,80,0xf2c749,1);
+    this.faceSprite = this.add.image(0,-72,'aidaFace').setDisplaySize(150,150);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
-      [this.katana, this.bodyRect, this.bodyStripeL, this.bodyStripeR, this.logoBadge, this.faceGlow, this.faceRing, this.faceSprite, this.faceEdge]);
+      [this.katana, this.legL, this.legR, this.bootL, this.bootR, this.armL, this.armR,
+       this.shoulderL, this.shoulderR, this.bodyRect, this.bodyShade, this.bodyStripeL, this.bodyStripeR, this.logoBadge,
+       this.gloveL, this.gloveR, this.neck, this.faceGlow, this.faceRing, this.faceSprite]);
 
     this.physics.add.collider(this.player, this.platforms);
 
@@ -307,6 +311,7 @@ class Chapter1 extends Phaser.Scene {
     this.add.text(gx+42, gy-108, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
     this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
 
+    this.cameras.main.setZoom(1.2);
     this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(80, 200);
 
@@ -392,12 +397,11 @@ class Chapter1 extends Phaser.Scene {
     this.attackCooldown = true;
     this.attacking = true;
     playSwoosh(this);
-    const from = this.player.flipX ? -18 : 18;
-    const to = this.player.flipX ? 150 : -150;
-    this.katana.setRotation(Phaser.Math.DegToRad(from));
+    // el flip de lado ya lo hace el scaleX del contenedor en update(); el ángulo del tajo es siempre el mismo
+    this.katana.setRotation(Phaser.Math.DegToRad(18));
     this.tweens.add({
-      targets:this.katana, rotation:Phaser.Math.DegToRad(to), duration:140, yoyo:true, ease:'Cubic.easeOut',
-      onComplete: ()=> this.katana.setRotation(Phaser.Math.DegToRad(from))
+      targets:this.katana, rotation:Phaser.Math.DegToRad(-150), duration:140, yoyo:true, ease:'Cubic.easeOut',
+      onComplete: ()=> this.katana.setRotation(Phaser.Math.DegToRad(18))
     });
     this.time.delayedCall(160, ()=> this.attacking=false);
     this.time.delayedCall(360, ()=> this.attackCooldown=false);
@@ -500,7 +504,7 @@ class Chapter1 extends Phaser.Scene {
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
     this.faceSprite.setFlipX(this.player.flipX);
-    this.katana.x = this.player.flipX ? -16 : 16;
+    this.katana.setScale(this.player.flipX ? -1 : 1, 1);
 
     this.enemies.getChildren().forEach(e=>{
       e.x += e.dir * (e.type==='machirulo'? 1.0:0.7);
