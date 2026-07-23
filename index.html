@@ -81,11 +81,24 @@ const W = 378, H = 546; // 9:13-ish, escala con CSS
 
 const keys = { left:false, right:false };
 let jumpRequested = false;
-let bgMusic = null;
-function startMusic(scene){
-  if(bgMusic) return;
-  bgMusic = scene.sound.add('march', {loop:true, volume:0.45});
-  bgMusic.play();
+
+/* ---------- MÚSICA ---------- */
+let currentMusic = null;
+let isMuted = false;
+function playMusic(scene, key, opts){
+  opts = opts || {};
+  const loop = opts.loop !== undefined ? opts.loop : true;
+  const volume = opts.volume !== undefined ? opts.volume : 0.45;
+  if(currentMusic) currentMusic.stop();
+  currentMusic = scene.sound.add(key, {loop, volume: isMuted ? 0 : volume});
+  currentMusic.baseVolume = volume;
+  currentMusic.play();
+  return currentMusic;
+}
+function toggleMute(){
+  isMuted = !isMuted;
+  if(currentMusic) currentMusic.setVolume(isMuted ? 0 : currentMusic.baseVolume);
+  document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊';
 }
 
 /* ---------- BOOT / PRELOAD ---------- */
@@ -94,7 +107,8 @@ class Boot extends Phaser.Scene {
   preload(){
     this.load.image('aidaFace', 'fotos/aida_face_surf.jpg');   // recorte cuadrado, ya centrado en su cara
     this.load.image('aidaGoal', 'fotos/aida_flamenca.jpg');    // foto de Corpus, para la meta
-    this.load.audio('march', ['audio/march_loop.mp3', 'audio/march_loop.ogg']); // Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
+    this.load.audio('marchIntro', ['audio/march_intro.mp3']); // fanfarria Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
+    this.load.audio('western', ['audio/western_loop.mp3', 'audio/western_loop.ogg']); // "Martian Cowboy" — Kevin MacLeod (incompetech.com), CC BY 3.0
   }
   create(){
     this.makeCircleTexture('aidaFace', 'aidaFaceCircle', 220);
@@ -145,7 +159,7 @@ class Title extends Phaser.Scene {
       padding:{left:20,right:20,top:10,bottom:10}
     }).setOrigin(0.5).setInteractive({useHandCursor:true});
     btn.on('pointerdown', ()=> {
-      startMusic(this);
+      playMusic(this, 'marchIntro', {loop:false, volume:0.5}); // fanfarria de Verdi al arrancar
       this.scene.start('Chapter1');
     });
   }
@@ -165,6 +179,9 @@ class Chapter1 extends Phaser.Scene {
 
     this.score = 0; this.lives = 3;
     this.drawBackground();
+
+    // tras la fanfarria de Verdi, entra la música de acción (western)
+    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'western', {loop:true, volume:0.4}); });
 
     this.platforms = this.physics.add.staticGroup();
     const segs = [
@@ -189,11 +206,15 @@ class Chapter1 extends Phaser.Scene {
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
-    this.bodyRect = this.add.rectangle(0,28,38,48,PALETTE.pink,1).setStrokeStyle(3,PALETTE.ink);
-    this.bodyStripe = this.add.rectangle(0,20,38,8,PALETTE.turquoise,1);
+    // "traje Kill Bill" con los colores de Instante: mono turquesa + raya lateral negra + logo
+    this.bodyRect = this.add.rectangle(0,28,38,48,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
+    this.bodyStripeL = this.add.rectangle(-13,28,7,48,0x141617,1);
+    this.bodyStripeR = this.add.rectangle(13,28,7,48,0x141617,1);
+    this.logoBadge = this.add.circle(0,18,7,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.pink);
     this.faceRing = this.add.circle(0,-30,50,0xf2c749,1);
     this.faceSprite = this.add.image(0,-30,'aidaFaceCircle').setDisplaySize(92,92);
-    this.playerVisual = this.add.container(this.player.x, this.player.y, [this.bodyRect, this.bodyStripe, this.faceRing, this.faceSprite]);
+    this.playerVisual = this.add.container(this.player.x, this.player.y,
+      [this.bodyRect, this.bodyStripeL, this.bodyStripeR, this.logoBadge, this.faceRing, this.faceSprite]);
 
     this.physics.add.collider(this.player, this.platforms);
 
@@ -204,6 +225,14 @@ class Chapter1 extends Phaser.Scene {
     this.spawnEnemy(2050, GROUND_Y-40, 'cliente', 1900, 2280);
 
     this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.hitEnemy(en), null, this);
+
+    // Brenda — su mejor amiga y socia, aparece como aliada
+    this.brenda = this.add.text(1150, GROUND_Y-46, '💁‍♀️', {fontSize:'34px'}).setOrigin(0.5);
+    this.add.text(1150, GROUND_Y-84, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#68416c'}).setOrigin(0.5);
+    this.physics.add.existing(this.brenda);
+    this.brenda.body.setAllowGravity(false);
+    this.brendaUsed = false;
+    this.physics.add.overlap(this.player, this.brenda, ()=>this.meetBrenda(), null, this);
 
     // coleccionables
     this.collectibles = this.physics.add.group({ allowGravity:false });
@@ -301,6 +330,18 @@ class Chapter1 extends Phaser.Scene {
     if(this.lives<=0) this.gameOver();
   }
 
+  meetBrenda(){
+    if(this.brendaUsed) return;
+    this.brendaUsed = true;
+    this.lives = Math.min(4, this.lives+1);
+    this.score += 3;
+    this.updateHud();
+    const msg = this.add.text(this.brenda.x, this.brenda.y-40, '¡Vamos, Aida! +1 ❤️', {
+      fontFamily:'Arial', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:6,right:6,top:3,bottom:3}
+    }).setOrigin(0.5);
+    this.tweens.add({targets:msg, y:msg.y-20, alpha:0, duration:1400, onComplete:()=>msg.destroy()});
+  }
+
   reachGoal(){
     if(this.win) return;
     this.win = true;
@@ -343,7 +384,6 @@ class Chapter1 extends Phaser.Scene {
     }
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
-    this.bodyRect.setFillStyle(PALETTE.pink);
     this.faceSprite.setFlipX(this.player.flipX);
 
     this.enemies.getChildren().forEach(e=>{
@@ -380,11 +420,7 @@ wireHold('btnLeft', ()=>keys.left=true, ()=>keys.left=false);
 wireHold('btnRight', ()=>keys.right=true, ()=>keys.right=false);
 wireHold('jump-btn', ()=>jumpRequested=true);
 
-document.getElementById('mute-btn').addEventListener('click', ()=>{
-  if(!bgMusic) return;
-  bgMusic.setMute(!bgMusic.mute);
-  document.getElementById('mute-btn').textContent = bgMusic.mute ? '🔇' : '🔊';
-});
+document.getElementById('mute-btn').addEventListener('click', toggleMute);
 
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') keys.left=true;
