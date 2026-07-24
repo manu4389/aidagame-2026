@@ -2,6 +2,8 @@
 
 ## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, duodécima vuelta — sesión cortada por Manuel, "guarda y cierra")
 
+**Última nota suya antes de cerrar (apuntar, NO se ejecutó todavía):** el cartón final de la Intro (el que ahora pone "ESCRITO Y DIRIGIDO POR / QUENTIN TARANTINO") tiene que separarse en dos líneas: **"ESCRITO POR MANUEL MOLINA PRADOS"** y **"DIRIGIDO POR QUENTIN TARANTINO"** — es él (el hermano) quien firma como escritor del regalo, y Tarantino se queda solo como director (el guiño a la bio de Instagram de Aida). Cambio pequeño en el array `INTRO_BEATS`, el último elemento (`tarantino:true`).
+
 **Posible causa raíz de VARIOS "sigue sin aparecer/no hay botón" de sesiones anteriores, arreglada esta vez (build v17):** `#game-holder` tenía `aspect-ratio:9/13` calculado solo por ANCHO, sin mirar la altura real de pantalla. En un móvil con poca altura visible (barra del navegador, etc.), esto podía empujar la fila de controles (el botón TAJO, SALTAR) **fuera de la pantalla, invisible, sin poder hacer scroll** (`body` tiene `overflow:hidden`). Arreglado: `#wrap` ahora mide `100dvh` de alto y `#game-holder` es `flex:1` (se queda con lo que sobra) — los controles YA NO PUEDEN quedar cortados, pase lo que pase con la altura de la pantalla. **Si esto era la causa real, debería resolver de una vez lo del "botón de la espada que no existe" de las últimas 3-4 rondas.**
 
 **PENDIENTE — Manuel mandó 5 imágenes pegadas en el chat en el último mensaje, NINGUNA accesible como archivo** (mismo límite de siempre: pegar una imagen en el chat no la deja en disco, solo la puedo "ver" en el momento, no procesarla con rembg/PIL). Contenido de esas 5 imágenes, descrito de memoria para la próxima sesión:
