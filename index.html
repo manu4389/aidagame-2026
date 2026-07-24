@@ -24,13 +24,23 @@
     position:relative;width:min(420px,100vw);
     display:flex;flex-direction:column;align-items:center;
   }
+  #marquee{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:8px 0;background:linear-gradient(180deg,#241014,#0c0d0e);
+    border:2px solid var(--yellow);border-bottom:none;border-radius:10px 10px 0 0;
+  }
+  #marquee img{width:26px;height:17px;filter:drop-shadow(0 0 4px rgba(64,173,169,.8));}
+  #marquee span{font-family:'Impact',Arial Narrow,sans-serif;font-size:13px;letter-spacing:1px;color:var(--yellow);text-shadow:0 0 6px rgba(242,199,73,.6);}
   #game-holder{
     width:100%;aspect-ratio:9/13;position:relative;
-    box-shadow:0 10px 40px rgba(0,0,0,.6);
+    box-shadow:0 10px 40px rgba(0,0,0,.6), inset 0 0 40px rgba(0,0,0,.5);
+    border:5px solid var(--ink);border-top:none;border-bottom:none;
+    background:#000;
   }
   #controls{
     display:flex;justify-content:space-between;align-items:center;
     width:100%;padding:12px 16px;background:#0c0d0e;
+    border:2px solid var(--yellow);border-top:none;border-radius:0 0 10px 10px;
   }
   #move-btns{display:flex;gap:10px;}
   .ctrl{
@@ -66,6 +76,7 @@
 </head>
 <body>
 <div id="wrap">
+  <div id="marquee"><img src="fotos/instante_logo.png" alt="Instante"><span>INSTANTE ARCADE</span></div>
   <div id="game-holder">
     <button id="mute-btn">🔊</button>
   </div>
@@ -247,7 +258,7 @@ class Title extends Phaser.Scene {
 
 /* ---------- VOL. 1 — EL CONTRATO ---------- */
 const WORLD_W = 2600, GROUND_Y = 460;
-const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️' };
+const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️', chirulo_viejo:'🧔' };
 
 class Chapter1 extends Phaser.Scene {
   constructor(){ super('Chapter1'); }
@@ -290,11 +301,11 @@ class Chapter1 extends Phaser.Scene {
     this.heroImage = this.add.image(0,-58,'aidaHeroReal').setDisplaySize(114,205);
     // el logo REAL de Instante, cerca del nudo del mantón — no un dibujo inventado
     this.logoBadge = this.add.image(6,-58,'instanteLogo').setDisplaySize(22,14);
-    // katana — hoja plateada + puño rojo, junto a su mano; se lanza en el tajo
-    this.katanaBlade = this.add.rectangle(41,-52,7,74,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
-    this.katanaHilt = this.add.rectangle(41,-14,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
-    this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaHilt]);
-    this.katana.setRotation(Phaser.Math.DegToRad(18));
+    // katana — puño junto a su mano, hoja colgando HACIA ABAJO (en reposo, punta al suelo — antes apuntaba hacia arriba por la cabeza, "al revés")
+    this.katanaHilt = this.add.rectangle(41,-20,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    this.katanaBlade = this.add.rectangle(41,20,7,66,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katana = this.add.container(0,0,[this.katanaHilt,this.katanaBlade]);
+    this.katana.setRotation(Phaser.Math.DegToRad(12));
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.heroImage, this.logoBadge, this.katana]);
 
@@ -303,16 +314,21 @@ class Chapter1 extends Phaser.Scene {
     // enemigos: burocracia (papeleo) y machirulos (jefazos con aires) — se cargan con la katana, no se esquivan
     this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
     this.spawnEnemy(760, GROUND_Y-40, 'burocracia', 620, 920);
-    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1780);
-    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2280);
+    this.spawnEnemy(1050, GROUND_Y-40, 'chirulo_viejo', 980, 1120);
+    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1600);
+    this.spawnEnemy(1700, GROUND_Y-40, 'burocracia', 1650, 1770);
+    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2130);
+    this.spawnEnemy(2220, GROUND_Y-40, 'chirulo_viejo', 2170, 2270);
 
     this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
 
-    // Brenda — su mejor amiga y socia, aparece como aliada
-    this.brenda = this.add.text(1150, GROUND_Y-46, '💁‍♀️', {fontSize:'34px'}).setOrigin(0.5);
-    this.add.text(1150, GROUND_Y-84, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#68416c'}).setOrigin(0.5);
+    // Brenda — su mejor amiga y socia. Se une como aliada QUE TAMBIÉN PELEA, no solo anima
+    // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
+    this.brenda = this.add.text(1150, GROUND_Y-46, '💁‍♀️', {fontSize:'58px'}).setOrigin(0.5);
+    this.brendaLabel = this.add.text(1150, GROUND_Y-96, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.brenda);
     this.brenda.body.setAllowGravity(false);
+    this.brendaAttackCooldown = false;
     this.brendaUsed = false;
     this.physics.add.overlap(this.player, this.brenda, ()=>this.meetBrenda(), null, this);
 
@@ -395,8 +411,10 @@ class Chapter1 extends Phaser.Scene {
   spawnEnemy(x,y,type,min,max){
     // sombra en el suelo, para que se lean como un adversario real plantado ahí, no un emoji flotando
     const shadow = this.add.ellipse(x,y+30,54,14,0x000000,0.35);
-    const label = this.add.text(x,y-46, type==='machirulo' ? 'MACHIRULO':'BUROCRACIA', {
-      fontFamily:'Impact', fontSize:'11px', color:'#ffffff', backgroundColor: type==='machirulo' ? '#68416c':'#141617', padding:{left:5,right:5,top:2,bottom:2}
+    const ENEMY_LABEL = { burocracia:'BUROCRACIA', machirulo:'MACHIRULO', chirulo_viejo:'VIEJO CHIRULO' };
+    const ENEMY_TAGCOLOR = { burocracia:'#141617', machirulo:'#68416c', chirulo_viejo:'#d83335' };
+    const label = this.add.text(x,y-46, ENEMY_LABEL[type], {
+      fontFamily:'Impact', fontSize:'11px', color:'#ffffff', backgroundColor: ENEMY_TAGCOLOR[type], padding:{left:5,right:5,top:2,bottom:2}
     }).setOrigin(0.5);
     const t = this.add.text(x,y, ENEMY_ICON[type], {fontSize:'52px'}).setOrigin(0.5);
     this.physics.add.existing(t);
@@ -445,7 +463,8 @@ class Chapter1 extends Phaser.Scene {
 
   defeatEnemy(en){
     if(!en.active) return;
-    const x=en.x, y=en.y, label = en.type==='machirulo' ? '¡A TU SITIO!' : '¡PAPELEO FUERA!';
+    const x=en.x, y=en.y;
+    const label = en.type==='machirulo' ? '¡A TU SITIO!' : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!' : '¡PAPELEO FUERA!';
     en.shadow.destroy(); en.label.destroy();
     en.destroy();
     this.score += 2;
@@ -488,7 +507,7 @@ class Chapter1 extends Phaser.Scene {
     this.lives = Math.min(4, this.lives+1);
     this.score += 3;
     this.updateHud();
-    const msg = this.add.text(this.brenda.x, this.brenda.y-40, '¡Vamos, Aida! +1 ❤️', {
+    const msg = this.add.text(this.brenda.x, this.brenda.y-40, '¡Voy contigo! +1 ❤️', {
       fontFamily:'Arial', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:6,right:6,top:3,bottom:3}
     }).setOrigin(0.5);
     this.tweens.add({targets:msg, y:msg.y-20, alpha:0, duration:1400, onComplete:()=>msg.destroy()});
@@ -545,12 +564,28 @@ class Chapter1 extends Phaser.Scene {
     this.katana.setScale(this.player.flipX ? -1 : 1, 1);
 
     this.enemies.getChildren().forEach(e=>{
-      e.x += e.dir * (e.type==='machirulo'? 1.0:0.7);
+      e.x += e.dir * (e.type==='machirulo'? 1.0 : e.type==='chirulo_viejo'? 0.5 : 0.7);
       if(e.x<e.min){ e.x=e.min; e.dir=1; }
       if(e.x>e.max){ e.x=e.max; e.dir=-1; }
       e.setFlipX(e.dir>0);
       e.shadow.x = e.x; e.label.x = e.x;
     });
+
+    // Brenda, ya de aliada: sigue a Aida y se pone A PELEAR — no solo a animar
+    if(this.brendaUsed){
+      const targetX = this.player.x + (this.player.flipX ? 70 : -70);
+      this.brenda.x += (targetX - this.brenda.x) * 0.06;
+      this.brenda.setFlipX(this.player.flipX);
+      this.brendaLabel.x = this.brenda.x;
+      if(!this.brendaAttackCooldown){
+        const target = this.enemies.getChildren().find(e => Math.abs(e.x-this.brenda.x) < 55);
+        if(target){
+          this.defeatEnemy(target);
+          this.brendaAttackCooldown = true;
+          this.time.delayedCall(450, ()=> this.brendaAttackCooldown=false);
+        }
+      }
+    }
   }
 }
 
