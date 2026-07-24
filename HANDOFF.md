@@ -1,6 +1,13 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, décima vuelta)
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, undécima vuelta)
+**Bug real encontrado en el tajo de la katana:** el contenedor de la katana estaba en `(0,0)` (centro del cuerpo) con las piezas dibujadas en coordenadas absolutas `x=28` — al rotar, giraba alrededor del CENTRO DEL CUERPO, no de la mano, así que el tajo se veía como la espada volando en un arco ancho e irreal en vez de un giro de muñeca. **Arreglado: el contenedor ahora vive EN la mano `(28,-28)` y las piezas cuelgan de ahí en coordenadas locales** — el giro ahora pivota donde debe. **Lección general: cualquier pieza que tenga que rotar tiene que vivir en un contenedor centrado en su propio eje de giro, nunca en el origen del padre.**
+
+**Voz en alto añadida** (Web Speech API, `speechSynthesis`) para catchphrases, taunts de derrota, mensaje de Brenda, del tutor y de la victoria. **Aviso realista para Manuel: no hay manera de forzar acento andaluz específico** — solo se puede elegir la voz "es-ES" que ya traiga instalada su propio móvil/ordenador (si no tiene ninguna en español, sonará en la voz por defecto del sistema). Esto no es algo que se pueda arreglar con más código, es una limitación de qué voces trae el dispositivo.
+
+**Botón de ataque simplificado a texto plano "TAJO"** (como el de "SALTAR") — se quitó el emoji ⚔️ por si el icono no se veía bien y por eso "no había tecla para la espada" en algunos dispositivos.
+
+**Brenda: su foto SIGUE sin llegar como archivo** — búsqueda repetida, nada nuevo en el disco.
 **Causa raíz real encontrada de "sigue sin sonar música al inicio":** los navegadores BLOQUEAN el audio hasta el primer toque del usuario — el `create()` de `Intro` se ejecuta automáticamente, SIN ningún toque todavía, así que `playMusic()` no sonaba nunca (sin error, silenciosamente). Arreglado con `this.sound.locked` + evento `UNLOCKED`. **Si algo de audio "no suena" en el futuro, sospechar SIEMPRE de esto primero**, no asumir que el código está mal.
 
 **Causa raíz real de "la katana/el cigarro no están integrados":** estaba calculando la posición de manos/boca **por proporción desde OTRA foto** (la original sin recortar), nunca mirando directamente `fotos/aida_hero_real.png` (el archivo real usado en el juego). Se corrigió mirando el archivo real con el propio `Read` — sus manos quedan a la altura de las bocamangas del mantón (~y=-28 en coordenadas del contenedor), NO donde se había estimado antes. **Lección: para cualquier prop "pegado" a la foto, mirar SIEMPRE el archivo final tal cual se usa, nunca estimar por proporción de otra imagen.**
