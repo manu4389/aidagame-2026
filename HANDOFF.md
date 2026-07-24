@@ -1,6 +1,14 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, séptima vuelta — la más grande hasta ahora)
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, octava vuelta)
+**Decisiones ya tomadas por Manuel (vía panel de preguntas — el widget visual no se le mostró, se le preguntó con AskUserQuestion en el chat y SÍ funcionó):**
+- Espada: **katana + cigarrillo** de detalle (no sustituir, añadir). Hecho.
+- "Una tecla para moverse" en realidad era **una tecla para el tajo de la katana** — ya existía (botón ⚔️ + tecla `x`/`Control`), se añadió también `z` como alternativa.
+- Caras de enemigos: pidió **buscar herramienta de imagen** → Pollinations volvió a funcionar (el 429 de antes era temporal, cola llena), se generaron 3 caras "chirulas" (2 machirulo + 1 viejo) + rembg para quitar fondo. Ya en el juego.
+- Alcance: **seguir puliendo el Vol. 1** hasta que esté redondo — NO pasar a Vol. 2-5 todavía.
+- **Foto de Brenda: sigue sin llegar como archivo** (búsqueda exhaustiva en todo el disco, nada) — sigue pendiente que la mande por otra vía.
+
+## Deuda técnica anterior
 Manuel mandó una FOTO PEGADA EN EL CHAT de Aida y Brenda juntas (Instagram, 23 marzo 2025) para identificar a Brenda — **se pudo IDENTIFICAR de vista (la de blanco, por el comentario "brendamye" debajo) pero NO PROCESAR**: una imagen pegada directamente en el chat no llega como archivo al disco (búsqueda exhaustiva en Downloads/Pictures/Desktop/OneDrive/Temp, nada). Rembg necesita un archivo real. **Pedido a Manuel que la guarde como archivo y la pase de otra forma** (WhatsApp a sí mismo, o soltarla en `fotos/`). En cuanto llegue como archivo: mismo proceso que con Aida (rembg + u2net_human_seg, crop a bbox) y sustituye el emoji 💁‍♀️ de Brenda en el código.
 
 En el mismo mensaje, Manuel pidió de golpe: narrativa de villano (la competencia quiere cerrar Instante), un hilo de la TESIS (el tutor le pide un artículo, mini-juego de escribir título + "el revisor lo ha pasado"), reescalar a la protagonista -12%, frases suyas reales como catchphrases al coger bonus, la frase exacta "suéltame el brazo, hijo de puta" al derrotar a un machirulo, y "mira TODO de Instante" (5ª vez que lo pide — ya se usó logo+colores+tagline+services list). **Todo esto se implementó en un único commit grande** — ver el historial numerado más abajo para el detalle punto por punto.
@@ -74,6 +82,12 @@ Construido y funcionando **Vol. 1 — La Ola** (capítulo del surf) en Phaser 3,
     - **Catchphrases suyas de verdad**: 6 frases (mezcla de `BRIEF.md` + las nuevas que dio Manuel) saltan al azar al coger un ⚡. La frase "¡Suéltame el brazo, hijo de puta!" sustituye al taunt genérico específicamente al derrotar a un `machirulo` (pedido explícito, palabra por palabra). "¡Olé Instante! ¡Viva la agencia Instante!" en la pantalla de victoria.
     - **Más de Instante (5ª vez pedido)**: añadido su lema real "La primera impresión siempre cuenta." bajo el logo en el Título — sacado literal de `agenciainstante.com`. Ya van: colores, logo, tagline principal, este lema, y el nombre de los servicios (aún sin usar en el juego — posible futuro: nombrar a los enemigos "burocracia" con los servicios reales tipo SEM/Kit Digital).
     - **NO abordado esta vuelta** (pendiente si Manuel insiste): caras de enemigos dibujadas "más fuertes/cuadradas" (sigue sin generador de imágenes), cigarrillo-espada (pregunta sin resolver — ver conversación, es ambiguo si quiere sustituir la katana o añadir un cigarro como gesto de personalidad), "una tecla para moverse" (sin aclarar qué pide exactamente, las flechas y los botones táctiles ya funcionan).
+13. **24 jul, octava vuelta — resolviendo las 4 preguntas abiertas de la vuelta anterior:**
+    - Se ofreció un panel visual (`mcp__visualize__show_widget`) con todas las preguntas — **Manuel no lo vio** ("digo que me hagas todas las preguntas, no las veo"). Pasado a `AskUserQuestion` (preguntas nativas del chat) y esa vez SÍ funcionó. **Lección: en esta sesión/cliente concreto, usar `AskUserQuestion` para decisiones de Manuel, no el widget visual** — puede que este cliente no soporte el widget de `mcp__visualize`.
+    - **Cigarrillo añadido** (no sustituye la katana) — comisura de la boca, con ascua y una voluta de humo, tres formas pequeñas en `playerVisual`.
+    - **Pollinations volvió a funcionar** (la cola llena de la sesión anterior era temporal). Generadas y recortadas (rembg, modelo `u2net` general — no `u2net_human_seg`, este es para ilustraciones no fotos) 3 caras: `enemy_machirulo1.png`, `enemy_machirulo2.png`, `enemy_viejo.png`. Ya sustituyen el emoji en los enemigos `machirulo`/`chirulo_viejo` (burocracia se queda en 📋, no es una persona). **Si Manuel pide más variedad de caras en el futuro, este es el pipeline: Pollinations (prompt tipo "portrait headshot, [descripción], comic book villain style, plain dark background") → rembg modelo `u2net` → crop a bbox → `fotos/`.**
+    - **HUD ampliado** con contador de artículos (📖) — sube +1 cada vez que se pasa por un TUTOR. Se decidió NO añadir además una barra de progreso separada (redundante con un solo tutor en este nivel; reconsiderar si hay varios tutores en próximos capítulos).
+    - Tecla de ataque: añadida `z` como alternativa a `x`/`Control` (aunque el pedido resultó ser sobre algo que ya existía).
 
 ## Próximos pasos (por orden, según el plan aprobado)
 1. **Resolver por qué Manuel no ve el juego** (bloqueante).

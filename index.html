@@ -182,6 +182,10 @@ class Boot extends Phaser.Scene {
   preload(){
     this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
     this.load.image('aidaHeroReal', 'fotos/aida_hero_real.png'); // ELLA TAL CUAL — recorte real de cuerpo entero (IA de segmentación, rembg/u2net), sin dibujo vectorial de por medio
+    // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
+    this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
+    this.load.image('enemyMachirulo2', 'fotos/enemy_machirulo2.png');
+    this.load.image('enemyViejo', 'fotos/enemy_viejo.png');
     this.load.image('aidaGoal', 'fotos/aida_portada.jpg');     // cuerpo entero, para la revelación final — SIN recortar en círculo, se ve entera
     this.load.image('instanteLogo', 'fotos/instante_logo.png'); // el logo REAL de Instante (el ojo), sacado de agenciainstante.com
     this.load.audio('marchIntro', ['audio/march_intro.mp3']); // fanfarria Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
@@ -305,7 +309,7 @@ class Chapter1 extends Phaser.Scene {
     this.cameras.main.setBounds(0,0,WORLD_W,H);
     this.cameras.main.setBackgroundColor('#2a0f10');
 
-    this.score = 0; this.lives = 3; this.attacking = false;
+    this.score = 0; this.lives = 3; this.attacking = false; this.articulos = 0;
     this.drawBackground();
 
     // tras la fanfarria de Verdi, entra el silbido de spaghetti western (la raíz musical de Kill Bill)
@@ -343,19 +347,23 @@ class Chapter1 extends Phaser.Scene {
     this.katanaBlade = this.add.rectangle(36,18,6,58,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
     this.katana = this.add.container(0,0,[this.katanaHilt,this.katanaBlade]);
     this.katana.setRotation(Phaser.Math.DegToRad(12));
+    // cigarrillo — detalle de personalidad (pedido: katana + cigarrillo), en la comisura de la boca
+    this.cigSmoke = this.add.ellipse(11,-124,7,10,0xcccccc,0.35);
+    this.cigBody = this.add.rectangle(9,-115,3,13,0xf3ecd8,1).setAngle(-25);
+    this.cigEmber = this.add.circle(9.5,-109,1.6,PALETTE.red,1);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
-      [this.heroImage, this.logoBadge, this.katana]);
+      [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
 
     this.physics.add.collider(this.player, this.platforms);
 
     // enemigos: burocracia (papeleo) y machirulos (jefazos con aires) — se cargan con la katana, no se esquivan
     this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
     this.spawnEnemy(760, GROUND_Y-40, 'burocracia', 620, 920);
-    this.spawnEnemy(1050, GROUND_Y-40, 'chirulo_viejo', 980, 1120);
-    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1600);
+    this.spawnEnemy(1050, GROUND_Y-40, 'chirulo_viejo', 980, 1120, 'enemyViejo');
+    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1600, 'enemyMachirulo1');
     this.spawnEnemy(1700, GROUND_Y-40, 'burocracia', 1650, 1770);
-    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2130);
-    this.spawnEnemy(2220, GROUND_Y-40, 'chirulo_viejo', 2170, 2270);
+    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2130, 'enemyMachirulo2');
+    this.spawnEnemy(2220, GROUND_Y-40, 'chirulo_viejo', 2170, 2270, 'enemyViejo');
 
     this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
 
@@ -453,15 +461,16 @@ class Chapter1 extends Phaser.Scene {
     }
   }
 
-  spawnEnemy(x,y,type,min,max){
+  spawnEnemy(x,y,type,min,max,faceKey){
     // sombra en el suelo, para que se lean como un adversario real plantado ahí, no un emoji flotando
     const shadow = this.add.ellipse(x,y+30,54,14,0x000000,0.35);
     const ENEMY_LABEL = { burocracia:'BUROCRACIA', machirulo:'MACHIRULO', chirulo_viejo:'VIEJO CHIRULO' };
     const ENEMY_TAGCOLOR = { burocracia:'#141617', machirulo:'#68416c', chirulo_viejo:'#d83335' };
-    const label = this.add.text(x,y-46, ENEMY_LABEL[type], {
+    const label = this.add.text(x,y-58, ENEMY_LABEL[type], {
       fontFamily:'Impact', fontSize:'11px', color:'#ffffff', backgroundColor: ENEMY_TAGCOLOR[type], padding:{left:5,right:5,top:2,bottom:2}
     }).setOrigin(0.5);
-    const t = this.add.text(x,y, ENEMY_ICON[type], {fontSize:'52px'}).setOrigin(0.5);
+    // caras ilustradas de verdad para machirulo/viejo (generadas + recortadas); burocracia se queda en emoji, es papeleo, no una persona
+    const t = faceKey ? this.add.image(x,y,faceKey).setDisplaySize(56,56) : this.add.text(x,y, ENEMY_ICON[type], {fontSize:'52px'}).setOrigin(0.5);
     this.physics.add.existing(t);
     t.body.setAllowGravity(false);
     t.dir = -1; t.min = min; t.max = max; t.type = type;
@@ -586,6 +595,7 @@ class Chapter1 extends Phaser.Scene {
     this.physics.resume();
     const t = title && title.trim() ? title.trim() : 'Sin título (ya lo pondrás)';
     this.score += 5;
+    this.articulos += 1;
     this.updateHud();
     const msg = this.add.text(this.player.x, this.player.y-190, `📖 "${t}"\n¡El revisor lo ha pasado! ✅`, {
       fontFamily:'Arial', fontSize:'13px', color:'#141617', backgroundColor:'#f2c749', align:'center',
@@ -614,7 +624,7 @@ class Chapter1 extends Phaser.Scene {
   }
 
   updateHud(){
-    this.hud.setText(`♥ ${'❤'.repeat(Math.max(0,this.lives))}   🦄 ${this.score}`);
+    this.hud.setText(`♥ ${'❤'.repeat(Math.max(0,this.lives))}   🦄 ${this.score}   📖 ${this.articulos}`);
   }
 
   update(){
@@ -716,7 +726,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') keys.left=true;
   if(e.key==='ArrowRight') keys.right=true;
   if(e.key==='ArrowUp' || e.key===' ') jumpRequested=true;
-  if(e.key==='x' || e.key==='X' || e.key==='Control') attackRequested=true;
+  if(e.key==='x' || e.key==='X' || e.key==='z' || e.key==='Z' || e.key==='Control') attackRequested=true; // tecla dedicada para el tajo de la katana (además del botón ⚔️ táctil)
 });
 document.addEventListener('keyup', e=>{
   if(e.key==='ArrowLeft') keys.left=false;
