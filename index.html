@@ -147,6 +147,7 @@ class Boot extends Phaser.Scene {
   constructor(){ super('Boot'); }
   preload(){
     this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
+    this.load.image('aidaHeroReal', 'fotos/aida_hero_real.png'); // ELLA TAL CUAL — recorte real de cuerpo entero (IA de segmentación, rembg/u2net), sin dibujo vectorial de por medio
     this.load.image('aidaGoal', 'fotos/aida_portada.jpg');     // cuerpo entero, para la revelación final — SIN recortar en círculo, se ve entera
     this.load.image('instanteLogo', 'fotos/instante_logo.png'); // el logo REAL de Instante (el ojo), sacado de agenciainstante.com
     this.load.audio('marchIntro', ['audio/march_intro.mp3']); // fanfarria Marcha Triunfal de Aida (Verdi) — dominio público, US Marine Band
@@ -280,55 +281,22 @@ class Chapter1 extends Phaser.Scene {
 
     // jugador
     this.player = this.physics.add.sprite(80, GROUND_Y-110, null);
-    this.player.body.setSize(48,112).setOffset(-24,-70);
+    this.player.body.setSize(70,190).setOffset(-35,-148);
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
-    // "traje Kill Bill" con los colores de Instante — silueta de mujer de verdad (cintura marcada, cadera), no un bloque
-    const skin = 0xb97a5c;
-    const hairDark = 0x2a1c16;
-    // mechones que caen desde el pelo hasta el hombro — para que la cabeza no "flote" sobre el cuerpo
-    this.hairL = this.add.ellipse(-22,-24,15,34,hairDark,0.92).setAngle(-12);
-    this.hairR = this.add.ellipse(22,-24,15,34,hairDark,0.92).setAngle(12);
-    this.neck = this.add.rectangle(0,-10,18,20,skin,1);
-    this.collar = this.add.ellipse(0,-8,42,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.shoulderL = this.add.ellipse(-24,4,26,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.shoulderR = this.add.ellipse(24,4,26,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.armL = this.add.rectangle(-31,40,15,46,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink).setAngle(-8);
-    this.armR = this.add.rectangle(31,40,15,46,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink).setAngle(8);
-    this.gloveL = this.add.circle(-34,66,9,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.ink);
-    this.gloveR = this.add.circle(34,66,9,PALETTE.yellow,1).setStrokeStyle(2,PALETTE.ink);
-    // torso con reloj de arena real: pecho — CINTURA (entra) — cadera (sale) — y de ahí a las piernas
-    this.torso = this.add.polygon(0,0, [
-      -24,0,  -26,16,  -15,34,  -23,54,  -16,62,  16,62,  23,54,  15,34,  26,16,  24,0
-    ], PALETTE.turquoise, 1).setStrokeStyle(3, PALETTE.ink).setOrigin(0,0);
-    this.bodyShade = this.add.polygon(0,0, [
-      6,0, 26,16, 15,34, 23,54, 16,62, 4,62, 10,34, 5,16
-    ], 0x141617, 0.16).setOrigin(0,0);
-    this.bodyStripeL = this.add.polygon(0,0, [
-      -20,4, -22,17, -13,34, -19,53, -14,60, -6,60, -9,34, -16,17, -14,4
-    ], 0x141617, 1).setOrigin(0,0);
-    this.legL = this.add.rectangle(-11,74,16,26,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.legR = this.add.rectangle(11,74,16,26,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
-    this.bootL = this.add.rectangle(-11,90,19,14,0x141617,1);
-    this.bootR = this.add.rectangle(11,90,19,14,0x141617,1);
-    // el logo REAL de Instante, en el pecho — no un dibujo inventado
-    this.logoBadge = this.add.image(0,14,'instanteLogo').setDisplaySize(26,17);
-    // katana — hoja plateada + puño rojo, en reposo pegada al costado; se lanza en el tajo
-    this.katanaBlade = this.add.rectangle(34,-6,9,96,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
-    this.katanaHilt = this.add.rectangle(34,44,13,20,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
+    this.heroImage = this.add.image(0,-58,'aidaHeroReal').setDisplaySize(114,205);
+    // el logo REAL de Instante, cerca del nudo del mantón — no un dibujo inventado
+    this.logoBadge = this.add.image(6,-58,'instanteLogo').setDisplaySize(22,14);
+    // katana — hoja plateada + puño rojo, junto a su mano; se lanza en el tajo
+    this.katanaBlade = this.add.rectangle(41,-52,7,74,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katanaHilt = this.add.rectangle(41,-14,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
     this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(18));
-    // CABEZÓN — su cara real, con el borde difuminado de verdad, en proporción real al ancho de hombros (~74px): antes 160px de cabeza sobre 74 de cuerpo era un perolo
-    this.faceGlow = this.add.circle(0,-50,58,PALETTE.red,0.30);
-    this.faceRing = this.add.circle(0,-50,52,0xf2c749,1);
-    this.faceSprite = this.add.image(0,-50,'aidaFace').setDisplaySize(100,100);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
-      [this.katana, this.legL, this.legR, this.bootL, this.bootR, this.armL, this.armR,
-       this.shoulderL, this.shoulderR, this.torso, this.bodyShade, this.bodyStripeL, this.logoBadge,
-       this.gloveL, this.gloveR, this.collar, this.neck, this.hairL, this.hairR,
-       this.faceGlow, this.faceRing, this.faceSprite]);
+      [this.heroImage, this.logoBadge, this.katana]);
 
     this.physics.add.collider(this.player, this.platforms);
 
@@ -572,7 +540,8 @@ class Chapter1 extends Phaser.Scene {
     }
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
-    this.faceSprite.setFlipX(this.player.flipX);
+    this.heroImage.setFlipX(this.player.flipX);
+    this.logoBadge.x = this.player.flipX ? -6 : 6;
     this.katana.setScale(this.player.flipX ? -1 : 1, 1);
 
     this.enemies.getChildren().forEach(e=>{
