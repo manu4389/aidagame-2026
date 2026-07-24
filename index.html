@@ -153,6 +153,56 @@ class Boot extends Phaser.Scene {
     this.load.audio('tension', ['audio/tension_western.mp3']); // "In The West" — Kevin MacLeod (incompetech.com), CC BY 4.0 — silbido de spaghetti western, la raíz musical del propio Kill Bill
   }
   create(){
+    this.scene.start('Intro');
+  }
+}
+
+/* ---------- NARRATIVA INICIAL — cartelas al estilo Tarantino, su vida real ---------- */
+const INTRO_BEATS = [
+  { big:'GRANADA.', small:'19 de agosto.' },
+  { big:'AIDA MOLINA PRADOS', small:'cumple 33.' },
+  { big:'HA REMADO', small:'en Ori Surf School,\nha corrido kilómetros,\nse ha subido a una barra con Conchita,\ny se ha puesto el traje de flamenca cada Corpus.' },
+  { big:'HA ESTADO', small:'en Lisboa, en París, en Bali...\ny en Berlín, dos veces,\ncon 12 años de diferencia.' },
+  { big:'UNA VEZ', small:'tocó rock and roll con su hermano.' },
+  { big:'FUNDÓ INSTANTE', small:'con Brenda.\nSu lema: "No se brilla sin oscuridad."' },
+  { big:'ESCRITO Y DIRIGIDO POR', small:'QUENTIN TARANTINO', tarantino:true },
+];
+class Intro extends Phaser.Scene {
+  constructor(){ super('Intro'); }
+  create(){
+    this.cameras.main.setBackgroundColor('#0c0d0e');
+    this.i = 0;
+    this.cx = W/2; this.cy = H/2;
+    this.bigText = this.add.text(this.cx, this.cy-18, '', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'34px', color:'#f2c749', align:'center', wordWrap:{width:W-50}
+    }).setOrigin(0.5).setAlpha(0);
+    this.smallText = this.add.text(this.cx, this.cy+56, '', {
+      fontFamily:'Georgia, serif', fontSize:'15px', color:'#ffffff', align:'center', lineSpacing:6, wordWrap:{width:W-70}
+    }).setOrigin(0.5).setAlpha(0);
+    this.hint = this.add.text(this.cx, H-24, 'toca para seguir', {
+      fontFamily:'Arial', fontSize:'12px', color:'#40ada9'
+    }).setOrigin(0.5).setAlpha(0.7);
+    this.skip = this.add.text(W-10, 10, 'saltar ›', {fontFamily:'Arial', fontSize:'12px', color:'#68416c'})
+      .setOrigin(1,0).setInteractive({useHandCursor:true});
+    this.skip.on('pointerdown', ()=> this.goTitle());
+    this.input.on('pointerdown', (p)=>{ if(p.y < H-40) this.next(); });
+    this.showBeat();
+  }
+  showBeat(){
+    const b = INTRO_BEATS[this.i];
+    this.bigText.setText(b.big).setFontSize(b.tarantino ? '22px':'34px').setColor(b.tarantino ? '#ffffff':'#f2c749');
+    this.smallText.setText(b.small).setFontSize(b.tarantino ? '30px':'15px').setColor(b.tarantino ? '#f2c749':'#ffffff')
+      .setFontFamily(b.tarantino ? 'Impact, Arial Narrow, sans-serif':'Georgia, serif');
+    this.bigText.setAlpha(0); this.smallText.setAlpha(0);
+    this.tweens.add({targets:[this.bigText,this.smallText], alpha:1, duration:500});
+  }
+  next(){
+    if(this.i >= INTRO_BEATS.length-1){ this.goTitle(); return; }
+    this.tweens.add({targets:[this.bigText,this.smallText], alpha:0, duration:250, onComplete:()=>{
+      this.i++; this.showBeat();
+    }});
+  }
+  goTitle(){
     this.scene.start('Title', {chapter:1, name:'El Contrato', sub:'que no se te escape entre papeleo y machirulos'});
   }
 }
@@ -535,7 +585,7 @@ const config = {
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { preserveDrawingBuffer: true },
   physics: { default:'arcade', arcade:{ gravity:{y:1500}, debug:false } },
-  scene: [Boot, Title, Chapter1],
+  scene: [Boot, Intro, Title, Chapter1],
 };
 const game = new Phaser.Game(config);
 
