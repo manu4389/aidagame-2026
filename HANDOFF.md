@@ -1,6 +1,11 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, séptima vuelta — la más grande hasta ahora)
+Manuel mandó una FOTO PEGADA EN EL CHAT de Aida y Brenda juntas (Instagram, 23 marzo 2025) para identificar a Brenda — **se pudo IDENTIFICAR de vista (la de blanco, por el comentario "brendamye" debajo) pero NO PROCESAR**: una imagen pegada directamente en el chat no llega como archivo al disco (búsqueda exhaustiva en Downloads/Pictures/Desktop/OneDrive/Temp, nada). Rembg necesita un archivo real. **Pedido a Manuel que la guarde como archivo y la pase de otra forma** (WhatsApp a sí mismo, o soltarla en `fotos/`). En cuanto llegue como archivo: mismo proceso que con Aida (rembg + u2net_human_seg, crop a bbox) y sustituye el emoji 💁‍♀️ de Brenda en el código.
+
+En el mismo mensaje, Manuel pidió de golpe: narrativa de villano (la competencia quiere cerrar Instante), un hilo de la TESIS (el tutor le pide un artículo, mini-juego de escribir título + "el revisor lo ha pasado"), reescalar a la protagonista -12%, frases suyas reales como catchphrases al coger bonus, la frase exacta "suéltame el brazo, hijo de puta" al derrotar a un machirulo, y "mira TODO de Instante" (5ª vez que lo pide — ya se usó logo+colores+tagline+services list). **Todo esto se implementó en un único commit grande** — ver el historial numerado más abajo para el detalle punto por punto.
+
+## Deuda técnica anterior
 **✅ CONFIRMADO por Manuel (24 jul): "ahora me encanta cómo está el muñeco" — la foto real de cuerpo entero (sin dibujo vectorial) ES el acierto. NO volver a un cuerpo dibujado. Cualquier ajuste futuro de personaje parte de foto real + rembg.**
 **🔴 Pendiente que Manuel mande: una foto de Brenda** (no se pudo confirmar ninguna en su Instagram sin verla — Instagram bloqueó tras varios intentos y esta sesión no puede ver imágenes en el navegador en vivo, solo archivos ya descargados). Brenda sigue con el emoji 💁‍♀️ de momento, pero YA es aliada que ataca enemigos, no solo anima.
 
@@ -61,6 +66,14 @@ Construido y funcionando **Vol. 1 — La Ola** (capítulo del surf) en Phaser 3,
     - **Más enemigos + variedad**: de 3 a 6 en el nivel, nuevo tipo `chirulo_viejo` (🧔, más lento, tag rojo "VIEJO CHIRULO") además de burocracia/machirulo — variedad de caras, no siempre el mismo icono. (Los emoji siguen siendo el límite real: no hay generador de imágenes en esta sesión para caras dibujadas "más fuertes/cuadradas" de verdad — si Manuel quiere ilustraciones reales de enemigos, hace falta esa herramienta o encargarlo fuera.)
     - **"Arcade potente" con el ojo de Instante**: añadida una marquesina estilo cabina arcade encima del juego (logo real de Instante + "INSTANTE ARCADE") y un marco/bisel de cabina alrededor de la pantalla, en HTML/CSS — esto SÍ se pudo verificar visualmente porque es DOM normal, no canvas de Phaser.
     - **"Más narrativa"**: NO abordado esta vuelta por foco en lo demás — sigue pendiente, la Intro actual (7 cartelas) no se ha ampliado.
+12. **24 jul, séptima vuelta — mensaje-torrente con foto de Brenda + villano + tesis + resize + catchphrases, todo junto:**
+    - **Foto de Brenda**: identificada de vista, no procesable (pegada en chat ≠ archivo). Ver el bloqueante de arriba.
+    - **Narrativa ampliada**: 2 cartelas nuevas en la Intro, antes del cartón de Tarantino — la competencia quiere cerrar Instante, y el tutor le pide un artículo más para la tesis. Establece a los DOS villanos/frentes del juego (Instante + tesis), tal como pidió ("es como una aventura en la que aparte de Instante tiene que hacer la tesis").
+    - **Mini-juego de la tesis**: nuevo personaje 📚 TUTOR en el nivel (x=2160). Al tocarlo se pausa el juego y sale un overlay HTML (no Phaser — inputs de texto reales necesitan DOM) pidiendo el título de un artículo; al enviar, siempre "el revisor lo ha pasado ✅" con el título que haya puesto, +5 al marcador, y se reanuda el juego. Reutilizable para más "tutores" en futuros capítulos.
+    - **Protagonista -12%**: cuerpo físico y sprite reescalados (antes 114×205 → ahora 100×180), katana y logo reposicionados a la misma escala.
+    - **Catchphrases suyas de verdad**: 6 frases (mezcla de `BRIEF.md` + las nuevas que dio Manuel) saltan al azar al coger un ⚡. La frase "¡Suéltame el brazo, hijo de puta!" sustituye al taunt genérico específicamente al derrotar a un `machirulo` (pedido explícito, palabra por palabra). "¡Olé Instante! ¡Viva la agencia Instante!" en la pantalla de victoria.
+    - **Más de Instante (5ª vez pedido)**: añadido su lema real "La primera impresión siempre cuenta." bajo el logo en el Título — sacado literal de `agenciainstante.com`. Ya van: colores, logo, tagline principal, este lema, y el nombre de los servicios (aún sin usar en el juego — posible futuro: nombrar a los enemigos "burocracia" con los servicios reales tipo SEM/Kit Digital).
+    - **NO abordado esta vuelta** (pendiente si Manuel insiste): caras de enemigos dibujadas "más fuertes/cuadradas" (sigue sin generador de imágenes), cigarrillo-espada (pregunta sin resolver — ver conversación, es ambiguo si quiere sustituir la katana o añadir un cigarro como gesto de personalidad), "una tecla para moverse" (sin aclarar qué pide exactamente, las flechas y los botones táctiles ya funcionan).
 
 ## Próximos pasos (por orden, según el plan aprobado)
 1. **Resolver por qué Manuel no ve el juego** (bloqueante).

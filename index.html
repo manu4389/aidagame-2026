@@ -72,6 +72,22 @@
     color:var(--yellow);font-size:16px;line-height:1;
     display:flex;align-items:center;justify-content:center;
   }
+  #thesis-overlay{
+    position:absolute;inset:0;z-index:20;display:none;
+    background:rgba(6,7,8,.94);flex-direction:column;align-items:center;justify-content:center;
+    padding:24px;text-align:center;
+  }
+  #thesis-overlay.show{display:flex;}
+  #thesis-overlay h3{font-family:Impact,Arial Narrow,sans-serif;color:var(--yellow);font-size:18px;margin:0 0 8px;}
+  #thesis-overlay p{font-family:Georgia,serif;color:#fff;font-size:13px;line-height:1.5;margin:0 0 16px;}
+  #thesis-input{
+    width:90%;padding:10px;border-radius:8px;border:2px solid var(--turquoise);
+    background:#141617;color:#fff;font-size:14px;text-align:center;margin-bottom:14px;
+  }
+  #thesis-submit{
+    background:var(--yellow);border:none;border-radius:10px;padding:10px 22px;
+    font-family:Impact,Arial Narrow,sans-serif;font-size:15px;color:#141617;
+  }
 </style>
 </head>
 <body>
@@ -79,6 +95,12 @@
   <div id="marquee"><img src="fotos/instante_logo.png" alt="Instante"><span>INSTANTE ARCADE</span></div>
   <div id="game-holder">
     <button id="mute-btn">🔊</button>
+    <div id="thesis-overlay">
+      <h3 id="thesis-title">📚 EL TUTOR</h3>
+      <p id="thesis-msg">Antes de depositar, un artículo más.</p>
+      <input id="thesis-input" type="text" maxlength="70" placeholder="Título del artículo...">
+      <button id="thesis-submit">ENVIAR A REVISIÓN</button>
+    </div>
   </div>
   <div id="controls">
     <div id="move-btns">
@@ -100,6 +122,7 @@ const PALETTE = { turquoise:0x40ada9, pink:0xe4378c, yellow:0xf2c749, purple:0x6
 const W = 378, H = 546; // 9:13-ish, escala con CSS
 
 const keys = { left:false, right:false };
+let activeChapter1 = null; // referencia a la escena activa, para que el overlay HTML del tutor pueda avisarla
 let jumpRequested = false;
 let attackRequested = false;
 
@@ -177,6 +200,8 @@ const INTRO_BEATS = [
   { big:'HA ESTADO', small:'en Lisboa, en París, en Bali...\ny en Berlín, dos veces,\ncon 12 años de diferencia.' },
   { big:'UNA VEZ', small:'tocó rock and roll con su hermano.' },
   { big:'FUNDÓ INSTANTE', small:'con Brenda.\nSu lema: "No se brilla sin oscuridad."' },
+  { big:'PERO HAY UN PROBLEMA', small:'la competencia quiere cerrar Instante.\nVan detrás de todo lo que ha montado con Brenda.' },
+  { big:'ADEMÁS', small:'el tutor le pide un artículo más\npara terminar la tesis.\nEsto va a ser de todo, menos tranquilo.' },
   { big:'ESCRITO Y DIRIGIDO POR', small:'QUENTIN TARANTINO', tarantino:true },
 ];
 class Intro extends Phaser.Scene {
@@ -232,8 +257,11 @@ class Title extends Phaser.Scene {
     this.add.circle(cx, H*0.26, 120, 0xf2c749, 1).setStrokeStyle(0);
     const photo = this.add.image(cx, H*0.26, 'aidaFace').setDisplaySize(232,232);
     this.add.circle(cx, H*0.26, 112, 0, 0).setStrokeStyle(6, 0xf2c749);
-    // el logo real de Instante, con ella — es SU agencia
-    this.add.image(cx, H*0.395, 'instanteLogo').setDisplaySize(56,36).setAlpha(0.95);
+    // el logo real de Instante, con ella — es SU agencia — y su propio lema, sacado literal de agenciainstante.com
+    this.add.image(cx, H*0.385, 'instanteLogo').setDisplaySize(56,36).setAlpha(0.95);
+    this.add.text(cx, H*0.435, '"La primera impresión siempre cuenta."', {
+      fontFamily:'Georgia, serif', fontSize:'10px', color:'#e4378c', fontStyle:'italic'
+    }).setOrigin(0.5);
 
     this.add.text(cx, H*0.475, 'AIDA', {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'52px', color:'#ffffff', fontStyle:'bold'
@@ -259,6 +287,15 @@ class Title extends Phaser.Scene {
 /* ---------- VOL. 1 — EL CONTRATO ---------- */
 const WORLD_W = 2600, GROUND_Y = 460;
 const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️', chirulo_viejo:'🧔' };
+// frases suyas de verdad (BRIEF.md) + las nuevas que pidió Manuel — saltan al azar al coger un ⚡
+const CATCHPHRASES = [
+  '¡Hoy se cena en vaso!',
+  '¡Y olé, olé, los caracoles!',
+  '¡Lo que sucede conviene, los cojones!',
+  '¡Qué arte, mi coño moreno!',
+  '¡Muerte a los caraduras!',
+  '¡Poco para los que no lo merecemos!',
+];
 
 class Chapter1 extends Phaser.Scene {
   constructor(){ super('Chapter1'); }
@@ -292,18 +329,18 @@ class Chapter1 extends Phaser.Scene {
 
     // jugador
     this.player = this.physics.add.sprite(80, GROUND_Y-110, null);
-    this.player.body.setSize(70,190).setOffset(-35,-148);
+    this.player.body.setSize(62,167).setOffset(-31,-130); // -12% (pedido: más jugabilidad, menos bloque en pantalla)
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
     // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
-    this.heroImage = this.add.image(0,-58,'aidaHeroReal').setDisplaySize(114,205);
+    this.heroImage = this.add.image(0,-51,'aidaHeroReal').setDisplaySize(100,180);
     // el logo REAL de Instante, cerca del nudo del mantón — no un dibujo inventado
-    this.logoBadge = this.add.image(6,-58,'instanteLogo').setDisplaySize(22,14);
+    this.logoBadge = this.add.image(5,-51,'instanteLogo').setDisplaySize(19,12);
     // katana — puño junto a su mano, hoja colgando HACIA ABAJO (en reposo, punta al suelo — antes apuntaba hacia arriba por la cabeza, "al revés")
-    this.katanaHilt = this.add.rectangle(41,-20,10,16,PALETTE.red,1).setStrokeStyle(2,0x141617);
-    this.katanaBlade = this.add.rectangle(41,20,7,66,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katanaHilt = this.add.rectangle(36,-18,9,14,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    this.katanaBlade = this.add.rectangle(36,18,6,58,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
     this.katana = this.add.container(0,0,[this.katanaHilt,this.katanaBlade]);
     this.katana.setRotation(Phaser.Math.DegToRad(12));
     this.playerVisual = this.add.container(this.player.x, this.player.y,
@@ -331,6 +368,14 @@ class Chapter1 extends Phaser.Scene {
     this.brendaAttackCooldown = false;
     this.brendaUsed = false;
     this.physics.add.overlap(this.player, this.brenda, ()=>this.meetBrenda(), null, this);
+
+    // el tutor de la tesis — la aventura no es solo Instante, también tiene que sacar la tesis adelante
+    this.tutor = this.add.text(2160, GROUND_Y-46, '📚', {fontSize:'46px'}).setOrigin(0.5);
+    this.add.text(2160, GROUND_Y-84, 'TUTOR', {fontFamily:'Impact', fontSize:'12px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    this.physics.add.existing(this.tutor);
+    this.tutor.body.setAllowGravity(false);
+    this.tutorUsed = false;
+    this.physics.add.overlap(this.player, this.tutor, ()=>this.meetTutor(), null, this);
 
     // coleccionables
     this.collectibles = this.physics.add.group({ allowGravity:false });
@@ -439,6 +484,16 @@ class Chapter1 extends Phaser.Scene {
     t.destroy();
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
+    if(t.icon==='⚡') this.sayPhrase(Phaser.Utils.Array.GetRandom(CATCHPHRASES));
+  }
+
+  sayPhrase(text){
+    const px = this.playerVisual.x, py = this.playerVisual.y - 190;
+    const bubble = this.add.text(px, py, text, {
+      fontFamily:'Impact', fontSize:'14px', color:'#141617', backgroundColor:'#f2c749',
+      padding:{left:8,right:8,top:4,bottom:4}, align:'center', wordWrap:{width:180}
+    }).setOrigin(0.5);
+    this.tweens.add({targets:bubble, y:bubble.y-18, alpha:0, duration:1500, delay:500, onComplete:()=>bubble.destroy()});
   }
 
   onEnemyTouch(en){
@@ -464,7 +519,7 @@ class Chapter1 extends Phaser.Scene {
   defeatEnemy(en){
     if(!en.active) return;
     const x=en.x, y=en.y;
-    const label = en.type==='machirulo' ? '¡A TU SITIO!' : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!' : '¡PAPELEO FUERA!';
+    const label = en.type==='machirulo' ? '¡SUÉLTAME EL BRAZO, HIJO DE PUTA!' : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!' : '¡PAPELEO FUERA!';
     en.shadow.destroy(); en.label.destroy();
     en.destroy();
     this.score += 2;
@@ -513,14 +568,41 @@ class Chapter1 extends Phaser.Scene {
     this.tweens.add({targets:msg, y:msg.y-20, alpha:0, duration:1400, onComplete:()=>msg.destroy()});
   }
 
+  meetTutor(){
+    if(this.tutorUsed) return;
+    this.tutorUsed = true;
+    this.physics.pause();
+    activeChapter1 = this;
+    const overlay = document.getElementById('thesis-overlay');
+    document.getElementById('thesis-title').textContent = '📚 EL TUTOR';
+    document.getElementById('thesis-msg').textContent = 'Para acabar la tesis hace falta un artículo más. Título:';
+    const input = document.getElementById('thesis-input');
+    input.value = '';
+    overlay.classList.add('show');
+    this.time.delayedCall(50, ()=> input.focus());
+  }
+
+  onArticleSubmitted(title){
+    this.physics.resume();
+    const t = title && title.trim() ? title.trim() : 'Sin título (ya lo pondrás)';
+    this.score += 5;
+    this.updateHud();
+    const msg = this.add.text(this.player.x, this.player.y-190, `📖 "${t}"\n¡El revisor lo ha pasado! ✅`, {
+      fontFamily:'Arial', fontSize:'13px', color:'#141617', backgroundColor:'#f2c749', align:'center',
+      padding:{left:8,right:8,top:5,bottom:5}, wordWrap:{width:200}
+    }).setOrigin(0.5);
+    this.tweens.add({targets:msg, y:msg.y-24, alpha:0, duration:2200, delay:900, onComplete:()=>msg.destroy()});
+  }
+
   reachGoal(){
     if(this.win) return;
     this.win = true;
     this.physics.pause();
     this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
     this.add.text(W/2, H*0.4, '¡CONTRATO FIRMADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.5, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.58, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'14px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.48, '¡OLÉ INSTANTE! ¡VIVA LA AGENCIA INSTANTE!', {fontFamily:'Impact', fontSize:'14px', color:'#e4378c', align:'center', wordWrap:{width:W-60}}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.56, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.63, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'14px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
   }
 
   gameOver(){
@@ -617,6 +699,18 @@ wireHold('jump-btn', ()=>jumpRequested=true);
 wireHold('attack-btn', ()=>attackRequested=true);
 
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
+
+function submitArticle(){
+  const overlay = document.getElementById('thesis-overlay');
+  const input = document.getElementById('thesis-input');
+  overlay.classList.remove('show');
+  if(activeChapter1) activeChapter1.onArticleSubmitted(input.value);
+}
+document.getElementById('thesis-submit').addEventListener('click', submitArticle);
+document.getElementById('thesis-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter') submitArticle();
+  e.stopPropagation(); // que las letras no se cuelen como controles del juego
+});
 
 document.addEventListener('keydown', e=>{
   if(e.key==='ArrowLeft') keys.left=true;
