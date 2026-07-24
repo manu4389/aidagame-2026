@@ -63,10 +63,13 @@
   #attack-btn{
     background:linear-gradient(145deg,var(--red),#8f1417);
     border:2px solid #ffd7d7;border-radius:50%;
-    color:#fff;font-size:22px;font-weight:900;
+    color:#fff;font-weight:900;
     width:64px;height:64px;box-shadow:0 4px 0 #5c0d0f;
     margin-right:8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;
   }
+  #attack-btn .ico{font-size:18px;}
+  #attack-btn .txt{font-size:9px;letter-spacing:.5px;}
   #attack-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c0d0f;}
   #mute-btn{
     position:absolute;top:8px;right:8px;z-index:10;
@@ -110,10 +113,10 @@
       <button class="ctrl" id="btnLeft">◀</button>
       <button class="ctrl" id="btnRight">▶</button>
     </div>
-    <button id="attack-btn">⚔️</button>
+    <button id="attack-btn"><span class="ico">⚔️</span><span class="txt">TAJO</span></button>
     <button id="jump-btn">SALTAR</button>
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v14 — 24 jul, caras+cigarro+musica</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v15 — 24 jul, katana+cigarro en manos, logo final, testimonio</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -216,8 +219,13 @@ class Intro extends Phaser.Scene {
   constructor(){ super('Intro'); }
   create(){
     this.cameras.main.setBackgroundColor('#0c0d0e');
-    // música desde el primer cartel, no solo al darle a EMPEZAR
-    playMusic(this, 'tension', {loop:true, volume:0.35});
+    // música desde el primer cartel — los navegadores BLOQUEAN el audio hasta el primer toque
+    // (por eso "seguía sin sonar": el create() se ejecuta solo, sin ningún toque todavía)
+    if(this.sound.locked){
+      this.sound.once(Phaser.Sound.Events.UNLOCKED, ()=> playMusic(this, 'tension', {loop:true, volume:0.35}));
+    } else {
+      playMusic(this, 'tension', {loop:true, volume:0.35});
+    }
     this.i = 0;
     this.cx = W/2; this.cy = H/2;
     this.bigText = this.add.text(this.cx, this.cy-18, '', {
@@ -353,17 +361,21 @@ class Chapter1 extends Phaser.Scene {
 
     // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
     this.heroImage = this.add.image(0,-33,'aidaHeroReal').setDisplaySize(84,150);
-    // el logo REAL de Instante, cerca del nudo del mantón — no un dibujo inventado
-    this.logoBadge = this.add.image(4,-33,'instanteLogo').setDisplaySize(17,11);
-    // katana — MÁS GRANDE para que se vea de verdad (antes era demasiado fina/pequeña). Puño junto a su mano, hoja colgando hacia abajo, en reposo
-    this.katanaHilt = this.add.rectangle(31,-14,12,19,PALETTE.red,1).setStrokeStyle(2,0x141617);
-    this.katanaBlade = this.add.rectangle(31,20,9,72,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
-    this.katana = this.add.container(0,0,[this.katanaHilt,this.katanaBlade]);
-    this.katana.setRotation(Phaser.Math.DegToRad(12));
-    // cigarrillo — MÁS GRANDE, en la comisura de la boca (detalle de personalidad, pedido: katana + cigarrillo)
-    this.cigSmoke = this.add.ellipse(11,-95,9,13,0xcccccc,0.4);
-    this.cigBody = this.add.rectangle(9,-84,5,19,0xf3ecd8,1).setAngle(-25);
-    this.cigEmber = this.add.circle(10,-76,2.6,PALETTE.red,1);
+    // el logo REAL de Instante — más grande, en el pecho, para que se lea de verdad
+    this.logoBadge = this.add.image(8,-33,'instanteLogo').setDisplaySize(30,19);
+    // Medido a ojo sobre `fotos/aida_hero_real.png` directamente (no por proporción de otra foto):
+    // sus manos quedan a la altura de las bocamangas del mantón, ~y=-28 en este contenedor,
+    // mano derecha (de ella) hacia x=+28, mano izquierda hacia x=-25.
+    // KATANA en la mano derecha — puño + guarda (tsuba) + hoja colgando, para que SE LEA como espada de verdad
+    this.katanaHilt = this.add.rectangle(28,-28,8,16,0x141617,1).setStrokeStyle(1,0x3a3a3a);
+    this.katanaGuard = this.add.rectangle(28,-20,16,4,PALETTE.yellow,1).setStrokeStyle(1,0x141617);
+    this.katanaBlade = this.add.rectangle(28,16,7,68,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaGuard,this.katanaHilt]);
+    this.katana.setRotation(Phaser.Math.DegToRad(8));
+    // CIGARRILLO en la mano izquierda — NO en la cara (tapaba la cara)
+    this.cigBody = this.add.rectangle(-25,-28,16,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
+    this.cigEmber = this.add.circle(-18,-30,2.4,PALETTE.red,1);
+    this.cigSmoke = this.add.ellipse(-17,-40,8,12,0xcccccc,0.35);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
 
@@ -626,10 +638,19 @@ class Chapter1 extends Phaser.Scene {
     this.win = true;
     this.physics.pause();
     this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
+    // el logo de Instante, GRANDE, en la pantalla final — pedido explícito: "tiene que verse el logotipo al final"
+    this.add.image(W/2, H*0.28, 'instanteLogo').setDisplaySize(90,58).setScrollFactor(0);
     this.add.text(W/2, H*0.4, '¡CONTRATO FIRMADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
     this.add.text(W/2, H*0.48, '¡OLÉ INSTANTE! ¡VIVA LA AGENCIA INSTANTE!', {fontFamily:'Impact', fontSize:'14px', color:'#e4378c', align:'center', wordWrap:{width:W-60}}).setOrigin(0.5).setScrollFactor(0);
     this.add.text(W/2, H*0.56, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.63, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'14px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
+    // testimonio REAL de un cliente de Instante, sacado literal de agenciainstante.com — no inventado
+    this.add.text(W/2, H*0.66, '"Recomiendo 100% trabajar con Aida y Brenda.\nSon muy profesionales, muy creativas..."', {
+      fontFamily:'Georgia, serif', fontSize:'11px', color:'#40ada9', fontStyle:'italic', align:'center', wordWrap:{width:W-70}
+    }).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.74, '— Gabriel Rodríguez, CEO SinComisiones', {
+      fontFamily:'Arial', fontSize:'10px', color:'#888', align:'center'
+    }).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.82, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'13px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
   }
 
   gameOver(){

@@ -1,6 +1,11 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, novena vuelta)
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, décima vuelta)
+**Causa raíz real encontrada de "sigue sin sonar música al inicio":** los navegadores BLOQUEAN el audio hasta el primer toque del usuario — el `create()` de `Intro` se ejecuta automáticamente, SIN ningún toque todavía, así que `playMusic()` no sonaba nunca (sin error, silenciosamente). Arreglado con `this.sound.locked` + evento `UNLOCKED`. **Si algo de audio "no suena" en el futuro, sospechar SIEMPRE de esto primero**, no asumir que el código está mal.
+
+**Causa raíz real de "la katana/el cigarro no están integrados":** estaba calculando la posición de manos/boca **por proporción desde OTRA foto** (la original sin recortar), nunca mirando directamente `fotos/aida_hero_real.png` (el archivo real usado en el juego). Se corrigió mirando el archivo real con el propio `Read` — sus manos quedan a la altura de las bocamangas del mantón (~y=-28 en coordenadas del contenedor), NO donde se había estimado antes. **Lección: para cualquier prop "pegado" a la foto, mirar SIEMPRE el archivo final tal cual se usa, nunca estimar por proporción de otra imagen.**
+
+Manuel pidió explícitamente: katana en una mano, cigarrillo en la OTRA (no en la cara — "tapaba la cara"). Hecho. También encontrados y usados **testimonios reales de clientes de Instante que nombran a Aida y Brenda** (agenciainstante.com tiene una sección de opiniones que no se había mirado a fondo hasta ahora) — uno ya está en la pantalla de victoria.
 **SOSPECHA FUERTE DE CACHÉ, sin confirmar todavía:** Manuel dijo "sigue sin la katana y el cigarrillo, sigue sin decir las frases" — pero AMBAS cosas estaban verificadas en el código y desplegadas (katana desde hace varias rondas, cigarrillo desde la ronda anterior). Esto solo se explica por: (a) estaba viendo una versión vieja en caché, o (b) los elementos eran demasiado pequeños/con condición de aparición demasiado rara para notarlos. Se atacaron LAS DOS posibilidades a la vez:
 - Meta tags `Cache-Control: no-cache` añadidas al `<head>`.
 - **`#build-tag` visible bajo los controles** (texto tipo "build v14 — fecha, resumen") — **si Manuel dice que no ve un cambio, LO PRIMERO es preguntarle qué texto de build ve** (o pedirle una captura), para saber en 2 segundos si es caché o un fallo real. Subir el número/fecha en cada commit que cambie algo visible.
