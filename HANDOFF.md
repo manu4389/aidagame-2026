@@ -1,6 +1,14 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, octava vuelta)
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, novena vuelta)
+**SOSPECHA FUERTE DE CACHÉ, sin confirmar todavía:** Manuel dijo "sigue sin la katana y el cigarrillo, sigue sin decir las frases" — pero AMBAS cosas estaban verificadas en el código y desplegadas (katana desde hace varias rondas, cigarrillo desde la ronda anterior). Esto solo se explica por: (a) estaba viendo una versión vieja en caché, o (b) los elementos eran demasiado pequeños/con condición de aparición demasiado rara para notarlos. Se atacaron LAS DOS posibilidades a la vez:
+- Meta tags `Cache-Control: no-cache` añadidas al `<head>`.
+- **`#build-tag` visible bajo los controles** (texto tipo "build v14 — fecha, resumen") — **si Manuel dice que no ve un cambio, LO PRIMERO es preguntarle qué texto de build ve** (o pedirle una captura), para saber en 2 segundos si es caché o un fallo real. Subir el número/fecha en cada commit que cambie algo visible.
+- Katana y cigarrillo hechos notablemente MÁS GRANDES (ya no solo proporcionales al cuerpo reducido).
+- Frases: antes solo saltaban al azar al coger un ⚡ (raro) — ahora saltan EN ORDEN con cualquier coleccionable (🦄 o ⚡) y la primera se dice sola a los 1.8s de empezar el nivel, para que se la oiga hablar sí o sí.
+- Música ya suena desde la primera cartela de la Intro (antes solo empezaba al pulsar EMPEZAR).
+- Personaje reducido OTRA VEZ (100×180 → 84×150) + zoom de cámara bajado de 1.2 a 1.0 — "sigue siendo demasiado grande para la jugabilidad".
+- Más Instante: los enemigos de burocracia derrotados ahora nombran un servicio REAL de la agencia (Redes Sociales, Diseño Web, SEM, Kit Digital...) en vez de un "papeleo" genérico.
 **Decisiones ya tomadas por Manuel (vía panel de preguntas — el widget visual no se le mostró, se le preguntó con AskUserQuestion en el chat y SÍ funcionó):**
 - Espada: **katana + cigarrillo** de detalle (no sustituir, añadir). Hecho.
 - "Una tecla para moverse" en realidad era **una tecla para el tajo de la katana** — ya existía (botón ⚔️ + tecla `x`/`Control`), se añadió también `z` como alternativa.

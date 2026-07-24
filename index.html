@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>AIDA</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#141617">
@@ -110,6 +113,7 @@
     <button id="attack-btn">⚔️</button>
     <button id="jump-btn">SALTAR</button>
   </div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v14 — 24 jul, caras+cigarro+musica</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -212,6 +216,8 @@ class Intro extends Phaser.Scene {
   constructor(){ super('Intro'); }
   create(){
     this.cameras.main.setBackgroundColor('#0c0d0e');
+    // música desde el primer cartel, no solo al darle a EMPEZAR
+    playMusic(this, 'tension', {loop:true, volume:0.35});
     this.i = 0;
     this.cx = W/2; this.cy = H/2;
     this.bigText = this.add.text(this.cx, this.cy-18, '', {
@@ -292,6 +298,11 @@ class Title extends Phaser.Scene {
 const WORLD_W = 2600, GROUND_Y = 460;
 const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️', chirulo_viejo:'🧔' };
 // frases suyas de verdad (BRIEF.md) + las nuevas que pidió Manuel — saltan al azar al coger un ⚡
+// servicios REALES de Instante (agenciainstante.com) — para que la burocracia derrotada los nombre, no un genérico "papeleo"
+const INSTANTE_SERVICES = [
+  'REDES SOCIALES', 'DISEÑO WEB', 'INFLUENCER MARKETING', 'DISEÑO GRÁFICO',
+  'CAMPAÑAS SEM', 'KIT DIGITAL', 'ESTUDIOS DE MERCADO',
+];
 const CATCHPHRASES = [
   '¡Hoy se cena en vaso!',
   '¡Y olé, olé, los caracoles!',
@@ -309,11 +320,13 @@ class Chapter1 extends Phaser.Scene {
     this.cameras.main.setBounds(0,0,WORLD_W,H);
     this.cameras.main.setBackgroundColor('#2a0f10');
 
-    this.score = 0; this.lives = 3; this.attacking = false; this.articulos = 0;
+    this.score = 0; this.lives = 3; this.attacking = false; this.articulos = 0; this.phraseIndex = 0;
     this.drawBackground();
 
     // tras la fanfarria de Verdi, entra el silbido de spaghetti western (la raíz musical de Kill Bill)
     this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.7}); });
+    // frase de apertura — que se la oiga hablar desde el minuto uno, no solo al coger cosas
+    this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(CATCHPHRASES[0]); this.phraseIndex = 1; });
 
     this.platforms = this.physics.add.staticGroup();
     const segs = [
@@ -333,24 +346,24 @@ class Chapter1 extends Phaser.Scene {
 
     // jugador
     this.player = this.physics.add.sprite(80, GROUND_Y-110, null);
-    this.player.body.setSize(62,167).setOffset(-31,-130); // -12% (pedido: más jugabilidad, menos bloque en pantalla)
+    this.player.body.setSize(55,140).setOffset(-27,-98); // reducida OTRA VEZ (sigue "demasiado grande" según Manuel) + zoom de cámara bajado
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
 
     // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
-    this.heroImage = this.add.image(0,-51,'aidaHeroReal').setDisplaySize(100,180);
+    this.heroImage = this.add.image(0,-33,'aidaHeroReal').setDisplaySize(84,150);
     // el logo REAL de Instante, cerca del nudo del mantón — no un dibujo inventado
-    this.logoBadge = this.add.image(5,-51,'instanteLogo').setDisplaySize(19,12);
-    // katana — puño junto a su mano, hoja colgando HACIA ABAJO (en reposo, punta al suelo — antes apuntaba hacia arriba por la cabeza, "al revés")
-    this.katanaHilt = this.add.rectangle(36,-18,9,14,PALETTE.red,1).setStrokeStyle(2,0x141617);
-    this.katanaBlade = this.add.rectangle(36,18,6,58,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
+    this.logoBadge = this.add.image(4,-33,'instanteLogo').setDisplaySize(17,11);
+    // katana — MÁS GRANDE para que se vea de verdad (antes era demasiado fina/pequeña). Puño junto a su mano, hoja colgando hacia abajo, en reposo
+    this.katanaHilt = this.add.rectangle(31,-14,12,19,PALETTE.red,1).setStrokeStyle(2,0x141617);
+    this.katanaBlade = this.add.rectangle(31,20,9,72,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
     this.katana = this.add.container(0,0,[this.katanaHilt,this.katanaBlade]);
     this.katana.setRotation(Phaser.Math.DegToRad(12));
-    // cigarrillo — detalle de personalidad (pedido: katana + cigarrillo), en la comisura de la boca
-    this.cigSmoke = this.add.ellipse(11,-124,7,10,0xcccccc,0.35);
-    this.cigBody = this.add.rectangle(9,-115,3,13,0xf3ecd8,1).setAngle(-25);
-    this.cigEmber = this.add.circle(9.5,-109,1.6,PALETTE.red,1);
+    // cigarrillo — MÁS GRANDE, en la comisura de la boca (detalle de personalidad, pedido: katana + cigarrillo)
+    this.cigSmoke = this.add.ellipse(11,-95,9,13,0xcccccc,0.4);
+    this.cigBody = this.add.rectangle(9,-84,5,19,0xf3ecd8,1).setAngle(-25);
+    this.cigEmber = this.add.circle(10,-76,2.6,PALETTE.red,1);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
 
@@ -410,7 +423,7 @@ class Chapter1 extends Phaser.Scene {
     this.add.text(gx+42, gy-108, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
     this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
 
-    this.cameras.main.setZoom(1.2);
+    this.cameras.main.setZoom(1.0); // bajado de 1.2 — Manuel: "el muñeco es demasiado grande para la jugabilidad"
     this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
     this.cameras.main.setDeadzone(80, 200);
 
@@ -493,7 +506,9 @@ class Chapter1 extends Phaser.Scene {
     t.destroy();
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
-    if(t.icon==='⚡') this.sayPhrase(Phaser.Utils.Array.GetRandom(CATCHPHRASES));
+    // en orden, no al azar — así en un recorrido completo las DICE TODAS, no depende de la suerte
+    this.sayPhrase(CATCHPHRASES[this.phraseIndex % CATCHPHRASES.length]);
+    this.phraseIndex++;
   }
 
   sayPhrase(text){
@@ -528,7 +543,9 @@ class Chapter1 extends Phaser.Scene {
   defeatEnemy(en){
     if(!en.active) return;
     const x=en.x, y=en.y;
-    const label = en.type==='machirulo' ? '¡SUÉLTAME EL BRAZO, HIJO DE PUTA!' : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!' : '¡PAPELEO FUERA!';
+    const label = en.type==='machirulo' ? '¡SUÉLTAME EL BRAZO, HIJO DE PUTA!'
+      : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!'
+      : `¡${Phaser.Utils.Array.GetRandom(INSTANTE_SERVICES)} ENTREGADO A TIEMPO!`;
     en.shadow.destroy(); en.label.destroy();
     en.destroy();
     this.score += 2;
