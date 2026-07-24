@@ -238,7 +238,7 @@ class Title extends Phaser.Scene {
       padding:{left:20,right:20,top:10,bottom:10}
     }).setOrigin(0.5).setInteractive({useHandCursor:true});
     btn.on('pointerdown', ()=> {
-      playMusic(this, 'marchIntro', {loop:false, volume:0.5}); // fanfarria de Verdi al arrancar
+      playMusic(this, 'marchIntro', {loop:false, volume:0.8}); // fanfarria de Verdi al arrancar
       this.scene.start('Chapter1');
     });
   }
@@ -260,7 +260,7 @@ class Chapter1 extends Phaser.Scene {
     this.drawBackground();
 
     // tras la fanfarria de Verdi, entra el silbido de spaghetti western (la raíz musical de Kill Bill)
-    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.4}); });
+    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.7}); });
 
     this.platforms = this.physics.add.staticGroup();
     const segs = [
@@ -425,10 +425,16 @@ class Chapter1 extends Phaser.Scene {
   }
 
   spawnEnemy(x,y,type,min,max){
-    const t = this.add.text(x,y, ENEMY_ICON[type], {fontSize:'30px'}).setOrigin(0.5);
+    // sombra en el suelo, para que se lean como un adversario real plantado ahí, no un emoji flotando
+    const shadow = this.add.ellipse(x,y+30,54,14,0x000000,0.35);
+    const label = this.add.text(x,y-46, type==='machirulo' ? 'MACHIRULO':'BUROCRACIA', {
+      fontFamily:'Impact', fontSize:'11px', color:'#ffffff', backgroundColor: type==='machirulo' ? '#68416c':'#141617', padding:{left:5,right:5,top:2,bottom:2}
+    }).setOrigin(0.5);
+    const t = this.add.text(x,y, ENEMY_ICON[type], {fontSize:'52px'}).setOrigin(0.5);
     this.physics.add.existing(t);
     t.body.setAllowGravity(false);
     t.dir = -1; t.min = min; t.max = max; t.type = type;
+    t.shadow = shadow; t.label = label;
     t.body.setVelocityX(-60);
     this.enemies.add(t);
   }
@@ -472,6 +478,7 @@ class Chapter1 extends Phaser.Scene {
   defeatEnemy(en){
     if(!en.active) return;
     const x=en.x, y=en.y, label = en.type==='machirulo' ? '¡A TU SITIO!' : '¡PAPELEO FUERA!';
+    en.shadow.destroy(); en.label.destroy();
     en.destroy();
     this.score += 2;
     this.updateHud();
@@ -548,7 +555,7 @@ class Chapter1 extends Phaser.Scene {
     else if(keys.right){ this.player.setVelocityX(speed); this.player.flipX = false; }
     if(jumpRequested){
       if(this.player.body.blocked.down || this.player.body.touching.down){
-        this.player.setVelocityY(-480);
+        this.player.setVelocityY(-640); // antes -480: con gravedad 1500 solo llegaba a 76px y la repisa está a 110px — NUNCA se podía alcanzar. Ahora llega a ~136px.
       }
       jumpRequested = false;
     }
@@ -573,6 +580,7 @@ class Chapter1 extends Phaser.Scene {
       if(e.x<e.min){ e.x=e.min; e.dir=1; }
       if(e.x>e.max){ e.x=e.max; e.dir=-1; }
       e.setFlipX(e.dir>0);
+      e.shadow.x = e.x; e.label.x = e.x;
     });
   }
 }
