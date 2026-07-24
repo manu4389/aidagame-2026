@@ -289,9 +289,9 @@ class Chapter1 extends Phaser.Scene {
     const skin = 0xb97a5c;
     const hairDark = 0x2a1c16;
     // mechones que caen desde el pelo hasta el hombro — para que la cabeza no "flote" sobre el cuerpo
-    this.hairL = this.add.ellipse(-26,-32,20,46,hairDark,0.92).setAngle(-12);
-    this.hairR = this.add.ellipse(26,-32,20,46,hairDark,0.92).setAngle(12);
-    this.neck = this.add.rectangle(0,-16,18,26,skin,1);
+    this.hairL = this.add.ellipse(-22,-24,15,34,hairDark,0.92).setAngle(-12);
+    this.hairR = this.add.ellipse(22,-24,15,34,hairDark,0.92).setAngle(12);
+    this.neck = this.add.rectangle(0,-10,18,20,skin,1);
     this.collar = this.add.ellipse(0,-8,42,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
     this.shoulderL = this.add.ellipse(-24,4,26,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
     this.shoulderR = this.add.ellipse(24,4,26,22,PALETTE.turquoise,1).setStrokeStyle(3,PALETTE.ink);
@@ -320,10 +320,10 @@ class Chapter1 extends Phaser.Scene {
     this.katanaHilt = this.add.rectangle(34,44,13,20,PALETTE.red,1).setStrokeStyle(2,0x141617);
     this.katana = this.add.container(0,0,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(18));
-    // CABEZÓN — su cara real, GRANDE y con el borde difuminado de verdad (alpha real, no un círculo duro pegado)
-    this.faceGlow = this.add.circle(0,-72,86,PALETTE.red,0.30);
-    this.faceRing = this.add.circle(0,-72,80,0xf2c749,1);
-    this.faceSprite = this.add.image(0,-72,'aidaFace').setDisplaySize(150,150);
+    // CABEZÓN — su cara real, con el borde difuminado de verdad, en proporción real al ancho de hombros (~74px): antes 160px de cabeza sobre 74 de cuerpo era un perolo
+    this.faceGlow = this.add.circle(0,-50,58,PALETTE.red,0.30);
+    this.faceRing = this.add.circle(0,-50,52,0xf2c749,1);
+    this.faceSprite = this.add.image(0,-50,'aidaFace').setDisplaySize(100,100);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.katana, this.legL, this.legR, this.bootL, this.bootR, this.armL, this.armR,
        this.shoulderL, this.shoulderR, this.torso, this.bodyShade, this.bodyStripeL, this.logoBadge,
