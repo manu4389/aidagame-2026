@@ -1,6 +1,26 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, undécima vuelta)
+## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, duodécima vuelta — sesión cortada por Manuel, "guarda y cierra")
+
+**Posible causa raíz de VARIOS "sigue sin aparecer/no hay botón" de sesiones anteriores, arreglada esta vez (build v17):** `#game-holder` tenía `aspect-ratio:9/13` calculado solo por ANCHO, sin mirar la altura real de pantalla. En un móvil con poca altura visible (barra del navegador, etc.), esto podía empujar la fila de controles (el botón TAJO, SALTAR) **fuera de la pantalla, invisible, sin poder hacer scroll** (`body` tiene `overflow:hidden`). Arreglado: `#wrap` ahora mide `100dvh` de alto y `#game-holder` es `flex:1` (se queda con lo que sobra) — los controles YA NO PUEDEN quedar cortados, pase lo que pase con la altura de la pantalla. **Si esto era la causa real, debería resolver de una vez lo del "botón de la espada que no existe" de las últimas 3-4 rondas.**
+
+**PENDIENTE — Manuel mandó 5 imágenes pegadas en el chat en el último mensaje, NINGUNA accesible como archivo** (mismo límite de siempre: pegar una imagen en el chat no la deja en disco, solo la puedo "ver" en el momento, no procesarla con rembg/PIL). Contenido de esas 5 imágenes, descrito de memoria para la próxima sesión:
+1. Foto profesional, pelo oscuro liso, brazos cruzados, vestido gris — dijo "estas son Brenda y Aida" nombrando a Brenda primero.
+2. Foto profesional, pelo ondulado más claro/rubio, blazer negro, anillos dorados — la segunda de esa pareja.
+3. Logo de Instante CON el texto "Instante" debajo (versión completa, no solo el ojo).
+4. El mismo logo (ojo), más grande, sin texto.
+5. Imagen de estilo: manos sujetando una cámara, foto en blanco y negro con círculos/barras de color (turquesa, rosa, amarillo) superpuestos — pinta de collage de la propia marca. Dijo que "todo eso tiene que tener el estilo del videojuego" — quiere ADOPTAR esta estética (foto B/N + formas de color plano) como estilo visual central del juego, no solo un detalle.
+
+**⚠️ OJO — NO asumir a ciegas cuál foto es Brenda y cuál es Aida.** Las fotos previas confirmadas de Aida (`aida_flamenca.jpg`, `aida_portada.jpg`, la de Instagram) la muestran SIEMPRE con pelo oscuro — lo cual coincidiría con la foto #1, NO con el orden literal en que Manuel las nombró ("Brenda y Aida" = 1,2). Esto es una contradicción real sin resolver. **Preguntar a Manuel explícitamente cuál es cuál antes de tocar nada de Brenda** — confundir a dos personas reales en un regalo personal es un error que hay que evitar, no adivinar.
+**Vía para conseguir los archivos de verdad:** pedirle que las suba a Google Fotos/Drive y pase el link, o que se las mande por email a sí mismo y las guarde en el Escritorio — pegar en el chat no funciona para esto.
+
+**Pedido de esta ronda, con trabajo iniciado pero NO completado (para no dejar el juego roto, se revirtió el cambio a medias):**
+- **Nivel demasiado saturado de enemigos** — pidió alargar el nivel (`WORLD_W`, ahora mismo 2600) y separar más los encuentros. Si se toca `WORLD_W`, hay que extender A LA VEZ `segs` (las plataformas), reposicionar los 6 `spawnEnemy(...)`, mover el `tutor` (x=2160) y el `goalZone` (`WORLD_W-170`), y añadir más `coinXs` — si no, el mundo se queda con un hueco sin suelo y la meta flotando en el vacío. **NO cambiar `WORLD_W` sin hacer las cuatro cosas a la vez.**
+- **La katana "no parece una katana"** — sigue siendo un rectángulo con guarda; pidió una forma más curva/reconocible.
+- **Que se vea/oiga mejor la lucha** — más presencia del sonido del tajo, feedback visual del golpe.
+- **"Instante" en el fondo de la pantalla de juego** — ya hay texto "INSTANTE" repetido de fondo (parallax); posible mejora: usar la imagen real del ojo también ahí, no solo texto.
+
+## Cosas ya resueltas de rondas anteriores (no repetir preguntas ya respondidas)
 **Bug real encontrado en el tajo de la katana:** el contenedor de la katana estaba en `(0,0)` (centro del cuerpo) con las piezas dibujadas en coordenadas absolutas `x=28` — al rotar, giraba alrededor del CENTRO DEL CUERPO, no de la mano, así que el tajo se veía como la espada volando en un arco ancho e irreal en vez de un giro de muñeca. **Arreglado: el contenedor ahora vive EN la mano `(28,-28)` y las piezas cuelgan de ahí en coordenadas locales** — el giro ahora pivota donde debe. **Lección general: cualquier pieza que tenga que rotar tiene que vivir en un contenedor centrado en su propio eje de giro, nunca en el origen del padre.**
 
 **Voz en alto añadida** (Web Speech API, `speechSynthesis`) para catchphrases, taunts de derrota, mensaje de Brenda, del tutor y de la victoria. **Aviso realista para Manuel: no hay manera de forzar acento andaluz específico** — solo se puede elegir la voz "es-ES" que ya traiga instalada su propio móvil/ordenador (si no tiene ninguna en español, sonará en la voz por defecto del sistema). Esto no es algo que se pueda arreglar con más código, es una limitación de qué voces trae el dispositivo.
