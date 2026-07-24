@@ -533,6 +533,7 @@ const config = {
   width: W, height: H,
   backgroundColor: '#0c0d0e',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  render: { preserveDrawingBuffer: true },
   physics: { default:'arcade', arcade:{ gravity:{y:1500}, debug:false } },
   scene: [Boot, Title, Chapter1],
 };
