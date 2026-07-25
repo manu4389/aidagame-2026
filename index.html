@@ -120,7 +120,7 @@
     <button id="attack-btn">TAJO</button>
     <button id="jump-btn">SALTAR</button>
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v17 — 24 jul, controles nunca se cortan de la pantalla</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v18 — 25 jul, nivel más largo · katana curva · tajo que se ve y se oye</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -164,7 +164,7 @@ function speakPhrase(text){
 /* ---------- SONIDO DE ESPADA (sintetizado, sin licencias de por medio) ---------- */
 function playSwoosh(scene){
   const ctx = scene.sound.context;
-  if(!ctx) return;
+  if(!ctx || isMuted) return;
   const dur = 0.22;
   const buffer = ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
   const data = buffer.getChannelData(0);
@@ -177,7 +177,7 @@ function playSwoosh(scene){
   filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime+dur);
   filter.Q.value = 1.1;
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.5, ctx.currentTime);
+  gain.gain.setValueAtTime(0.85, ctx.currentTime); // subido de 0.5 — Manuel: "que se oiga mejor la lucha"
   gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+dur);
   noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
   noise.start();
@@ -186,10 +186,38 @@ function playSwoosh(scene){
   clang.type = 'triangle'; clang.frequency.setValueAtTime(1800, ctx.currentTime+0.03);
   clang.frequency.exponentialRampToValueAtTime(300, ctx.currentTime+0.14);
   const clangGain = ctx.createGain();
-  clangGain.gain.setValueAtTime(0.35, ctx.currentTime+0.03);
+  clangGain.gain.setValueAtTime(0.6, ctx.currentTime+0.03); // subido de 0.35
   clangGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.16);
   clang.connect(clangGain); clangGain.connect(ctx.destination);
   clang.start(ctx.currentTime+0.03); clang.stop(ctx.currentTime+0.16);
+}
+
+/* ---------- GOLPE QUE ATERRIZA (impacto seco y grave, para que el tajo SUENE a que ha dado) ---------- */
+function playImpact(scene){
+  const ctx = scene.sound.context;
+  if(!ctx || isMuted) return;
+  const t0 = ctx.currentTime;
+  // golpe grave
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(190, t0);
+  osc.frequency.exponentialRampToValueAtTime(48, t0+0.20);
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(0.9, t0);
+  g1.gain.exponentialRampToValueAtTime(0.001, t0+0.24);
+  osc.connect(g1); g1.connect(ctx.destination);
+  osc.start(t0); osc.stop(t0+0.25);
+  // chasquido corto encima, para que se note el corte
+  const dur = 0.09;
+  const buf = ctx.createBuffer(1, ctx.sampleRate*dur, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length, 2);
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(0.55, t0);
+  g2.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  src.connect(g2); g2.connect(ctx.destination);
+  src.start(t0);
 }
 
 /* ---------- MÚSICA ---------- */
@@ -241,7 +269,8 @@ const INTRO_BEATS = [
   { big:'FUNDÓ INSTANTE', small:'con Brenda.\nSu lema: "No se brilla sin oscuridad."' },
   { big:'PERO HAY UN PROBLEMA', small:'la competencia quiere cerrar Instante.\nVan detrás de todo lo que ha montado con Brenda.' },
   { big:'ADEMÁS', small:'el tutor le pide un artículo más\npara terminar la tesis.\nEsto va a ser de todo, menos tranquilo.' },
-  { big:'ESCRITO Y DIRIGIDO POR', small:'QUENTIN TARANTINO', tarantino:true },
+  { big:'ESCRITO POR', small:'MANUEL MOLINA PRADOS', tarantino:true, smallSize:'24px' },
+  { big:'DIRIGIDO POR', small:'QUENTIN TARANTINO', tarantino:true },
 ];
 class Intro extends Phaser.Scene {
   constructor(){ super('Intro'); }
@@ -274,7 +303,7 @@ class Intro extends Phaser.Scene {
   showBeat(){
     const b = INTRO_BEATS[this.i];
     this.bigText.setText(b.big).setFontSize(b.tarantino ? '22px':'34px').setColor(b.tarantino ? '#ffffff':'#f2c749');
-    this.smallText.setText(b.small).setFontSize(b.tarantino ? '30px':'15px').setColor(b.tarantino ? '#f2c749':'#ffffff')
+    this.smallText.setText(b.small).setFontSize(b.smallSize || (b.tarantino ? '30px':'15px')).setColor(b.tarantino ? '#f2c749':'#ffffff')
       .setFontFamily(b.tarantino ? 'Impact, Arial Narrow, sans-serif':'Georgia, serif');
     this.bigText.setAlpha(0); this.smallText.setAlpha(0);
     this.tweens.add({targets:[this.bigText,this.smallText], alpha:1, duration:500});
@@ -331,7 +360,9 @@ class Title extends Phaser.Scene {
 }
 
 /* ---------- VOL. 1 — EL CONTRATO ---------- */
-const WORLD_W = 2600, GROUND_Y = 460;
+// Nivel ALARGADO (2600 → 3600) para que los encuentros respiren — Manuel: "demasiado saturado de enemigos".
+// ⚠️ Si se vuelve a tocar WORLD_W hay que mover A LA VEZ: segs, los 6 spawnEnemy, brenda, tutor, coinXs y goalZone.
+const WORLD_W = 3600, GROUND_Y = 460;
 const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️', chirulo_viejo:'🧔' };
 // frases suyas de verdad (BRIEF.md) + las nuevas que pidió Manuel — saltan al azar al coger un ⚡
 // servicios REALES de Instante (agenciainstante.com) — para que la burocracia derrotada los nombre, no un genérico "papeleo"
@@ -365,8 +396,9 @@ class Chapter1 extends Phaser.Scene {
     this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(CATCHPHRASES[0]); this.phraseIndex = 1; });
 
     this.platforms = this.physics.add.staticGroup();
+    // 7 tramos hasta 3600, con huecos de 100px (el salto llega a ~136px de alto y ~187px de largo: se pasan de sobra)
     const segs = [
-      {x:0,w:420}, {x:520,w:340}, {x:940,w:420}, {x:1440,w:340}, {x:1860,w:420}, {x:2360,w:240},
+      {x:0,w:520}, {x:620,w:460}, {x:1180,w:480}, {x:1760,w:460}, {x:2320,w:480}, {x:2900,w:340}, {x:3340,w:260},
     ];
     this.segs = segs;
     segs.forEach(s=>{
@@ -376,7 +408,7 @@ class Chapter1 extends Phaser.Scene {
       const edge = this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 8, 0xc9a86b);
     });
     // pequeña plataforma elevada con bonus
-    const ledge = this.add.rectangle(700, GROUND_Y-110, 140, 24, 0x8a7256);
+    const ledge = this.add.rectangle(780, GROUND_Y-110, 140, 24, 0x8a7256);
     this.physics.add.existing(ledge, true);
     this.platforms.add(ledge);
 
@@ -397,10 +429,38 @@ class Chapter1 extends Phaser.Scene {
     // KATANA en la mano derecha — puño + guarda (tsuba) + hoja colgando, para que SE LEA como espada de verdad
     // el contenedor va EN la mano (28,-28) y las piezas cuelgan de ahí en local — así al rotar
     // gira alrededor de la muñeca de verdad, no alrededor del centro del cuerpo (por eso "no era orgánico")
-    this.katanaHilt = this.add.rectangle(0,0,8,16,0x141617,1).setStrokeStyle(1,0x3a3a3a);
-    this.katanaGuard = this.add.rectangle(0,8,16,4,PALETTE.yellow,1).setStrokeStyle(1,0x141617);
-    this.katanaBlade = this.add.rectangle(0,44,7,68,0xe8eef2,1).setStrokeStyle(1,0x9aa7ad);
-    this.katana = this.add.container(28,-28,[this.katanaBlade,this.katanaGuard,this.katanaHilt]);
+    // KATANA DE VERDAD, no un palo: hoja CURVA (sori) que se afina, punta en diagonal (kissaki),
+    // línea de temple (hamon), guarda redonda (tsuba) y empuñadura trenzada (tsuka).
+    // Manuel: "no parece una katana" — un rectángulo con guarda no lo parecía, esto sí.
+    const BL = 80, BN = 14, SORI = 13; // largo, nº de tramos de la curva, cuánto se curva
+    const bladeEdge = [], bladeBack = [];
+    for(let i=0;i<=BN;i++){
+      const t = i/BN, y = 6 + BL*t;
+      const off = SORI*t*t;                 // la curva: nada al salir de la guarda, mucha en la punta
+      const hw = 4.2*(1 - 0.35*t*t);        // se va afinando
+      bladeEdge.push({x: off+hw, y});
+      bladeBack.push({x: off-hw, y});
+    }
+    const bladePoly = bladeEdge.concat([{x: SORI+2.5, y: 6+BL+9}], bladeBack.slice().reverse());
+    this.katanaBlade = this.add.graphics();
+    this.katanaBlade.fillStyle(0xe8eef2,1); this.katanaBlade.fillPoints(bladePoly, true);
+    this.katanaBlade.lineStyle(1.4,0x8f9ba1,1); this.katanaBlade.strokePoints(bladePoly, true);
+    this.katanaBlade.lineStyle(1.2,0xffffff,0.8); // hamon
+    this.katanaBlade.beginPath();
+    for(let i=0;i<=BN;i++){
+      const t = i/BN, y = 6 + BL*t;
+      const x = SORI*t*t + 4.2*(1-0.35*t*t) - 1.6 + Math.sin(t*9)*0.7;
+      if(i===0) this.katanaBlade.moveTo(x,y); else this.katanaBlade.lineTo(x,y);
+    }
+    this.katanaBlade.strokePath();
+    this.katanaHilt = this.add.graphics();
+    this.katanaHilt.fillStyle(0x141617,1); this.katanaHilt.fillRoundedRect(-4.5,-19,9,22,3);
+    this.katanaHilt.lineStyle(1,0xb99a44,0.9); // trenzado del puño
+    for(let i=0;i<4;i++){ this.katanaHilt.beginPath(); this.katanaHilt.moveTo(-4.5,-16+i*5); this.katanaHilt.lineTo(4.5,-13+i*5); this.katanaHilt.strokePath(); }
+    this.katanaHilt.fillStyle(0xb99a44,1); this.katanaHilt.fillRect(-5.5,-20.5,11,3); // kashira (pomo)
+    this.katanaHilt.fillStyle(PALETTE.yellow,1); this.katanaHilt.fillEllipse(0,4,20,7); // tsuba
+    this.katanaHilt.lineStyle(1.2,0x141617,1); this.katanaHilt.strokeEllipse(0,4,20,7);
+    this.katana = this.add.container(28,-28,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(8));
     // CIGARRILLO en la mano izquierda — NO en la cara (tapaba la cara)
     this.cigBody = this.add.rectangle(-25,-28,16,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
@@ -413,19 +473,20 @@ class Chapter1 extends Phaser.Scene {
 
     // enemigos: burocracia (papeleo) y machirulos (jefazos con aires) — se cargan con la katana, no se esquivan
     this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
-    this.spawnEnemy(760, GROUND_Y-40, 'burocracia', 620, 920);
-    this.spawnEnemy(1050, GROUND_Y-40, 'chirulo_viejo', 980, 1120, 'enemyViejo');
-    this.spawnEnemy(1560, GROUND_Y-40, 'machirulo', 1460, 1600, 'enemyMachirulo1');
-    this.spawnEnemy(1700, GROUND_Y-40, 'burocracia', 1650, 1770);
-    this.spawnEnemy(2050, GROUND_Y-40, 'machirulo', 1900, 2130, 'enemyMachirulo2');
-    this.spawnEnemy(2220, GROUND_Y-40, 'chirulo_viejo', 2170, 2270, 'enemyViejo');
+    // los mismos 6, pero repartidos por un mundo 1000px más largo: uno por tramo, sin amontonarse
+    this.spawnEnemy(900, GROUND_Y-40, 'burocracia', 760, 1040);
+    this.spawnEnemy(1470, GROUND_Y-40, 'chirulo_viejo', 1340, 1600, 'enemyViejo');
+    this.spawnEnemy(2000, GROUND_Y-40, 'machirulo', 1820, 2160, 'enemyMachirulo1');
+    this.spawnEnemy(2450, GROUND_Y-40, 'burocracia', 2380, 2560);
+    this.spawnEnemy(2700, GROUND_Y-40, 'machirulo', 2600, 2760, 'enemyMachirulo2');
+    this.spawnEnemy(3060, GROUND_Y-40, 'chirulo_viejo', 2960, 3180, 'enemyViejo');
 
     this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
 
     // Brenda — su mejor amiga y socia. Se une como aliada QUE TAMBIÉN PELEA, no solo anima
     // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
-    this.brenda = this.add.text(1150, GROUND_Y-46, '💁‍♀️', {fontSize:'58px'}).setOrigin(0.5);
-    this.brendaLabel = this.add.text(1150, GROUND_Y-96, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    this.brenda = this.add.text(1250, GROUND_Y-46, '💁‍♀️', {fontSize:'58px'}).setOrigin(0.5);
+    this.brendaLabel = this.add.text(1250, GROUND_Y-96, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.brenda);
     this.brenda.body.setAllowGravity(false);
     this.brendaAttackCooldown = false;
@@ -433,8 +494,8 @@ class Chapter1 extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.brenda, ()=>this.meetBrenda(), null, this);
 
     // el tutor de la tesis — la aventura no es solo Instante, también tiene que sacar la tesis adelante
-    this.tutor = this.add.text(2160, GROUND_Y-46, '📚', {fontSize:'46px'}).setOrigin(0.5);
-    this.add.text(2160, GROUND_Y-84, 'TUTOR', {fontFamily:'Impact', fontSize:'12px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    this.tutor = this.add.text(2600, GROUND_Y-46, '📚', {fontSize:'46px'}).setOrigin(0.5);
+    this.add.text(2600, GROUND_Y-84, 'TUTOR', {fontFamily:'Impact', fontSize:'12px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.tutor);
     this.tutor.body.setAllowGravity(false);
     this.tutorUsed = false;
@@ -442,10 +503,11 @@ class Chapter1 extends Phaser.Scene {
 
     // coleccionables
     this.collectibles = this.physics.add.group({ allowGravity:false });
-    const coinXs = [180,240,300, 700, 980,1040,1100,1160, 1480,1540,1600, 1900,1960,2020,2080, 2420,2460];
+    const coinXs = [200,260,320, 780, 900,960,1020, 1250,1310,1370,1500,1560, 1850,1910,1970,
+                    2350,2410,2470, 2650,2710, 2950,3010,3070,3200, 3400,3450];
     coinXs.forEach((x,i)=>{
       const icon = (i%6===5) ? '⚡' : '🦄';
-      const y = (x===700)? GROUND_Y-150 : GROUND_Y-60;
+      const y = (x===780)? GROUND_Y-150 : GROUND_Y-60; // el de la repisa alta
       this.spawnCollectible(x,y,icon);
     });
 
@@ -573,6 +635,17 @@ class Chapter1 extends Phaser.Scene {
     this.attackCooldown = true;
     this.attacking = true;
     playSwoosh(this);
+    // ESTELA DEL TAJO — un arco blanco que barre delante de ella: el golpe se VE, no solo se intuye
+    const dir = this.player.flipX ? -1 : 1;
+    const fx = this.add.graphics();
+    fx.lineStyle(8, 0xffffff, 0.95);
+    fx.beginPath(); fx.arc(0,0,62, Phaser.Math.DegToRad(-62), Phaser.Math.DegToRad(62), false); fx.strokePath();
+    fx.lineStyle(3, PALETTE.turquoise, 0.9);
+    fx.beginPath(); fx.arc(0,0,50, Phaser.Math.DegToRad(-52), Phaser.Math.DegToRad(52), false); fx.strokePath();
+    fx.setPosition(this.player.x + dir*16, this.player.y - 30);
+    fx.setScale(dir*0.55, 0.55);
+    this.tweens.add({targets:fx, scaleX:dir*1.2, scaleY:1.2, alpha:0, duration:250, ease:'Cubic.easeOut', onComplete:()=>fx.destroy()});
+    this.cameras.main.shake(60, 0.003); // el tajo se nota en la cámara
     // el flip de lado ya lo hace el scaleX del contenedor en update(); el ángulo del tajo es siempre el mismo
     this.katana.setRotation(Phaser.Math.DegToRad(18));
     this.tweens.add({
@@ -590,6 +663,7 @@ class Chapter1 extends Phaser.Scene {
       : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!'
       : `¡${Phaser.Utils.Array.GetRandom(INSTANTE_SERVICES)} ENTREGADO A TIEMPO!`;
     speakPhrase(label);
+    playImpact(this); // el golpe que aterriza suena grave y seco, no solo el silbido del aire
     en.shadow.destroy(); en.label.destroy();
     en.destroy();
     this.score += 2;
@@ -604,7 +678,21 @@ class Chapter1 extends Phaser.Scene {
     }
     const t = this.add.text(x, y-30, label, {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:3,bottom:3}}).setOrigin(0.5);
     this.tweens.add({targets:t, y:t.y-24, alpha:0, duration:600, onComplete:()=>t.destroy()});
-    this.cameras.main.shake(90, 0.005);
+    // destello blanco de impacto + estrella de corte, para que el golpe se lea de lejos
+    const flash = this.add.circle(x, y, 34, 0xffffff, 0.9);
+    this.tweens.add({targets:flash, scale:2.1, alpha:0, duration:220, onComplete:()=>flash.destroy()});
+    const star = this.add.graphics();
+    star.lineStyle(4, PALETTE.yellow, 1);
+    for(let a=0;a<4;a++){
+      const ang = Phaser.Math.DegToRad(a*45+15);
+      star.beginPath();
+      star.moveTo(Math.cos(ang)*-26, Math.sin(ang)*-26);
+      star.lineTo(Math.cos(ang)*26, Math.sin(ang)*26);
+      star.strokePath();
+    }
+    star.setPosition(x,y);
+    this.tweens.add({targets:star, scale:1.9, alpha:0, duration:300, onComplete:()=>star.destroy()});
+    this.cameras.main.shake(150, 0.011); // el impacto sacude de verdad (antes 90/0.005, apenas se notaba)
   }
 
   hitEnemy(en){

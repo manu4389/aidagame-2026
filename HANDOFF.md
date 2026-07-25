@@ -1,8 +1,16 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (24 jul, duodécima vuelta — sesión cortada por Manuel, "guarda y cierra")
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimotercera vuelta — build v18)
 
-**Última nota suya antes de cerrar (apuntar, NO se ejecutó todavía):** el cartón final de la Intro (el que ahora pone "ESCRITO Y DIRIGIDO POR / QUENTIN TARANTINO") tiene que separarse en dos líneas: **"ESCRITO POR MANUEL MOLINA PRADOS"** y **"DIRIGIDO POR QUENTIN TARANTINO"** — es él (el hermano) quien firma como escritor del regalo, y Tarantino se queda solo como director (el guiño a la bio de Instagram de Aida). Cambio pequeño en el array `INTRO_BEATS`, el último elemento (`tarantino:true`).
+**LO ÚNICO QUE BLOQUEA AHORA MISMO: las fotos de Brenda y Aida.** Manuel pegó 5 imágenes en el chat el 24 jul (ninguna llegó como archivo) y **hay una contradicción sin resolver sobre cuál de las dos mujeres es Brenda** — ver el bloque de abajo. **NO tocar nada de Brenda sin preguntárselo primero.** Vía buena: que las suba a Google Fotos/Drive y pase el link, o que se las mande por email a sí mismo y las guarde en el Escritorio.
+
+**Hecho el 25 jul (build v18), sin que Manuel lo haya visto todavía:**
+1. **Créditos de la Intro separados en dos cartelas** (lo último que pidió): "ESCRITO POR / MANUEL MOLINA PRADOS" y "DIRIGIDO POR / QUENTIN TARANTINO". El nombre va a 24px (`smallSize` nuevo en `INTRO_BEATS`) para que no se parta de línea.
+2. **Nivel alargado 2600 → 3600** con las cinco cosas movidas a la vez, como avisaba el handoff: `segs` (ahora 7 tramos, huecos de 100px), los 6 `spawnEnemy`, Brenda (1150→1250), el tutor (2160→2600), `coinXs` (26 monedas) y la meta (`WORLD_W-170` = 3430). **Verificado con matemáticas**: los 6 huecos son de 100px y el salto llega a ~136px de alto y ~187px de largo; ninguna moneda, enemigo, aliada ni la meta queda flotando sobre un pozo.
+3. **Katana de verdad**: ya no es un rectángulo con guarda. Hoja curva (sori) dibujada con `Graphics` punto a punto, que se afina hacia la punta, con punta en diagonal (kissaki), línea de temple (hamon), tsuba ovalada dorada y empuñadura trenzada. Sigue viviendo en el contenedor de la mano `(28,-28)`, así que el pivote del tajo no cambia.
+4. **La lucha se ve y se oye**: estela de arco blanco+turquesa que barre delante de ella en cada tajo, sacudida de cámara al atacar (60/0.003) y al matar (150/0.011, antes 90/0.005), destello blanco + estrella de corte sobre el enemigo, silbido de espada subido (0.5→0.85, clang 0.35→0.6) y **`playImpact()` nuevo** — golpe grave + chasquido, para que el tajo suene a que ha dado. Los sfx ahora también respetan el botón de silenciar.
+
+**Pendiente que Manuel pidió y sigue sin hacerse:** usar la imagen real del ojo de Instante en el fondo del nivel (ahora el parallax es solo el texto "INSTANTE" repetido), y la estética "collage" de la imagen 5 (foto B/N + círculos y barras de color plano) como estilo visual central.
 
 **Posible causa raíz de VARIOS "sigue sin aparecer/no hay botón" de sesiones anteriores, arreglada esta vez (build v17):** `#game-holder` tenía `aspect-ratio:9/13` calculado solo por ANCHO, sin mirar la altura real de pantalla. En un móvil con poca altura visible (barra del navegador, etc.), esto podía empujar la fila de controles (el botón TAJO, SALTAR) **fuera de la pantalla, invisible, sin poder hacer scroll** (`body` tiene `overflow:hidden`). Arreglado: `#wrap` ahora mide `100dvh` de alto y `#game-holder` es `flex:1` (se queda con lo que sobra) — los controles YA NO PUEDEN quedar cortados, pase lo que pase con la altura de la pantalla. **Si esto era la causa real, debería resolver de una vez lo del "botón de la espada que no existe" de las últimas 3-4 rondas.**
 
@@ -16,11 +24,11 @@
 **⚠️ OJO — NO asumir a ciegas cuál foto es Brenda y cuál es Aida.** Las fotos previas confirmadas de Aida (`aida_flamenca.jpg`, `aida_portada.jpg`, la de Instagram) la muestran SIEMPRE con pelo oscuro — lo cual coincidiría con la foto #1, NO con el orden literal en que Manuel las nombró ("Brenda y Aida" = 1,2). Esto es una contradicción real sin resolver. **Preguntar a Manuel explícitamente cuál es cuál antes de tocar nada de Brenda** — confundir a dos personas reales en un regalo personal es un error que hay que evitar, no adivinar.
 **Vía para conseguir los archivos de verdad:** pedirle que las suba a Google Fotos/Drive y pase el link, o que se las mande por email a sí mismo y las guarde en el Escritorio — pegar en el chat no funciona para esto.
 
-**Pedido de esta ronda, con trabajo iniciado pero NO completado (para no dejar el juego roto, se revirtió el cambio a medias):**
-- **Nivel demasiado saturado de enemigos** — pidió alargar el nivel (`WORLD_W`, ahora mismo 2600) y separar más los encuentros. Si se toca `WORLD_W`, hay que extender A LA VEZ `segs` (las plataformas), reposicionar los 6 `spawnEnemy(...)`, mover el `tutor` (x=2160) y el `goalZone` (`WORLD_W-170`), y añadir más `coinXs` — si no, el mundo se queda con un hueco sin suelo y la meta flotando en el vacío. **NO cambiar `WORLD_W` sin hacer las cuatro cosas a la vez.**
-- **La katana "no parece una katana"** — sigue siendo un rectángulo con guarda; pidió una forma más curva/reconocible.
-- **Que se vea/oiga mejor la lucha** — más presencia del sonido del tajo, feedback visual del golpe.
-- **"Instante" en el fondo de la pantalla de juego** — ya hay texto "INSTANTE" repetido de fondo (parallax); posible mejora: usar la imagen real del ojo también ahí, no solo texto.
+**Pedido de la ronda 12, ✅ YA RESUELTO EN LA 13 (build v18) salvo lo del ojo de Instante:**
+- ~~Nivel demasiado saturado de enemigos~~ → hecho (2600→3600, las 5 cosas movidas a la vez). **La regla sigue en pie para el futuro: NO cambiar `WORLD_W` sin mover a la vez `segs`, los `spawnEnemy`, Brenda, el tutor, `coinXs` y `goalZone`.**
+- ~~La katana "no parece una katana"~~ → hecho, hoja curva con `Graphics`.
+- ~~Que se vea/oiga mejor la lucha~~ → hecho (estela, shake, destello, `playImpact()`).
+- **"Instante" en el fondo de la pantalla de juego** — SIGUE PENDIENTE: hay texto "INSTANTE" repetido en parallax, falta usar la imagen real del ojo (`fotos/instante_logo.png`) también ahí.
 
 ## Cosas ya resueltas de rondas anteriores (no repetir preguntas ya respondidas)
 **Bug real encontrado en el tajo de la katana:** el contenedor de la katana estaba en `(0,0)` (centro del cuerpo) con las piezas dibujadas en coordenadas absolutas `x=28` — al rotar, giraba alrededor del CENTRO DEL CUERPO, no de la mano, así que el tajo se veía como la espada volando en un arco ancho e irreal en vez de un giro de muñeca. **Arreglado: el contenedor ahora vive EN la mano `(28,-28)` y las piezas cuelgan de ahí en coordenadas locales** — el giro ahora pivota donde debe. **Lección general: cualquier pieza que tenga que rotar tiene que vivir en un contenedor centrado en su propio eje de giro, nunca en el origen del padre.**
