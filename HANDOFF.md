@@ -1,6 +1,15 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoquinta vuelta — build v21)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimosexta vuelta — build v22)
+
+**🐛 BUG DE FONDO GORDO, ENCONTRADO Y ARREGLADO — apuntar la regla, que se repetirá:** un objeto con `scrollFactor` s **solo llega a verse si su x del mundo cae dentro de `[0, s*(WORLD_W-W) + W]`**. Todo el decorado estaba repartido a lo largo de los 3600px del mundo sin tener eso en cuenta, así que **buena parte NO SE VEÍA NUNCA**: de los 3 soles solo aparecía 1, se perdían 4 torres de la Alhambra, 3 edificios del skyline y casi todos los rótulos de marca. Ahora hay un helper `reparte(n, sf)` en `drawBackground()` que coloca cada capa dentro de su alcance real, y una comprobación numérica que confirma que las 10 capas se ven enteras. **Siempre que se añada algo al fondo con scrollFactor, usar `reparte()` — no poner x a mano.**
+
+**Ronda 16 (build v22):**
+- **"Brenda es mucho más grande que Aida, equilibra"** → medido, no a ojo: la foto de Aida es de cuerpo entero y la de Brenda de medio muslo arriba, así que a igual altura su cabeza salía **1,20×**. Comparando el **ancho de cabeza** de cada foto (lo fiable, no depende del encuadre): **Aida sube a 160px** (pidió "un poquito más grande") y **Brenda baja a 150px** → las dos cabezas miden ya 26,6px. Katana y cigarrillo recolocados al nuevo tamaño (mismo punto de la foto, reescalado ×1,067). **Si se vuelve a tocar el tamaño de cualquiera de las dos, rehacer esta cuenta — no ajustar a ojo.**
+- **"Los colores de Instante por toda la plataforma, por todo el escenario"** → el suelo deja de ser marrón: cuerpo morado de marca, filo de un color distinto por tramo, franjas de collage en la cara frontal y **el ojo grabado en el propio suelo cada 170px**. Añadida una segunda capa de collage más cercana (sf 0.6) para que el color llegue también a primer plano.
+- **"El ojo al fondo, y que el fondo cuente que alguien quiere apoderarse de Instante"** → el fondo narra ya el conflicto a dos voces: **el ojo de la competencia, en rojo, vigilando** con sus rótulos (LA COMPETENCIA VIGILA · QUIEREN QUEDARSE CON INSTANTE · OFERTA PARA COMPRAROS) frente al turquesa de ellas y sus carteles (INSTANTE NO SE VENDE · LO HAN LEVANTADO ELLAS · AUTÓNOMAS Y A MUCHA HONRA · HECHO CON CARIÑO). Palabras suyas del dictado, no inventadas.
+
+## Ronda 15 (build v21)
 
 **🕐 CAUSA (al menos parcial) DEL DESFASE, MEDIDA HOY: GitHub Pages tarda entre 30 y 60 s en servir el commit nuevo.** Comprobado con `curl` al desplegar la v21: al primer intento seguía sirviendo la v20; 15 s después ya era la v21. Es decir, **si se le dice a Manuel "ya está subido" y él refresca al instante, se traga la versión anterior**. Protocolo: **antes de avisarle, comprobar con `curl -s <url>/index.html | grep 'build v'` que el número ya es el nuevo** (y de paso que los ficheros nuevos dan HTTP 200, no 404).
 
