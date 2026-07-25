@@ -1,6 +1,58 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 25 — build v34)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, cierre del día — build v41)
+
+**📍 LA CARPETA:** `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA` (se movió a mitad de sesión; ya NO está en el Escritorio suelto).
+**🔗 URL:** https://manu4389.github.io/aidagame-2026/
+
+---
+
+### 🔴 LAS TRES COSAS QUE HAY QUE SABER ANTES DE TOCAR NADA
+
+**1. GITHUB PAGES CACHEA LA PÁGINA 10 MINUTOS. Esta fue la causa REAL de media semana de «no lo veo».**
+Comprobado con `curl -I`: manda `Cache-Control: max-age=600`. El navegador se queda la copia y **ni pregunta al servidor**. El despliegue estaba bien y él seguía viendo builds viejos.
+- **Para que lo vea al instante: pasarle siempre el enlace con `?v=NN`** (`.../aidagame-2026/?v=41`). Al cambiar la dirección, el navegador no puede servir la copia vieja.
+- El `sw.js` ya pide la página con `cache:'no-store'` para saltarse esa caché.
+- **Y comprobar SIEMPRE con `curl` el número de build antes de decirle que está subido.** GitHub tarda entre 1 y 6 minutos, y algún build sale como `errored` aunque publique bien.
+
+**2. SÍ SE PUEDE EJECUTAR EL JUEGO AQUÍ.** Los fotogramas no corren solos, pero **`game.step(t,16)` empuja el bucle a mano** y ejecuta el `create()` de verdad. Está en **`_PRUEBA_ARRANQUE.md`** con la salida esperada. **Pasarlo SIEMPRE antes de subir un cambio que toque los capítulos.** Nació de un cuelgue real: al reorganizar la cárcel se borró sin querer **todo el bloque del ángel** (5 métodos) y el Vol. 5 reventaba al pulsar EMPEZAR; desde fuera parecía «el menú no me deja entrar».
+- **Lección de método:** empalmar código por anclas de texto (`s[:ini] + nuevo + s[fin:]`) es peligroso — hay que mirar QUÉ VIVE dentro del tramo que se sustituye. Ahí se perdió el ACTO II entero.
+
+**3. LAS PELEAS SE COMPRUEBAN CON NÚMEROS, NO A OJO.** La del dragón era **matemáticamente imposible**: arena de 520 px, caja de golpes que se comía 180 px hacia la izquierda y llegaba hasta dentro del pozo anterior, y el diálogo saltaba cuando ya estabas DENTRO de esa caja → **sitio libre: −60 px**. Antes de dar una pelea por buena, calcular: `ancho de arena`, `alcance de la caja`, `dónde arranca el bicho` y `franja donde no te alcanza`.
+
+---
+
+### 🎮 ESTADO: EL JUEGO ESTÁ ENTERO (build v41)
+
+Cinco capítulos + intro + selector + interludios + final. **Los cinco abiertos desde el principio** (nada de candados: Aida no juega a videojuegos).
+
+**Vol. 5 «Instante HQ» — 6.500 px, el culmen, en cuatro actos separados ~1.200 px:**
+
+| x | acto |
+|---|---|
+| 260 | entrada + narrativa (campo `intro`) · **Brenda desde el principio** |
+| 1710 | **ACTO I — EL DRAGÓN** (arena 1020 px, 4 tajos) |
+| 3170 | **ACTO II — LA MADRE** baja del cielo, silencio + música `angel`, espada de fuego |
+| 4570 | **ACTO III — EL CLIENTE FINAL** (arena 1300 px, 14 tajos, el más duro) |
+| 5360 | **ACTO IV — LA CÁRCEL**: «¡SOIS LIBRES!» → «¡GRACIAS, AIDA, ERES LA MEJOR!» → «¡Y VIVA YO, Y MI COÑO MORENO!» |
+| 5900 | meta → currículum de Instante → cumpleaños |
+
+**Piezas reutilizables:** `escenaDialogo(BEATS, alAcabar)` · `cartelaActo(num,titulo,sub,alAcabar)` · campo `intro:[...]` · `INTERLUDIOS` · música procedural por estilo (`flamenco`, `neon`, `carrera`, `oficina`, `angel`, `jefe`).
+
+**Reglas que NO se tocan:** el silencio antes de la música del ángel (es lo que hace que se note el cambio) · las frases del diálogo son de Manuel palabra por palabra · no volver a duplicar `class Capitulo`.
+
+---
+
+### 🟡 PENDIENTE
+
+1. **El año de fundación de Instante** — para la primera cartela del currículum final. **No se inventa**; en cuanto lo diga, va.
+2. **Que Manuel lo juegue entero.** Es lo único que queda de verdad. Todo está verificado por geometría, por ejecución y por consola, pero el veredicto es suyo.
+3. **Tono:** hay cuatro tacos fuertes en pantalla y su madre es personaje. Él los dictó palabra por palabra y está avisado; queda como decisión suya, no como descuido.
+4. Fotos que mejorarían el resultado si aparecen: **Conchita** (ahora gimnasta dibujada) y **Brenda de cuerpo entero** (quitaría la muleta del mostrador).
+
+**Fecha límite: 19 de agosto de 2026.**
+
+## Rondas anteriores del 25 jul (builds v28-v34)
 
 **🎬 EL VOL. 5 ES AHORA UNA PELÍCULA EN CUATRO ACTOS.** Manuel lo llama «el culmen final» y es la parte del juego que más le importa. Estructura, con su separación medida:
 
