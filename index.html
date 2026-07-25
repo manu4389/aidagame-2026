@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v22 — 25 jul, tamaños igualados · Instante por TODO el escenario · la competencia vigila en el fondo</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v23 — 25 jul, Brenda a escala de verdad · Instante bajado de tono · plataformas otra vez legibles</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -438,21 +438,17 @@ class Chapter1 extends Phaser.Scene {
       const p = this.add.rectangle(s.x + s.w/2, GROUND_Y+30, s.w, 60, 0x2e1b33);
       this.physics.add.existing(p, true);
       this.platforms.add(p);
-      this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 9, BRAND[si%4]);           // filo de color
+      // MENOS ES MÁS (Manuel, 25 jul: "está demasiado recargado, ya no se aprecian ni las plataformas").
+      // Se queda SOLO el filo de color, que es lo que hace legible dónde se pisa; fuera las franjas
+      // de collage de la cara frontal y el ojo grabado cada 170px, que era lo que la emborronaba.
+      this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 9, BRAND[si%4]);           // filo de color: la marca SIN estorbar
       this.add.rectangle(s.x + s.w/2, GROUND_Y+7, s.w, 3, 0xffffff, 0.35);      // brillo bajo el filo
-      // franjas de collage en la cara frontal del suelo, alternando los 4 colores
-      for(let k=0; k*46 < s.w-18; k++){
-        this.add.rectangle(s.x+14+k*46, GROUND_Y+22, 26, 7, BRAND[(si+k+1)%4], 0.75).setOrigin(0,0.5);
-      }
-      // el ojo de la marca, grabado en el suelo cada 170px
-      for(let k=0; k*170 < s.w-90; k++){
-        this.add.image(s.x+70+k*170, GROUND_Y+42, 'instanteLogo').setDisplaySize(56,36).setAlpha(0.28);
-      }
+      // un solo ojo por tramo, tenue y centrado: se nota que es de Instante sin comerse el suelo
+      this.add.image(s.x + s.w/2, GROUND_Y+40, 'instanteLogo').setDisplaySize(52,33).setAlpha(0.12);
     });
-    // pequeña plataforma elevada con bonus — con el mismo lenguaje de marca
+    // pequeña plataforma elevada con bonus — mismo criterio: filo de color y nada más
     const ledge = this.add.rectangle(780, GROUND_Y-110, 140, 24, 0x2e1b33);
     this.add.rectangle(780, GROUND_Y-121, 140, 6, PALETTE.pink);
-    this.add.image(780, GROUND_Y-105, 'instanteLogo').setDisplaySize(46,29).setAlpha(0.32);
     this.physics.add.existing(ledge, true);
     this.platforms.add(ledge);
 
@@ -464,13 +460,16 @@ class Chapter1 extends Phaser.Scene {
     this.player.setDragX(1200);
 
     // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
-    // TAMAÑO: medido, no a ojo. La foto de Aida es de cuerpo entero y la de Brenda va de medio muslo
-    // para arriba, así que a igual altura en pantalla la cabeza de Brenda salía 1,20× la de Aida.
-    // Midiendo el ANCHO DE CABEZA de cada foto (fiable, no depende del encuadre): con Aida a 160px
-    // de alto, Brenda tiene que medir 150px para que las dos cabezas midan lo mismo (26,6px).
-    this.heroImage = this.add.image(0,-38,'aidaHeroReal').setDisplaySize(89,160); // subida de 150 a 160, "un poquito más grande"
+    // TAMAÑO — 2.º intento, y esta vez COMPROBADO A OJO, no solo con números.
+    // La primera medición (ancho de cabeza) engañaba: el peinado y la flor de la foto de flamenca
+    // hinchaban el "ancho de cabeza" de Aida, así que salía que estaban igualadas cuando Brenda
+    // seguía siendo un gigante. Se montaron las dos figuras a tamaño real de juego en un PNG y se
+    // MIRARON. Resultado: con Aida a 168, Brenda tiene que ir a 96 para que las caras coincidan.
+    // Sale bajita porque su foto está cortada a medio muslo — para que salga alta y a la vez
+    // proporcionada haría falta una foto suya de cuerpo entero.
+    this.heroImage = this.add.image(0,-42,'aidaHeroReal').setDisplaySize(93,168); // 150 → 160 → 168
     // el logo REAL de Instante — más grande, en el pecho, para que se lea de verdad
-    this.logoBadge = this.add.image(8,-33,'instanteLogo').setDisplaySize(32,20);
+    this.logoBadge = this.add.image(8,-36,'instanteLogo').setDisplaySize(34,21);
     // Medido a ojo sobre `fotos/aida_hero_real.png` directamente (no por proporción de otra foto):
     // sus manos quedan a la altura de las bocamangas del mantón, ~y=-28 en este contenedor,
     // mano derecha (de ella) hacia x=+28, mano izquierda hacia x=-25.
@@ -508,13 +507,13 @@ class Chapter1 extends Phaser.Scene {
     this.katanaHilt.fillStyle(0xb99a44,1); this.katanaHilt.fillRect(-5.5,-20.5,11,3); // kashira (pomo)
     this.katanaHilt.fillStyle(PALETTE.yellow,1); this.katanaHilt.fillEllipse(0,4,20,7); // tsuba
     this.katanaHilt.lineStyle(1.2,0x141617,1); this.katanaHilt.strokeEllipse(0,4,20,7);
-    // manos recolocadas al subir la foto de 150 a 160px (mismo punto de la foto, reescalado ×1,067)
-    this.katana = this.add.container(30,-33,[this.katanaBlade,this.katanaHilt]);
+    // manos recolocadas al subir la foto a 168px (mismo punto de la foto, reescalado ×1,12 sobre el original de 150)
+    this.katana = this.add.container(31,-36,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(8));
     // CIGARRILLO en la mano izquierda — NO en la cara (tapaba la cara)
-    this.cigBody = this.add.rectangle(-27,-33,17,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
-    this.cigEmber = this.add.circle(-19,-35,2.5,PALETTE.red,1);
-    this.cigSmoke = this.add.ellipse(-18,-45,8,12,0xcccccc,0.35);
+    this.cigBody = this.add.rectangle(-28,-36,18,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
+    this.cigEmber = this.add.circle(-20,-39,2.6,PALETTE.red,1);
+    this.cigSmoke = this.add.ellipse(-19,-50,8,12,0xcccccc,0.35);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
 
@@ -536,10 +535,10 @@ class Chapter1 extends Phaser.Scene {
     // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
     // ✅ 25 jul: ya NO es un emoji — es Brenda de verdad (Manuel confirmó que es la del pelo oscuro
     // liso y el vestido gris; la otra foto de esa pareja es Aida). Recorte con rembg/u2net_human_seg.
-    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 70, 16, 0x000000, 0.35);
-    // 150px, no 169: es la altura a la que su cabeza mide exactamente lo mismo que la de Aida (ver arriba)
-    this.brenda = this.add.image(1250, GROUND_Y-75, 'brendaHeroReal').setDisplaySize(82,150);
-    this.brendaLabel = this.add.text(1250, GROUND_Y-162, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 50, 13, 0x000000, 0.35);
+    // 96px: comprobado A OJO en un montaje a tamaño real, no con la medición que engañaba (ver arriba)
+    this.brenda = this.add.image(1250, GROUND_Y-48, 'brendaHeroReal').setDisplaySize(52,96);
+    this.brendaLabel = this.add.text(1250, GROUND_Y-108, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.brenda);
     this.brenda.body.setAllowGravity(false);
     this.brendaAttackCooldown = false;
@@ -587,7 +586,7 @@ class Chapter1 extends Phaser.Scene {
     // HUD (fijo en pantalla)
     // franja de los colores de Instante, fija en pantalla — la marca también en primer plano
     [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow].forEach((c,i)=>{
-      this.add.rectangle(W/2, H-10+i*4, W, 4, c, 0.95).setScrollFactor(0).setDepth(60);
+      this.add.rectangle(W/2, H-8+i*3, W, 3, c, 0.8).setScrollFactor(0).setDepth(60);
     });
     this.hud = this.add.text(10,10, '', {fontFamily:'Arial', fontSize:'16px', color:'#141617', backgroundColor:'#ffffffaa', padding:{left:8,right:8,top:4,bottom:4}})
       .setScrollFactor(0);
@@ -634,24 +633,24 @@ class Chapter1 extends Phaser.Scene {
 
     // el OJO DE LA MARCA, en mosaico, cubriendo TODA la pantalla de punta a punta
     this.add.tileSprite(0, 0, WORLD_W, H, 'ojosInstante')
-      .setOrigin(0,0).setScrollFactor(0.25).setAlpha(0.17).setTileScale(1.7);
+      .setOrigin(0,0).setScrollFactor(0.25).setAlpha(0.09).setTileScale(1.7); // bajado de 0.17: recargaba
     // EL OJO DE LA MARCA, ENORME, presidiendo el fondo — el de ellas, en turquesa
-    reparte(5, 0.18).forEach(x=>{
-      this.add.image(x, 150, 'instanteLogo').setDisplaySize(330,210).setAlpha(0.20).setScrollFactor(0.18);
+    reparte(3, 0.18).forEach(x=>{
+      this.add.image(x, 150, 'instanteLogo').setDisplaySize(330,210).setAlpha(0.12).setScrollFactor(0.18);
     });
     // COLLAGE DE MARCA: círculos y barras planas en los 4 colores, por todo el escenario
     const brand = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple];
-    reparte(18, 0.22).forEach((x,i)=>{
+    reparte(10, 0.22).forEach((x,i)=>{
       const c = brand[i%4];
-      if(i%3===0)      this.add.circle(x, 80+(i%4)*48, 46+(i%3)*26, c, 0.22).setScrollFactor(0.22);
-      else if(i%3===1) this.add.rectangle(x, 110+(i%5)*42, 210, 18, c, 0.24).setScrollFactor(0.22);
-      else             this.add.rectangle(x, 70+(i%4)*54, 18, 140, c, 0.20).setScrollFactor(0.22);
+      if(i%3===0)      this.add.circle(x, 80+(i%4)*48, 46+(i%3)*26, c, 0.12).setScrollFactor(0.22);
+      else if(i%3===1) this.add.rectangle(x, 110+(i%5)*42, 210, 18, c, 0.13).setScrollFactor(0.22);
+      else             this.add.rectangle(x, 70+(i%4)*54, 18, 140, c, 0.11).setScrollFactor(0.22);
     });
     // ...y otra capa de collage más cerca, para que el color llegue hasta delante y no solo al fondo
-    reparte(14, 0.6).forEach((x,i)=>{
+    reparte(6, 0.6).forEach((x,i)=>{
       const c = brand[(i+2)%4];
-      if(i%2===0) this.add.circle(x, 300+(i%3)*40, 30+(i%4)*14, c, 0.15).setScrollFactor(0.6);
-      else        this.add.rectangle(x, 320+(i%4)*36, 130, 12, c, 0.17).setScrollFactor(0.6);
+      if(i%2===0) this.add.circle(x, 300+(i%3)*40, 30+(i%4)*14, c, 0.07).setScrollFactor(0.6);
+      else        this.add.rectangle(x, 320+(i%4)*36, 130, 12, c, 0.08).setScrollFactor(0.6);
     });
 
     // ══ LA NARRATIVA, EN EL PROPIO FONDO ══
@@ -661,28 +660,28 @@ class Chapter1 extends Phaser.Scene {
     // el turquesa de ellas y los carteles de lo que han levantado.
     reparte(3, 0.2).forEach(x=>{
       this.add.image(x, 118, 'instanteLogo')
-        .setDisplaySize(360,230).setAlpha(0.30).setScrollFactor(0.2).setTint(0xd83335); // el ojo del que las vigila
+        .setDisplaySize(360,230).setAlpha(0.18).setScrollFactor(0.2).setTint(0xd83335); // el ojo del que las vigila
     });
     const AMENAZA = ['LA COMPETENCIA VIGILA', 'QUIEREN QUEDARSE\nCON INSTANTE', 'OFERTA PARA COMPRAROS'];
     reparte(3, 0.45).forEach((x,i)=>{
       this.add.text(x, 96, AMENAZA[i], {
         fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#d83335', align:'center'
-      }).setOrigin(0.5).setAlpha(0.55).setScrollFactor(0.45);
+      }).setOrigin(0.5).setAlpha(0.42).setScrollFactor(0.45);
     });
     const SUYO = ['INSTANTE NO SE VENDE', 'LO HAN LEVANTADO ELLAS', 'AUTÓNOMAS\nY A MUCHA HONRA', 'HECHO CON CARIÑO'];
     reparte(4, 0.55).forEach((x,i)=>{
       this.add.text(x, 240, SUYO[i], {
         fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#40ada9', align:'center'
-      }).setOrigin(0.5).setAlpha(0.6).setScrollFactor(0.55);
+      }).setOrigin(0.5).setAlpha(0.45).setScrollFactor(0.55);
     });
     // marca "INSTANTE" y "AIDA" de fondo, repetida — es su mundo, ganado a pulso
     reparte(5, 0.3).forEach(x=>{
       this.add.text(x, 190, 'INSTANTE', {
         fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#e4378c'
-      }).setOrigin(0.5).setAlpha(0.20).setScrollFactor(0.3);
+      }).setOrigin(0.5).setAlpha(0.12).setScrollFactor(0.3);
       this.add.text(x+150, 285, 'AIDA', {
         fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'80px', color:'#f2c749'
-      }).setOrigin(0.5).setAlpha(0.14).setScrollFactor(0.3);
+      }).setOrigin(0.5).setAlpha(0.09).setScrollFactor(0.3);
     });
   }
 
@@ -964,8 +963,8 @@ class Chapter1 extends Phaser.Scene {
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
     this.heroImage.setFlipX(this.player.flipX);
-    this.logoBadge.x = this.player.flipX ? -6 : 6;
-    this.katana.x = this.player.flipX ? -30 : 30; // la mano cambia de lado al girarse
+    this.logoBadge.x = this.player.flipX ? -7 : 7;
+    this.katana.x = this.player.flipX ? -31 : 31; // la mano cambia de lado al girarse
     this.katana.setScale(this.player.flipX ? -1 : 1, 1);
 
     this.enemies.getChildren().forEach(e=>{
