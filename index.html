@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v33 — 25 jul, dos actos en el último capítulo · zapatillas de correr · mamá baja del cielo</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v34 — 25 jul, el culmen en CUATRO ACTOS separados · ángel total con silencio y cambio de música</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -743,7 +743,7 @@ const CAPITULOS = [
   },
   {
     n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'un dragón, el cliente final, y tu gente encerrada detrás',
-    anchos:[520,480,500,480,520,480,380], hueco:100,
+    anchos:[520,480,520,480,540,480,560,480,400], hueco:100,   // 9 tramos: cada acto tiene su sitio
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
     rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
     rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
@@ -755,12 +755,13 @@ const CAPITULOS = [
       {gr:'DENTRO ESTÁ SU GENTE.',     pe:'Encerrada.', rojo:true},
       {gr:'Y DOS COSAS EN MEDIO.',     pe:'Un dragón.\nY el cliente final.', rojo:true},
     ],
-    repisas:[{t:1, off:-60},{t:4, off:80}],
-    enemigos:[{t:1,tipo:'urgente'},{t:2,tipo:'burocracia'},{t:2,tipo:'machirulo',off:170},
-              {t:4,tipo:'urgente'},{t:4,tipo:'machirulo2',off:170}],
+    repisas:[{t:1, off:-60},{t:3, off:80},{t:5, off:-70},{t:7, off:60}],
+    enemigos:[{t:1,tipo:'urgente'},{t:1,tipo:'burocracia',off:180},{t:3,tipo:'machirulo'},
+              {t:5,tipo:'urgente'},{t:5,tipo:'machirulo2',off:180},{t:7,tipo:'burocracia'}],
     aliada:{t:2, off:-180, quien:'brenda'},
-    jefe:{t:3, vidas:6},      // ACTO 1 — el dragón
-    carcel:{t:5, vidas:7},    // ACTO 2 — el cliente final, el del bigote, con su gente detrás
+    jefe:{t:2, vidas:6},      // ACTO I   — el dragón
+    angel:{t:4},              // ACTO II  — la madre, en su propio tramo, para que respire
+    carcel:{t:6, vidas:7},    // ACTO III — el cliente final, con su gente detrás
     meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
     ultimo:true,
   },
@@ -863,7 +864,8 @@ class Capitulo extends Phaser.Scene {
 
     if(C.aliada) this.construyeAliada();
     if(C.tutor)  this.construyeTutor();
-    if(C.carcel){ this.construyeCarcel(); this.construyeZonaAngel(); }
+    if(C.carcel) this.construyeCarcel();
+    if(C.angel)  this.construyeZonaAngel();
     if(C.jefe)   this.construyeJefe();
     this.construyeMonedas();
     this.construyeMeta();
@@ -1150,7 +1152,8 @@ class Capitulo extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.zonaDragon, ()=>{
       if(this.dialogoDragonHecho || this.dialogando) return;
       this.dialogoDragonHecho = true;
-      this.escenaDialogo(BEATS_DRAGON, ()=> this.cartelPelea());
+      this.cartelaActo('ACTO I', 'EL DRAGÓN', 'Lo que hay detrás de la oferta.',
+        ()=> this.escenaDialogo(BEATS_DRAGON, ()=> this.cartelPelea()));
     }, null, this);
   }
 
@@ -1276,6 +1279,37 @@ class Capitulo extends Phaser.Scene {
     pasa();
   }
 
+  // CARTELA DE ACTO: "ACTO I — EL DRAGÓN". Separa la narrativa del último capítulo
+  // en piezas claras, que es lo que pidió Manuel ("mucho más separado, y más largo").
+  cartelaActo(num, titulo, sub, alAcabar){
+    this.dialogando = true;
+    this.physics.pause();
+    const velo = this.add.rectangle(W/2, H/2, W, H, 0x000000, 0.92).setScrollFactor(0).setDepth(96);
+    const raya1 = this.add.rectangle(W/2, H*0.36, 0, 3, PALETTE.turquoise).setScrollFactor(0).setDepth(97);
+    const raya2 = this.add.rectangle(W/2, H*0.60, 0, 3, PALETTE.turquoise).setScrollFactor(0).setDepth(97);
+    const acto = this.add.text(W/2, H*0.43, num, {fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'17px', color:'#40ada9'})
+      .setOrigin(0.5).setScrollFactor(0).setDepth(97).setAlpha(0);
+    const tit = this.add.text(W/2, H*0.51, titulo, {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'36px', color:'#f2c749',
+      align:'center', wordWrap:{width:W-40}
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(97).setAlpha(0);
+    const su = this.add.text(W/2, H*0.68, sub || '', {
+      fontFamily:'Georgia, serif', fontSize:'13px', color:'#ffffff', fontStyle:'italic',
+      align:'center', wordWrap:{width:W-60}
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(97).setAlpha(0);
+    this.tweens.add({targets:[raya1,raya2], width:W-60, duration:700, ease:'Cubic.easeOut'});
+    this.tweens.add({targets:[acto,tit], alpha:1, duration:700, delay:300});
+    this.tweens.add({targets:su, alpha:1, duration:700, delay:1100});
+    this.time.delayedCall(3400, ()=>{
+      this.tweens.add({targets:[velo,raya1,raya2,acto,tit,su], alpha:0, duration:600, onComplete:()=>{
+        [velo,raya1,raya2,acto,tit,su].forEach(o=>o.destroy());
+        this.dialogando = false;
+        this.physics.resume();
+        if(alAcabar) alAcabar();
+      }});
+    });
+  }
+
   cartelPelea(){
     const ya = this.add.text(W/2, H*0.42, 'PELEA', {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#d83335'
@@ -1289,7 +1323,8 @@ class Capitulo extends Phaser.Scene {
   dialogoCarcel(){
     if(this.dialogoHecho || this.dialogando) return;
     this.dialogoHecho = true;
-    this.escenaDialogo(BEATS_CLIENTE, ()=> this.cartelPelea());
+    this.cartelaActo('ACTO III', 'EL CLIENTE FINAL', 'El que tiene a los suyos.',
+      ()=> this.escenaDialogo(BEATS_CLIENTE, ()=> this.cartelPelea()));
   }
 
   golpearBigote(){
@@ -1306,6 +1341,7 @@ class Capitulo extends Phaser.Scene {
 
   liberarFamilia(){
     this.carcelAbierta = true;
+    this.time.delayedCall(900, ()=> this.cartelaActo('ACTO IV', 'LOS SUYOS', 'Ya está. Se acabó.'));
     this.bigote.body.enable = false;
     this.bigoteLabel.setText('DERROTADO').setBackgroundColor('#40ada9');
     this.bigoteBarra.destroy();
@@ -1351,7 +1387,7 @@ class Capitulo extends Phaser.Scene {
   //  del juego: todo va despacio a propósito.
   // ══════════════════════════════════════════════════════════════════════════
   construyeZonaAngel(){
-    const s = this.segs[this.C.carcel.t];   // baja justo antes del acto 2, el del cliente final
+    const s = this.segs[this.C.angel.t];    // tramo propio: el ángel es un acto entero, no un aperitivo
     this.zonaAngel = this.add.zone(s.x + 36, GROUND_Y-110, 90, 260); // antes del alcance del dragón, para que la escena no acabe pegada a él
     this.physics.add.existing(this.zonaAngel);
     this.zonaAngel.body.setAllowGravity(false);
@@ -1366,76 +1402,97 @@ class Capitulo extends Phaser.Scene {
     this.tweens.timeScale = activa ? 0.45 : 1;
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  //  ACTO II — LA MADRE, ÁNGEL TOTAL
+  //  Manuel: "la madre tiene que aparecer como ángel total, y ahí cambias la
+  //  música". Es el centro del capítulo, así que va a lo grande y despacio:
+  //  cartela de acto → SILENCIO (se corta la música: es lo que hace que el
+  //  cambio se note) → el cielo se abre en rayos → baja de verdad desde arriba
+  //  → entra la música celestial → habla despacio → espada de fuego.
+  // ══════════════════════════════════════════════════════════════════════════
   escenaAngel(){
     if(this.angelHecho || this.dialogando) return;
     this.angelHecho = true;
+    this.cartelaActo('ACTO II', 'LA MADRE', 'Baja del cielo.', ()=> this.bajaElAngel());
+  }
+
+  bajaElAngel(){
     this.dialogando = true;
     this.physics.pause();
     this.camaraLenta(true);
-    arrancaMusicaPropia(this, 'angel');          // la música cambia: entra lo celestial
+    paraMusicaPropia();                     // SILENCIO: sin esto el cambio de música no se nota
 
-    const velo = this.add.rectangle(W/2, H/2, W, H, 0x04070c, 0.86).setScrollFactor(0).setDepth(90);
-    // resplandor
-    const halo = this.add.circle(W/2, H*0.30, 96, 0xfff4c4, 0.16).setScrollFactor(0).setDepth(91);
-    this.tweens.add({targets:halo, scale:1.25, alpha:0.30, duration:2200, yoyo:true, repeat:-1});
+    const velo = this.add.rectangle(W/2, H/2, W, H, 0x04070c, 0.90).setScrollFactor(0).setDepth(90);
+    // el cielo se abre: rayos de luz saliendo de arriba
+    const rayos = this.add.graphics().setScrollFactor(0).setDepth(91);
+    rayos.fillStyle(0xfff4c4, 0.13);
+    for(let i=0;i<9;i++){
+      const a = -Math.PI/2 + (i-4)*0.20;
+      rayos.fillTriangle(W/2, -40, W/2 + Math.cos(a)*760, -40 + Math.sin(a)*760 + 900,
+                                    W/2 + Math.cos(a+0.09)*760, -40 + Math.sin(a+0.09)*760 + 900);
+    }
+    rayos.setAlpha(0);
+    this.tweens.add({targets:rayos, alpha:1, duration:1600});
+    const fogonazo = this.add.rectangle(W/2, H/2, W, H, 0xffffff, 0.85).setScrollFactor(0).setDepth(95);
+    this.tweens.add({targets:fogonazo, alpha:0, duration:1400, onComplete:()=>fogonazo.destroy()});
+    const halo = this.add.circle(W/2, H*0.32, 118, 0xfff4c4, 0.16).setScrollFactor(0).setDepth(91);
+    this.tweens.add({targets:halo, scale:1.3, alpha:0.32, duration:2400, yoyo:true, repeat:-1});
 
-    // el ángel: alas dibujadas + su cara de verdad
-    const angel = this.add.container(W/2, H*0.30).setScrollFactor(0).setDepth(92).setAlpha(0);
+    // el ángel, en grande
+    const angel = this.add.container(W/2, -160).setScrollFactor(0).setDepth(92);
     const alas = this.add.graphics();
-    alas.fillStyle(0xffffff, 0.92);
+    alas.fillStyle(0xffffff, 0.95);
     for(const lado of [-1, 1]){
       alas.beginPath();
-      alas.moveTo(lado*22, -6);
-      alas.lineTo(lado*96, -54);
-      alas.lineTo(lado*104, -8);
-      alas.lineTo(lado*84,  16);
-      alas.lineTo(lado*96,  38);
-      alas.lineTo(lado*34,  22);
+      alas.moveTo(lado*26, -8);
+      alas.lineTo(lado*126, -74);
+      alas.lineTo(lado*138, -10);
+      alas.lineTo(lado*110,  22);
+      alas.lineTo(lado*128,  54);
+      alas.lineTo(lado*42,  30);
       alas.closePath(); alas.fillPath();
-      alas.lineStyle(2, 0xfff4c4, 0.9); alas.strokePath();
+      alas.lineStyle(2.5, 0xfff4c4, 0.95); alas.strokePath();
     }
-    const aro   = this.add.circle(0, 0, 46, 0x000000, 0).setStrokeStyle(5, 0xf2c749);
-    const cara  = this.add.image(0, 0, 'mamaFace').setDisplaySize(86, 86);
-    const corona= this.add.ellipse(0, -62, 66, 16, 0x000000, 0).setStrokeStyle(4, 0xf2c749);
+    const aro    = this.add.circle(0, 0, 58, 0x000000, 0).setStrokeStyle(6, 0xf2c749);
+    const cara   = this.add.image(0, 0, 'mamaFace').setDisplaySize(110, 110);
+    const corona = this.add.ellipse(0, -78, 84, 20, 0x000000, 0).setStrokeStyle(5, 0xf2c749);
     angel.add([alas, aro, cara, corona]);
-    // BAJA DEL CIELO: entra por arriba de la pantalla y desciende despacio
-    angel.y = -120;
-    this.tweens.add({targets:angel, alpha:1, y:H*0.29, duration:2600, ease:'Sine.easeOut'});
-    this.tweens.add({targets:angel, y:'+=10', duration:2600, yoyo:true, repeat:-1, ease:'Sine.easeInOut'});
+    // BAJA DE VERDAD, y despacio
+    this.tweens.add({targets:angel, y:H*0.32, duration:3400, ease:'Sine.easeOut'});
+    this.tweens.add({targets:alas, scaleY:0.86, duration:1500, yoyo:true, repeat:-1, ease:'Sine.easeInOut'});
+    // la música celestial entra cuando ella ya está aquí — el silencio de antes la hace notar
+    this.time.delayedCall(2600, ()=>{ if(this.sys.isActive()) arrancaMusicaPropia(this, 'angel'); });
 
-    const quien = this.add.text(W/2, H*0.53, 'MAMÁ', {fontFamily:'Impact', fontSize:'15px', color:'#f2c749'})
-      .setOrigin(0.5).setScrollFactor(0).setDepth(93);
-    const linea = this.add.text(W/2, H*0.63, '', {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'27px', color:'#ffffff',
+    const quien = this.add.text(W/2, H*0.58, 'MAMÁ', {fontFamily:'Impact', fontSize:'16px', color:'#f2c749'})
+      .setOrigin(0.5).setScrollFactor(0).setDepth(93).setAlpha(0);
+    const linea = this.add.text(W/2, H*0.68, '', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'28px', color:'#ffffff',
       align:'center', wordWrap:{width:W-52}, lineSpacing:6
     }).setOrigin(0.5).setScrollFactor(0).setDepth(93);
-    const pista = this.add.text(W/2, H-34, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
+    const pista = this.add.text(W/2, H-30, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
       .setOrigin(0.5).setScrollFactor(0).setDepth(93).setAlpha(0.7);
+    this.tweens.add({targets:quien, alpha:1, duration:900, delay:2600});
 
     const BEATS = [
-      {t:'HOLA, MI NIÑA.'},                       // sus palabras exactas
+      {t:'HOLA, MI NIÑA.'},                      // sus palabras exactas
       {t:'LO QUE SUCEDE CONVIENE.'},
+      {t:'SIEMPRE TE LO HE DICHO.'},
       {t:'CONFÍA.'},
       {t:'TOMA ESTO.', espada:true},
+      {t:'ES DE LAS QUE\nNO SE APAGAN.'},
       {t:'Y NO LE TIEMBLE\nLA MANO A MI NIÑA.'},
     ];
     let i = -1, reloj = null;
     const cerrar = ()=>{
       if(reloj) reloj.remove();
       this.input.off('pointerdown', pasa);
-      this.tweens.add({targets:[angel, halo, velo, quien, linea, pista], alpha:0, duration:900,
-        onComplete:()=>[angel,halo,velo,quien,linea,pista].forEach(o=>o.destroy())});
-      // y ahora sí: entra la música de pelea y se sale de la cámara lenta poco a poco
-      arrancaMusicaPropia(this, 'jefe');
-      const cartel = this.add.text(W/2, H*0.42, 'EL CLIENTE IMPOSIBLE', {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#d83335',
-        align:'center', wordWrap:{width:W-40}
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(94);
-      this.tweens.add({targets:cartel, scale:1.35, alpha:0, duration:1600, onComplete:()=>cartel.destroy()});
+      this.tweens.add({targets:[angel, halo, velo, quien, linea, pista, rayos], alpha:0, duration:1400,
+        onComplete:()=>[angel,halo,velo,quien,linea,pista,rayos].forEach(o=>o.destroy())});
       this.time.delayedCall(1500, ()=>{
         this.camaraLenta(false);
         this.physics.resume();
         this.dialogando = false;
+        arrancaMusicaPropia(this, 'oficina');   // se vuelve al pulso del capítulo hasta el acto III
       });
     };
     const pasa = ()=>{
@@ -1443,14 +1500,14 @@ class Capitulo extends Phaser.Scene {
       if(i >= BEATS.length){ cerrar(); return; }
       const b = BEATS[i];
       linea.setText(b.t).setAlpha(0);
-      this.tweens.add({targets:linea, alpha:1, duration:500});
+      this.tweens.add({targets:linea, alpha:1, duration:600});
       speakPhrase(b.t.replace(/\n/g,' '));
       if(b.espada) this.entregaEspadaDeFuego();
       if(reloj) reloj.remove();
-      reloj = this.time.delayedCall(3600, pasa);   // MUY lento, es lo que pidió
+      reloj = this.time.delayedCall(3800, pasa);   // MUY lento: es el centro del capítulo
     };
     this.input.on('pointerdown', pasa);
-    pasa();
+    this.time.delayedCall(2800, pasa);             // no habla hasta haber bajado del todo
   }
 
   // la katana se convierte en ESPADA DE FUEGO: se repinta la hoja y le sale llama
