@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v34 — 25 jul, el culmen en CUATRO ACTOS separados · ángel total con silencio y cambio de música</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v35 — 25 jul, ARREGLADO el dragón que se iba andando · cliente final de esmoquin y demonio</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -759,9 +759,10 @@ const CAPITULOS = [
     enemigos:[{t:1,tipo:'urgente'},{t:1,tipo:'burocracia',off:180},{t:3,tipo:'machirulo'},
               {t:5,tipo:'urgente'},{t:5,tipo:'machirulo2',off:180},{t:7,tipo:'burocracia'}],
     aliada:{t:2, off:-180, quien:'brenda'},
-    jefe:{t:2, vidas:6},      // ACTO I   — el dragón
-    angel:{t:4},              // ACTO II  — la madre, en su propio tramo, para que respire
-    carcel:{t:6, vidas:7},    // ACTO III — el cliente final, con su gente detrás
+    jefe:{t:2, vidas:6},        // ACTO I   — el dragón
+    angel:{t:4},                // ACTO II  — la madre baja del cielo, en su propio tramo
+    cliente:{t:6, vidas:14},    // ACTO III — el cliente final: 14 tajos, el más largo del juego
+    carcel:{t:7},               // ACTO IV  — la celda, un tramo MÁS ALLÁ: se camina antes de soltarlos
     meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
     ultimo:true,
   },
@@ -864,7 +865,8 @@ class Capitulo extends Phaser.Scene {
 
     if(C.aliada) this.construyeAliada();
     if(C.tutor)  this.construyeTutor();
-    if(C.carcel) this.construyeCarcel();
+    if(C.cliente) this.construyeClienteFinal();
+    if(C.carcel)  this.construyeCarcel();
     if(C.angel)  this.construyeZonaAngel();
     if(C.jefe)   this.construyeJefe();
     this.construyeMonedas();
@@ -1158,82 +1160,140 @@ class Capitulo extends Phaser.Scene {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  //  LA CÁRCEL — el monstruo intermedio del Vol. 5
-  //  Manuel lo pidió así: su gente encerrada, un tío grande con bigote
-  //  custodiándolos, y un INTERCAMBIO DE DIÁLOGOS MUY LENTO que frene a
-  //  propósito el ritmo de la narrativa antes de la pelea. Las frases son
-  //  literalmente las que dictó él; no se han suavizado ni adornado.
+  //  ACTO III — EL CLIENTE FINAL
+  //  Manuel: "supermachirulo, futurista, de esmoquin, con bigote y cara de
+  //  demonio, y mucho más difícil". Va SOLO, en su propio tramo: la cárcel
+  //  está más adelante, para que después de tumbarlo aún se camine un poco.
   // ══════════════════════════════════════════════════════════════════════════
-  construyeCarcel(){
-    const s = this.segs[this.C.carcel.t];
-    const cx = centro(s) + (this.C.carcel.off||0);
-    this.carcelX = cx;
-    this.carcelVidas = this.C.carcel.vidas || 7;
+  construyeClienteFinal(){
+    const s = this.segs[this.C.cliente.t];
+    const bx = centro(s) + (this.C.cliente.off||0);
+    this.bigoteX = bx;
+    this.bigoteXini = bx;
+    this.carcelVidas = this.C.cliente.vidas || 12;
     this.carcelAbierta = false;
     this.dialogoHecho = false;
 
-    // la celda
-    this.add.rectangle(cx-70, GROUND_Y-84, 210, 168, 0x0a1412).setStrokeStyle(5, 0x53585c);
-    this.add.rectangle(cx-70, GROUND_Y-172, 226, 14, 0x53585c);
-    this.presos = [];
-    const gente = [
-      {dx:-140, cara:'mamaFace',   nom:'MAMÁ'},
-      {dx:-93,  cara:'primoFace',  nom:'DIEGO'},
-      {dx:-47,  cara:'primo2Face', nom:'ALBERTO'},
-      {dx:0,    cara:'manuelFace', nom:'MANUEL'},
-    ];
-    gente.forEach(g=>{
-      const c = this.add.circle(cx+g.dx, GROUND_Y-104, 22, PALETTE.purple, 1).setStrokeStyle(2, 0x53585c);
-      const f = this.add.image(cx+g.dx, GROUND_Y-104, g.cara).setDisplaySize(40,40);
-      const n = this.add.text(cx+g.dx, GROUND_Y-74, g.nom, {fontFamily:'Impact', fontSize:'10px', color:'#ffffff'}).setOrigin(0.5);
-      this.presos.push({c,f,n});
-    });
-    // los barrotes, delante de ellos
-    this.barrotes = [];
-    for(let i=0;i<9;i++){
-      this.barrotes.push(this.add.rectangle(cx-166+i*24, GROUND_Y-84, 7, 166, 0x9aa2a8).setStrokeStyle(1, 0x53585c));
-    }
-    this.add.text(cx-70, GROUND_Y-192, 'TU GENTE', {
-      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:2,bottom:2}
-    }).setOrigin(0.5);
-
-    // EL CLIENTE FINAL — el del bigote, grandote, plantado delante de la celda
-    const bx = cx + 120;
-    this.bigoteX = bx;
-    this.add.ellipse(bx, GROUND_Y-2, 104, 20, 0x000000, 0.45);
-    this.bigote = this.add.container(bx, GROUND_Y-104);
+    this.add.ellipse(bx, GROUND_Y-2, 132, 24, 0x000000, 0.5);
+    this.bigote = this.add.container(bx, GROUND_Y-84);   // pegado al suelo: a 108 flotaba
     const g = this.add.graphics();
-    g.fillStyle(0x232323,1); g.fillRoundedRect(-52,-62,104,128,14);      // corpachón
-    g.fillStyle(0x3a3a3a,1); g.fillRoundedRect(-52,-62,104,22,10);       // hombreras
-    g.fillStyle(0xe0bd97,1); g.fillCircle(0,-84,30);                     // cabezón
-    g.fillStyle(0x141414,1); g.fillRect(-31,-108,62,16);                 // pelo
-    g.fillStyle(0xffffff,1); g.fillCircle(-11,-88,7); g.fillCircle(11,-88,7);
-    g.fillStyle(0x141617,1); g.fillCircle(-11,-88,3.6); g.fillCircle(11,-88,3.6);
-    g.fillStyle(0x141414,1);                                             // EL BIGOTE, bien gordo
-    g.fillEllipse(-13,-70,26,12); g.fillEllipse(13,-70,26,12);
-    g.fillStyle(0x8a1114,1); g.fillRoundedRect(-16,-58,32,8,4);          // boca torcida
+    // ── esmoquin negro con solapas de raso ──
+    g.fillStyle(0x0e0e12,1); g.fillRoundedRect(-58,-58,116,142,14);
+    g.fillStyle(0x1b1b24,1); g.fillTriangle(-58,-58, -6,-58, -30,34);      // solapa izq
+    g.fillStyle(0x1b1b24,1); g.fillTriangle(58,-58, 6,-58, 30,34);         // solapa der
+    g.fillStyle(0xffffff,1); g.fillTriangle(-16,-58, 16,-58, 0,4);         // camisa
+    g.fillStyle(0xd83335,1);                                              // pajarita
+    g.fillTriangle(-20,-50, -2,-42, -20,-32); g.fillTriangle(20,-50, 2,-42, 20,-32);
+    g.fillStyle(0x40ada9,1); g.fillCircle(0,-42,5);
+    // ── detalles futuristas: hombreras y líneas de neón ──
+    g.fillStyle(0x2a2a38,1); g.fillRoundedRect(-70,-62,30,34,8); g.fillRoundedRect(40,-62,30,34,8);
+    g.lineStyle(3, 0x40ada9, 0.95);
+    g.beginPath(); g.moveTo(-56,-24); g.lineTo(-34,-24); g.lineTo(-28,-6); g.strokePath();
+    g.beginPath(); g.moveTo(56,-24);  g.lineTo(34,-24);  g.lineTo(28,-6);  g.strokePath();
+    g.lineStyle(2.5, 0xe4378c, 0.9);
+    g.beginPath(); g.moveTo(-58,52); g.lineTo(58,52); g.strokePath();
+    // ── cabeza de demonio ──
+    g.fillStyle(0x8e2b2b,1); g.fillCircle(0,-92,34);
+    g.fillStyle(0x6d1f1f,1); g.fillEllipse(0,-72,46,22);                   // mandíbula
+    g.fillStyle(0x0e0e12,1); g.fillRect(-35,-120,70,16);                   // pelo engominado
+    g.fillTriangle(-35,-104, -35,-124, -8,-118);                           // pico de viuda
+    g.fillTriangle(35,-104, 35,-124, 8,-118);
+    // cuernos
+    g.fillStyle(0x1b1b24,1);
+    g.fillTriangle(-30,-116, -18,-120, -40,-158);
+    g.fillTriangle(30,-116, 18,-120, 40,-158);
+    // ojos encendidos
+    g.fillStyle(0xffd34d,1); g.fillEllipse(-13,-96,20,14); g.fillEllipse(13,-96,20,14);
+    g.fillStyle(0xd83335,1); g.fillEllipse(-13,-96,7,12);  g.fillEllipse(13,-96,7,12);
+    g.fillStyle(0x0e0e12,1);                                               // cejas de mala persona
+    g.fillTriangle(-30,-112, -4,-100, -30,-98);
+    g.fillTriangle(30,-112, 4,-100, 30,-98);
+    // EL BIGOTAZO, tieso y con las puntas hacia arriba
+    g.fillStyle(0x0e0e12,1);
+    g.fillEllipse(-16,-76,30,11); g.fillEllipse(16,-76,30,11);
+    g.fillTriangle(-31,-80, -24,-72, -44,-92);
+    g.fillTriangle(31,-80, 24,-72, 44,-92);
+    // sonrisa de dientes
+    g.fillStyle(0x2a0a0a,1); g.fillRoundedRect(-19,-66,38,12,5);
+    g.fillStyle(0xffffff,1);
+    for(let i=0;i<5;i++) g.fillRect(-17+i*7.5, -66, 5, 6);
+    // visor futurista, medio caído sobre un ojo
+    g.lineStyle(3, 0x40ada9, 0.85);
+    g.beginPath(); g.moveTo(-38,-104); g.lineTo(26,-92); g.strokePath();
+    g.fillStyle(0x40ada9, 0.25); g.fillRoundedRect(4,-104,30,16,6);
     this.bigote.add([g]);
+
     this.physics.add.existing(this.bigote);
-    this.bigote.body.setSize(112,196).setOffset(-56,-116);
+    this.bigote.body.setSize(132, 236).setOffset(-66, -152);
     this.bigote.body.setAllowGravity(false);
-    this.bigoteLabel = this.add.text(bx, GROUND_Y-234, 'EL CLIENTE FINAL', {
-      fontFamily:'Impact', fontSize:'16px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:8,right:8,top:3,bottom:3}
+    this.bigoteLabel = this.add.text(bx, GROUND_Y-286, 'EL CLIENTE FINAL', {
+      fontFamily:'Impact', fontSize:'17px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:9,right:9,top:3,bottom:3}
     }).setOrigin(0.5);
-    this.add.rectangle(bx-62, GROUND_Y-212, 124, 10, 0x000000, 0.55).setOrigin(0,0.5);
-    this.bigoteBarra = this.add.rectangle(bx-62, GROUND_Y-212, 124, 10, PALETTE.red).setOrigin(0,0.5);
+    this.add.rectangle(bx-80, GROUND_Y-262, 160, 12, 0x000000, 0.55).setOrigin(0,0.5);
+    this.bigoteBarra = this.add.rectangle(bx-80, GROUND_Y-262, 160, 12, PALETTE.red).setOrigin(0,0.5);
+
     this.physics.add.overlap(this.player, this.bigote, ()=>{
       if(!this.dialogoHecho) return;                 // primero se habla, luego se pega
       if(this.attacking) this.golpearBigote(); else this.hitEnemy({x:this.bigote.x});
     }, null, this);
 
-    // zona que dispara la conversación al acercarse
-    this.zonaDialogo = this.add.zone(cx+30, GROUND_Y-100, 260, 220);
+    // zona que dispara el acto III
+    this.zonaDialogo = this.add.zone(s.x + 50, GROUND_Y-110, 90, 300);
     this.physics.add.existing(this.zonaDialogo);
     this.zonaDialogo.body.setAllowGravity(false);
     this.physics.add.overlap(this.player, this.zonaDialogo, ()=>this.dialogoCarcel(), null, this);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  //  LA CÁRCEL — ya sin guardián: está MÁS ADELANTE que el cliente final, para
+  //  que después de tumbarlo se camine un poco antes de soltar a los suyos.
+  // ══════════════════════════════════════════════════════════════════════════
+  construyeCarcel(){
+    const s = this.segs[this.C.carcel.t];
+    const cx = centro(s) + (this.C.carcel.off||0);
+    this.carcelX = cx;
+
+    this.add.rectangle(cx, GROUND_Y-84, 250, 168, 0x0a1412).setStrokeStyle(5, 0x53585c);
+    this.add.rectangle(cx, GROUND_Y-172, 266, 14, 0x53585c);
+    this.presos = [];
+    const gente = [
+      {dx:-84, cara:'mamaFace',   nom:'MAMÁ'},
+      {dx:-28, cara:'primoFace',  nom:'DIEGO'},
+      {dx: 28, cara:'primo2Face', nom:'ALBERTO'},
+      {dx: 84, cara:'manuelFace', nom:'MANUEL'},
+    ];
+    gente.forEach(g=>{
+      const c = this.add.circle(cx+g.dx, GROUND_Y-104, 23, PALETTE.purple, 1).setStrokeStyle(2, 0x53585c);
+      const f = this.add.image(cx+g.dx, GROUND_Y-104, g.cara).setDisplaySize(42,42);
+      const n = this.add.text(cx+g.dx, GROUND_Y-72, g.nom, {fontFamily:'Impact', fontSize:'10px', color:'#ffffff'}).setOrigin(0.5);
+      this.presos.push({c,f,n});
+    });
+    this.barrotes = [];
+    for(let i=0;i<11;i++){
+      this.barrotes.push(this.add.rectangle(cx-120+i*24, GROUND_Y-84, 7, 166, 0x9aa2a8).setStrokeStyle(1, 0x53585c));
+    }
+    this.add.text(cx, GROUND_Y-192, 'TU GENTE', {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:2,bottom:2}
+    }).setOrigin(0.5);
+
+    // se abre al llegar, pero solo si el cliente final ya está tumbado
+    this.zonaCarcel = this.add.zone(cx, GROUND_Y-100, 260, 240);
+    this.physics.add.existing(this.zonaCarcel);
+    this.zonaCarcel.body.setAllowGravity(false);
+    this.physics.add.overlap(this.player, this.zonaCarcel, ()=>{
+      if(this.carcelAbierta || this.dialogando) return;
+      if(this.carcelVidas > 0){
+        if(!this.avisoCarcel){
+          this.avisoCarcel = true;
+          this.sayPhrase('¡Primero el cliente final!');
+          this.time.delayedCall(2500, ()=> this.avisoCarcel=false);
+        }
+        return;
+      }
+      this.liberarFamilia();
+    }, null, this);
+  }
+
   //  MOTOR DE DIÁLOGO — lo usan los DOS actos del último capítulo.
   //  Cartela a cartela, con el juego parado y muy lento a propósito: es lo que
   //  frena el ritmo de la narrativa, que es justo lo que pidió Manuel.
@@ -1331,210 +1391,69 @@ class Capitulo extends Phaser.Scene {
     if(this.carcelAbierta || this.bigoteInvuln) return;
     this.bigoteInvuln = true;
     this.time.delayedCall(400, ()=> this.bigoteInvuln=false);
-    this.carcelVidas--;
+    this.carcelVidas -= this.espadaFuego ? 2 : 1;   // con la espada de su madre, el doble
+    if(this.carcelVidas < 0) this.carcelVidas = 0;
     playImpact(this);
     this.cameras.main.shake(200, 0.014);
     this.bigoteBarra.setScale(Math.max(0,this.carcelVidas)/(this.C.carcel.vidas||7), 1);
     this.tweens.add({targets:this.bigote, alpha:0.35, duration:80, yoyo:true, repeat:1});
-    if(this.carcelVidas<=0) this.liberarFamilia();
+    if(this.carcelVidas<=0){
+      // cae él, pero la gente sigue encerrada: hay que seguir andando hasta la celda
+      this.bigote.body.enable = false;
+      this.bigoteLabel.setText('DERROTADO').setBackgroundColor('#40ada9');
+      this.bigoteBarra.destroy(); this.bigoteBarra = null;
+      this.tweens.add({targets:this.bigote, alpha:0, y:this.bigote.y+60, angle:80, duration:900});
+      this.score += 25; this.updateHud();
+      speakPhrase('Luego te paso la factura. Por mí y por todos los míos.');
+      const t = this.add.text(W/2, H*0.30, 'LUEGO TE PASO LA FACTURA.' + '\n' + 'POR MÍ Y POR TODOS LOS MÍOS.', {
+        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#141617',
+        backgroundColor:'#f2c749', padding:{left:10,right:10,top:5,bottom:5}, align:'center', wordWrap:{width:W-60}
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(92);
+      this.tweens.add({targets:t, alpha:0, duration:700, delay:2800, onComplete:()=>t.destroy()});
+      this.time.delayedCall(3800, ()=>{ if(this.sys.isActive()) arrancaMusicaPropia(this, 'oficina'); });
+    }
   }
 
+  // ACTO IV — soltar a los suyos. Frases de Manuel, tal cual las dictó.
   liberarFamilia(){
+    if(this.carcelAbierta) return;
     this.carcelAbierta = true;
-    this.time.delayedCall(900, ()=> this.cartelaActo('ACTO IV', 'LOS SUYOS', 'Ya está. Se acabó.'));
-    this.bigote.body.enable = false;
-    this.bigoteLabel.setText('DERROTADO').setBackgroundColor('#40ada9');
-    this.bigoteBarra.destroy();
-    this.tweens.add({targets:this.bigote, alpha:0, y:this.bigote.y+50, angle:80, duration:800});
     this.score += 20; this.lives = Math.min(5, this.lives+1);
     this.updateHud();
-    // los barrotes se abren
-    this.barrotes.forEach((b,i)=> this.tweens.add({targets:b, y:b.y-190, alpha:0, duration:700, delay:i*45}));
-    // y las tres frases, una detrás de otra, con su tiempo
-    const decir = (txt, color, retraso, y)=>{
+    this.cartelaActo('ACTO IV', 'LOS SUYOS', 'Ya está. Se acabó.', ()=> this.abrirCelda());
+  }
+
+  abrirCelda(){
+    this.barrotes.forEach((b,i)=> this.tweens.add({targets:b, y:b.y-200, alpha:0, duration:700, delay:i*45}));
+    const decir = (txt, color, retraso)=>{
       this.time.delayedCall(retraso, ()=>{
         if(!this.sys.isActive()) return;
         speakPhrase(txt);
-        const t = this.add.text(W/2, y, txt, {
-          fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#141617',
-          backgroundColor:color, padding:{left:10,right:10,top:5,bottom:5}, align:'center', wordWrap:{width:W-60}
+        const t = this.add.text(W/2, H*0.28, txt, {
+          fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#141617',
+          backgroundColor:color, padding:{left:11,right:11,top:6,bottom:6}, align:'center', wordWrap:{width:W-50}
         }).setOrigin(0.5).setScrollFactor(0).setDepth(92);
-        this.tweens.add({targets:t, alpha:0, duration:600, delay:2600, onComplete:()=>t.destroy()});
+        this.tweens.add({targets:t, alpha:0, duration:700, delay:2600, onComplete:()=>t.destroy()});
       });
     };
-    decir('LUEGO TE PASO LA FACTURA.\nPOR MÍ Y POR TODOS LOS MÍOS.', '#f2c749', 300,  H*0.30);
-    decir('¡VENGA, CHULOS, A DAROS UNA VUELTA!',                     '#40ada9', 3600, H*0.30);
-    decir('¡GRACIAS, AIDA, ERES LA MEJOR!',                          '#e4378c', 6600, H*0.30);
-    // la familia sale de la celda dando saltitos
+    decir('¡SOIS LIBRES!',                        '#f2c749', 400);
+    decir('¡GRACIAS, AIDA, ERES LA MEJOR!',       '#e4378c', 3800);   // los cuatro, al unísono
+    decir('¡Y VIVA YO, Y MI COÑO MORENO!',        '#40ada9', 7200);
+    decir('¡VENGA, CHULOS, A DAROS UNA VUELTA!',  '#40ada9', 10600);
+    // salen de la celda
     this.time.delayedCall(3600, ()=>{
       this.presos.forEach((p,i)=>{
         [p.c,p.f,p.n].forEach(o=> this.tweens.add({
-          targets:o, x:o.x - 90 - i*30, y:o.y-16, duration:1500, delay:i*180, ease:'Sine.easeOut', yoyo:false
+          targets:o, x:o.x + (i-1.5)*70, y:o.y-18, duration:1600, delay:i*180, ease:'Sine.easeOut'
         }));
       });
-      for(let i=0;i<26;i++){
+      for(let i=0;i<34;i++){
         const c = [PALETTE.turquoise,PALETTE.pink,PALETTE.yellow,0xffffff][i%4];
-        const p = this.add.rectangle(this.carcelX-70+Phaser.Math.Between(-90,90), GROUND_Y-150, 7, 10, c);
-        this.tweens.add({targets:p, y:GROUND_Y-10, angle:Phaser.Math.Between(-300,300), alpha:0, duration:Phaser.Math.Between(900,1800), onComplete:()=>p.destroy()});
+        const p = this.add.rectangle(this.carcelX+Phaser.Math.Between(-120,120), GROUND_Y-160, 7, 11, c);
+        this.tweens.add({targets:p, y:GROUND_Y-10, angle:Phaser.Math.Between(-320,320), alpha:0,
+          duration:Phaser.Math.Between(900,2000), onComplete:()=>p.destroy()});
       }
     });
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  //  LA MADRE, EN FORMA DE ÁNGEL — antes de la pelea con el Cliente Imposible
-  //  Pedido de Manuel: cámara lenta, mucho énfasis, la música cambia, y le da
-  //  una ESPADA DE FUEGO para enfrentarse al malo. Es la escena más marcada
-  //  del juego: todo va despacio a propósito.
-  // ══════════════════════════════════════════════════════════════════════════
-  construyeZonaAngel(){
-    const s = this.segs[this.C.angel.t];    // tramo propio: el ángel es un acto entero, no un aperitivo
-    this.zonaAngel = this.add.zone(s.x + 36, GROUND_Y-110, 90, 260); // antes del alcance del dragón, para que la escena no acabe pegada a él
-    this.physics.add.existing(this.zonaAngel);
-    this.zonaAngel.body.setAllowGravity(false);
-    this.angelHecho = false;
-    this.physics.add.overlap(this.player, this.zonaAngel, ()=>this.escenaAngel(), null, this);
-  }
-
-  // cámara lenta de verdad: la física y los tweens se arrastran, pero los tiempos
-  // del guion NO se tocan (si no, la escena duraría el triple sin querer)
-  camaraLenta(activa){
-    this.physics.world.timeScale = activa ? 3.2 : 1;
-    this.tweens.timeScale = activa ? 0.45 : 1;
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  //  ACTO II — LA MADRE, ÁNGEL TOTAL
-  //  Manuel: "la madre tiene que aparecer como ángel total, y ahí cambias la
-  //  música". Es el centro del capítulo, así que va a lo grande y despacio:
-  //  cartela de acto → SILENCIO (se corta la música: es lo que hace que el
-  //  cambio se note) → el cielo se abre en rayos → baja de verdad desde arriba
-  //  → entra la música celestial → habla despacio → espada de fuego.
-  // ══════════════════════════════════════════════════════════════════════════
-  escenaAngel(){
-    if(this.angelHecho || this.dialogando) return;
-    this.angelHecho = true;
-    this.cartelaActo('ACTO II', 'LA MADRE', 'Baja del cielo.', ()=> this.bajaElAngel());
-  }
-
-  bajaElAngel(){
-    this.dialogando = true;
-    this.physics.pause();
-    this.camaraLenta(true);
-    paraMusicaPropia();                     // SILENCIO: sin esto el cambio de música no se nota
-
-    const velo = this.add.rectangle(W/2, H/2, W, H, 0x04070c, 0.90).setScrollFactor(0).setDepth(90);
-    // el cielo se abre: rayos de luz saliendo de arriba
-    const rayos = this.add.graphics().setScrollFactor(0).setDepth(91);
-    rayos.fillStyle(0xfff4c4, 0.13);
-    for(let i=0;i<9;i++){
-      const a = -Math.PI/2 + (i-4)*0.20;
-      rayos.fillTriangle(W/2, -40, W/2 + Math.cos(a)*760, -40 + Math.sin(a)*760 + 900,
-                                    W/2 + Math.cos(a+0.09)*760, -40 + Math.sin(a+0.09)*760 + 900);
-    }
-    rayos.setAlpha(0);
-    this.tweens.add({targets:rayos, alpha:1, duration:1600});
-    const fogonazo = this.add.rectangle(W/2, H/2, W, H, 0xffffff, 0.85).setScrollFactor(0).setDepth(95);
-    this.tweens.add({targets:fogonazo, alpha:0, duration:1400, onComplete:()=>fogonazo.destroy()});
-    const halo = this.add.circle(W/2, H*0.32, 118, 0xfff4c4, 0.16).setScrollFactor(0).setDepth(91);
-    this.tweens.add({targets:halo, scale:1.3, alpha:0.32, duration:2400, yoyo:true, repeat:-1});
-
-    // el ángel, en grande
-    const angel = this.add.container(W/2, -160).setScrollFactor(0).setDepth(92);
-    const alas = this.add.graphics();
-    alas.fillStyle(0xffffff, 0.95);
-    for(const lado of [-1, 1]){
-      alas.beginPath();
-      alas.moveTo(lado*26, -8);
-      alas.lineTo(lado*126, -74);
-      alas.lineTo(lado*138, -10);
-      alas.lineTo(lado*110,  22);
-      alas.lineTo(lado*128,  54);
-      alas.lineTo(lado*42,  30);
-      alas.closePath(); alas.fillPath();
-      alas.lineStyle(2.5, 0xfff4c4, 0.95); alas.strokePath();
-    }
-    const aro    = this.add.circle(0, 0, 58, 0x000000, 0).setStrokeStyle(6, 0xf2c749);
-    const cara   = this.add.image(0, 0, 'mamaFace').setDisplaySize(110, 110);
-    const corona = this.add.ellipse(0, -78, 84, 20, 0x000000, 0).setStrokeStyle(5, 0xf2c749);
-    angel.add([alas, aro, cara, corona]);
-    // BAJA DE VERDAD, y despacio
-    this.tweens.add({targets:angel, y:H*0.32, duration:3400, ease:'Sine.easeOut'});
-    this.tweens.add({targets:alas, scaleY:0.86, duration:1500, yoyo:true, repeat:-1, ease:'Sine.easeInOut'});
-    // la música celestial entra cuando ella ya está aquí — el silencio de antes la hace notar
-    this.time.delayedCall(2600, ()=>{ if(this.sys.isActive()) arrancaMusicaPropia(this, 'angel'); });
-
-    const quien = this.add.text(W/2, H*0.58, 'MAMÁ', {fontFamily:'Impact', fontSize:'16px', color:'#f2c749'})
-      .setOrigin(0.5).setScrollFactor(0).setDepth(93).setAlpha(0);
-    const linea = this.add.text(W/2, H*0.68, '', {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'28px', color:'#ffffff',
-      align:'center', wordWrap:{width:W-52}, lineSpacing:6
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(93);
-    const pista = this.add.text(W/2, H-30, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
-      .setOrigin(0.5).setScrollFactor(0).setDepth(93).setAlpha(0.7);
-    this.tweens.add({targets:quien, alpha:1, duration:900, delay:2600});
-
-    const BEATS = [
-      {t:'HOLA, MI NIÑA.'},                      // sus palabras exactas
-      {t:'LO QUE SUCEDE CONVIENE.'},
-      {t:'SIEMPRE TE LO HE DICHO.'},
-      {t:'CONFÍA.'},
-      {t:'TOMA ESTO.', espada:true},
-      {t:'ES DE LAS QUE\nNO SE APAGAN.'},
-      {t:'Y NO LE TIEMBLE\nLA MANO A MI NIÑA.'},
-    ];
-    let i = -1, reloj = null;
-    const cerrar = ()=>{
-      if(reloj) reloj.remove();
-      this.input.off('pointerdown', pasa);
-      this.tweens.add({targets:[angel, halo, velo, quien, linea, pista, rayos], alpha:0, duration:1400,
-        onComplete:()=>[angel,halo,velo,quien,linea,pista,rayos].forEach(o=>o.destroy())});
-      this.time.delayedCall(1500, ()=>{
-        this.camaraLenta(false);
-        this.physics.resume();
-        this.dialogando = false;
-        arrancaMusicaPropia(this, 'oficina');   // se vuelve al pulso del capítulo hasta el acto III
-      });
-    };
-    const pasa = ()=>{
-      i++;
-      if(i >= BEATS.length){ cerrar(); return; }
-      const b = BEATS[i];
-      linea.setText(b.t).setAlpha(0);
-      this.tweens.add({targets:linea, alpha:1, duration:600});
-      speakPhrase(b.t.replace(/\n/g,' '));
-      if(b.espada) this.entregaEspadaDeFuego();
-      if(reloj) reloj.remove();
-      reloj = this.time.delayedCall(3800, pasa);   // MUY lento: es el centro del capítulo
-    };
-    this.input.on('pointerdown', pasa);
-    this.time.delayedCall(2800, pasa);             // no habla hasta haber bajado del todo
-  }
-
-  // la katana se convierte en ESPADA DE FUEGO: se repinta la hoja y le sale llama
-  entregaEspadaDeFuego(){
-    if(this.espadaFuego) return;
-    this.espadaFuego = true;
-    const b = this.katanaBlade;
-    b.clear();
-    b.fillStyle(0xffd34d, 1);  b.fillPoints(this.bladePoly, true);
-    b.lineStyle(3, 0xff6a1f, 1); b.strokePoints(this.bladePoly, true);
-    b.lineStyle(1.6, 0xffffff, 0.95);
-    b.beginPath();
-    this.bladePoly.slice(0, 15).forEach((p,i)=> i===0 ? b.moveTo(p.x-1.6,p.y) : b.lineTo(p.x-1.6,p.y));
-    b.strokePath();
-    // aura de llama alrededor de la hoja, latiendo
-    this.llama = this.add.graphics();
-    this.llama.fillStyle(0xff7a1f, 0.30);
-    this.llama.fillPoints(this.bladePoly.map(p=>({x:p.x*1.9, y:p.y*1.06})), true);
-    this.katana.addAt(this.llama, 0);
-    this.tweens.add({targets:this.llama, alpha:0.45, scaleX:1.15, duration:280, yoyo:true, repeat:-1});
-    // fogonazo y aviso
-    this.cameras.main.flash(400, 255, 190, 80);
-    const t = this.add.text(W/2, H*0.76, '⚔️ ESPADA DE FUEGO', {
-      fontFamily:'Impact', fontSize:'22px', color:'#141617', backgroundColor:'#ffb020',
-      padding:{left:12,right:12,top:6,bottom:6}
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(95);
-    this.tweens.add({targets:t, alpha:0, duration:900, delay:2200, onComplete:()=>t.destroy()});
   }
 
   construyeMonedas(){
@@ -1808,7 +1727,7 @@ class Capitulo extends Phaser.Scene {
       const dx = (this.jefeCuerpo.x - this.player.x) * dir;
       if(dx > -40 && dx < 116) this.golpearJefe();
     }
-    if(this.bigote && this.dialogoHecho && !this.carcelAbierta){
+    if(this.bigote && this.dialogoHecho && this.carcelVidas > 0){
       const dx = (this.bigote.x - this.player.x) * dir;
       if(dx > -40 && dx < 122) this.golpearBigote();
     }
@@ -2049,7 +1968,7 @@ class Capitulo extends Phaser.Scene {
       // pero NO contra el Bigote ni contra el Cliente Imposible — y ninguno de los dos se puede
       // esquivar. Aida, que no juega a videojuegos, podía morir ahí sin entender que había que
       // pulsar TAJO. Ahora también se acciona sola contra ellos (el botón sigue estando).
-      if(!cerca && this.bigote && this.dialogoHecho && !this.carcelAbierta &&
+      if(!cerca && this.bigote && this.dialogoHecho && this.carcelVidas > 0 &&
          Math.abs(this.bigote.x - this.player.x) < 104) cerca = this.bigote;
       if(!cerca && this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
          Math.abs(this.jefeCuerpo.x - this.player.x) < 104) cerca = this.jefeCuerpo;
@@ -2084,12 +2003,27 @@ class Capitulo extends Phaser.Scene {
       e.shadow.x = e.x; e.label.x = e.x;
     });
 
-    // el jefe te persigue de lado a lado de su tramo
-    if(this.jefeCuerpo && this.jefeVidas > 0){
+    // EL DRAGÓN: quieto en su tramo hasta que se habla con él, y sin salirse nunca de él.
+    // (Antes perseguía desde el primer fotograma y sin límites: cuando llegabas a su sitio
+    //  ya se había ido andando, y la cartela anunciaba un dragón que no estaba.)
+    if(this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho){
+      const t = this.segs[this.C.jefe.t];
       const dx = this.player.x - this.jefeCuerpo.x;
-      this.jefeCuerpo.x += Phaser.Math.Clamp(dx, -1.5, 1.5);
+      this.jefeCuerpo.x = Phaser.Math.Clamp(this.jefeCuerpo.x + Phaser.Math.Clamp(dx, -1.6, 1.6),
+                                            t.x + 120, t.x + t.w - 120);
+    }
+    if(this.jefeCuerpo){
       this.jefeLabel.x = this.jefeCuerpo.x;
-      this.jefeBarra.x = this.jefeCuerpo.x - 60;
+      if(this.jefeBarra) this.jefeBarra.x = this.jefeCuerpo.x - 80;
+    }
+    // EL CLIENTE FINAL: igual, pero más rápido y más pesado — es el más difícil
+    if(this.bigote && this.carcelVidas > 0 && this.dialogoHecho){
+      const t = this.segs[this.C.cliente.t];
+      const dx = this.player.x - this.bigote.x;
+      this.bigote.x = Phaser.Math.Clamp(this.bigote.x + Phaser.Math.Clamp(dx, -2.4, 2.4),
+                                        t.x + 110, t.x + t.w - 110);
+      this.bigoteLabel.x = this.bigote.x;
+      if(this.bigoteBarra) this.bigoteBarra.x = this.bigote.x - 80;
     }
 
     // la aliada, ya unida: te sigue y se pone a pelear
