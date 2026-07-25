@@ -1,6 +1,21 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 20 — build v27)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 21 — build v28)
+
+**📁 LA CARPETA SE MOVIÓ: el juego ya NO está en `Desktop\JUEGO_AIDA` sino en `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA`.** Se movió a mitad de sesión (también `JUEGO_MAMA` y `PARA_SAMARA`). El repo quedó intacto. Si un comando falla con "no such file", es esto.
+
+**Ronda 21 (build v28) — todo pedido por voz en cuatro mensajes seguidos:**
+- **Niveles más largos y menos saturados:** los cinco crecen (Cap1 3600→4420, Cap2 3080→3820, Cap3 3005→3770, Cap4 3800→4490, Cap5 3280→3960) manteniendo los mismos enemigos, así que la densidad baja sola. La Milla pasa de 80 a 95 s.
+- **Variación** («todas las pantallas dicen lo mismo y empiezan igual»): cada capítulo tiene **su frase de apertura y sus cuatro frases propias**; **«¡Toma kit digital!»** entra en los cinco; las repisas pasan de una a varias y **en La Barra son TRAMPOLINES** (impulso −820); el tutor de la tesis ya no está solo en el Vol. 1, también en el 3.
+- **🔒 LA CÁRCEL (Vol. 5, tramo intermedio)** — la pieza que más le importa, dictada literalmente por él: mamá, Diego, Alberto y Manuel tras los barrotes, y **EL DEL BIGOTE** custodiándolos. Al acercarse arranca un **diálogo LENTO con el juego parado**, cartela a cartela cada 3,2 s (frena el ritmo a propósito, fue una petición explícita), con sus frases exactas; luego cartela de **PELEA**, mini-jefe de 7 tajos con barra de vida, y al tumbarlo: «Luego te paso la factura. Por mí y por todos los míos» → se abren los barrotes → «¡Venga, chulos, a daros una vuelta!» → «¡Gracias, Aida, eres la mejor!». **Las frases son suyas palabra por palabra: no suavizarlas ni reescribirlas sin que él lo pida.**
+- **Brenda**: al encontrarla le dice «Brenda, ¿qué pasa, chocho? ¡Vamos a machacarles!».
+- **Final en dos partes:** 13 cartelas lentas con el **currículum real de Instante** (servicios de agenciainstante.com, Instante Weddings, autónomas) rematadas con «NO NOS LO VAIS A ARREBATAR — dicen Brenda y Aida» / «NOT TODAY», y después la celebración con las seis caras y el cumpleaños.
+
+**🟡 DOS COSAS QUE FALTAN Y SON DE MANUEL:**
+1. **El año de fundación de Instante.** El currículum del final quería empezar con «desde tal año...» y **no se puso porque nadie lo ha dicho — no se inventa una fecha en un regalo**. En cuanto lo diga, va en la primera cartela.
+2. **Que lo juegue.** Sigue sin haberlo jugado nadie: cinco niveles, la cárcel y el final están verificados por geometría y por consola, no por manos.
+
+## Ronda 20 (build v27)
 
 **🗂️ HAY OTRO JUEGO DE MANUEL EN EL ESCRITORIO Y ES UNA MINA: `C:\Users\Manuel\Desktop\JUEGO_MAMA`** (el que le hizo a su madre, "Belén al Rescate"). De ahí salieron **la foto de mamá** y **la plantilla de PWA**. Contiene `belen2.jpg`, `mama_tio.jpg`, `hermana.jpg`, `manuel.jpg`, `manifest.json`, `sw.js`, iconos. También existe `Desktop\PARA_SAMARA`. **Mirar ahí antes de dar por perdido cualquier material familiar.**
 
