@@ -1,6 +1,18 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 19 — build v25: EL JUEGO YA ESTÁ ENTERO)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 20 — build v27)
+
+**🗂️ HAY OTRO JUEGO DE MANUEL EN EL ESCRITORIO Y ES UNA MINA: `C:\Users\Manuel\Desktop\JUEGO_MAMA`** (el que le hizo a su madre, "Belén al Rescate"). De ahí salieron **la foto de mamá** y **la plantilla de PWA**. Contiene `belen2.jpg`, `mama_tio.jpg`, `hermana.jpg`, `manuel.jpg`, `manifest.json`, `sw.js`, iconos. También existe `Desktop\PARA_SAMARA`. **Mirar ahí antes de dar por perdido cualquier material familiar.**
+
+**⚠️ Y LA LECCIÓN DE ESTA RONDA: verificar la identidad en el código, no por el nombre del fichero.** En `JUEGO_MAMA` hay dos mujeres distintas (`belen2.jpg` y `mama_tio.jpg`) y el nombre del segundo fichero invitaba a pensar que la de la foto era mamá. Lo que lo resolvió fue **leer el `index.html` de aquel juego**, que etiqueta `belen2.jpg` como `'mama'` y `mama_tio.jpg` como `'tio'`. Sin eso se habría metido a la persona equivocada en el regalo. Se reutilizó incluso **su mismo encuadre** (`CROPS.mama`).
+
+**Ronda 20 (build v27):**
+- **El cameo final ya es de caras reales:** Aida, **Brenda**, **mamá** (de `JUEGO_MAMA`), **Diego** (foto que dejó Manuel) y **Manuel** (retrato profesional en B/N de `ARCHIVO_MAESTRO\07_PERSONAL_FAMILIA\MEDIA\_retratos_manu\Manu-1.jpg`). Todos con `rembg` + recorte redondo con borde difuminado y **margen arriba** para que el círculo no corte la coronilla.
+- **Conchita se queda DIBUJADA, como GIMNASTA** — decisión de Manuel, ya no hace falta buscarle foto. Maillot, moño, brazo estirado, spagat y cinta de rítmica ondeando; fuera la barra y el emoji de bailarina.
+- **PWA lista (Fase 6):** `manifest.json`, `sw.js` e iconos 192/512 con el ojo de Instante. **El service worker es NETWORK-FIRST para el HTML a propósito** — la página se pide siempre a la red, para que no pueda volver el problema de las versiones viejas. **NO pasarlo nunca a cache-first.** Solo fotos y audio van de caché (así abre al vuelo y funciona sin datos).
+- **Límite que se le puso y aceptó:** buscar fotos **en su disco, sí; en Internet, no** — mamá, primos y Conchita son personas que no han dado permiso y esto se publica en abierto. La hoja de contacto de fotos familiares que se le montó para identificar gente está en `.gitignore`, fuera del repo.
+
+## Ronda 19 (build v25 — el juego entero)
 
 **🏗️ LA REFORMA QUE HAY QUE CONOCER ANTES DE TOCAR NADA.** `class Chapter1` ya no existe. La mecánica —la que Manuel dio por buena tras 18 rondas— vive **una sola vez** en `class Capitulo`, y **cada capítulo es una ficha de datos** en el array `CAPITULOS`. Consecuencia práctica: **un retoque de jugabilidad se hace una vez y vale para los cinco**; un retoque de contenido se hace en la ficha del capítulo. **No volver a duplicar la clase.**
 - El suelo se construye con `construyeSuelo(anchos, hueco)` y de ahí sale el ancho del mundo, así que **es imposible dejar la meta o un enemigo flotando sobre un pozo** (el error clásico al alargar un nivel, que ya pasó una vez).
