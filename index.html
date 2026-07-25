@@ -121,7 +121,11 @@
     <button id="attack-btn">TAJO<small>KATANA</small></button>
     <button id="jump-btn">SALTAR</button>
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v20 — 25 jul, katana con alcance y automática · malos más grandes · Instante en grande · sonidos</div>
+  <div id="teclas" style="color:#7c8286;font-size:11px;padding:2px 0;text-align:center;line-height:1.5;flex-shrink:0;">
+    <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
+    <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
+  </div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v21 — 25 jul, la CARA de Brenda en grande · katana con X/ENTER y más teclas</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -267,6 +271,7 @@ class Boot extends Phaser.Scene {
     this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
     this.load.image('aidaHeroReal', 'fotos/aida_hero_real.png'); // ELLA TAL CUAL — recorte real de cuerpo entero (IA de segmentación, rembg/u2net), sin dibujo vectorial de por medio
     this.load.image('brendaHeroReal', 'fotos/brenda_hero_real.png'); // Brenda, por fin con su foto real (Manuel la dejó en fotos/ el 25 jul) — mismo proceso: rembg + u2net_human_seg + crop
+    this.load.image('brendaFace', 'fotos/brenda_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
     this.load.image('ojosInstante', 'fotos/instante_ojos_tile.png'); // mosaico del ojo de la marca, con el blanco pasado a transparente, para el fondo del nivel
     // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
     this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
@@ -779,10 +784,26 @@ class Chapter1 extends Phaser.Scene {
     this.score += 3;
     this.updateHud();
     speakPhrase('¡Voy contigo!');
-    const msg = this.add.text(this.brenda.x, this.brenda.y-40, '¡Voy contigo! +1 ❤️', {
-      fontFamily:'Arial', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:6,right:6,top:3,bottom:3}
+    // FICHA DE PERSONAJE: SU CARA EN GRANDE, en mitad de la pantalla, con su nombre.
+    // Manuel insistió dos veces en "que Brenda tenga su propia cara" — aquí ya no hay forma de no verla.
+    const card = this.add.container(W/2, H*0.42).setScrollFactor(0).setDepth(70);
+    const ring = this.add.circle(0, 0, 64, PALETTE.purple, 1).setStrokeStyle(4, PALETTE.turquoise);
+    const face = this.add.image(0, 0, 'brendaFace').setDisplaySize(120,120);
+    const nombre = this.add.text(0, 82, 'BRENDA', {
+      fontFamily:'Impact', fontSize:'26px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:10,right:10,top:3,bottom:3}
     }).setOrigin(0.5);
-    this.tweens.add({targets:msg, y:msg.y-20, alpha:0, duration:1400, onComplete:()=>msg.destroy()});
+    const sub = this.add.text(0, 112, '¡Voy contigo!  +1 ❤️', {
+      fontFamily:'Arial', fontSize:'14px', color:'#f2c749'
+    }).setOrigin(0.5);
+    card.add([ring, face, nombre, sub]);
+    card.setScale(0.4); card.setAlpha(0);
+    this.tweens.add({targets:card, scale:1, alpha:1, duration:280, ease:'Back.easeOut'});
+    this.tweens.add({targets:card, alpha:0, duration:400, delay:2000, onComplete:()=>card.destroy()});
+    // y su cara se queda fija en el HUD mientras te acompaña, para que se sepa que va contigo
+    // (abajo a la izquierda, no arriba a la derecha: ahí está el botón de silenciar)
+    this.brendaBadge = this.add.image(30, 62, 'brendaFace').setDisplaySize(42,42).setScrollFactor(0).setDepth(60);
+    this.add.circle(30, 62, 23, 0x000000, 0).setStrokeStyle(2, PALETTE.turquoise).setScrollFactor(0).setDepth(60);
+    this.add.text(56, 62, 'contigo', {fontFamily:'Impact', fontSize:'11px', color:'#40ada9'}).setOrigin(0,0.5).setScrollFactor(0).setDepth(60);
   }
 
   meetTutor(){
@@ -823,15 +844,20 @@ class Chapter1 extends Phaser.Scene {
     this.add.text(W/2, H*0.4, '¡CONTRATO FIRMADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
     this.add.text(W/2, H*0.48, '¡OLÉ INSTANTE! ¡VIVA LA AGENCIA INSTANTE!', {fontFamily:'Impact', fontSize:'14px', color:'#e4378c', align:'center', wordWrap:{width:W-60}}).setOrigin(0.5).setScrollFactor(0);
     speakPhrase('¡Contrato firmado! ¡Olé Instante! ¡Viva la agencia Instante!');
-    this.add.text(W/2, H*0.56, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.55, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
+    // las dos socias, con su cara, presidiendo el testimonio que las nombra a las dos
+    this.add.circle(W/2-46, H*0.635, 25, 0x000000, 0).setStrokeStyle(3, PALETTE.yellow).setScrollFactor(0);
+    this.add.image(W/2-46, H*0.635, 'aidaFace').setDisplaySize(46,46).setScrollFactor(0);
+    this.add.circle(W/2+46, H*0.635, 25, 0x000000, 0).setStrokeStyle(3, PALETTE.turquoise).setScrollFactor(0);
+    this.add.image(W/2+46, H*0.635, 'brendaFace').setDisplaySize(46,46).setScrollFactor(0);
     // testimonio REAL de un cliente de Instante, sacado literal de agenciainstante.com — no inventado
-    this.add.text(W/2, H*0.66, '"Recomiendo 100% trabajar con Aida y Brenda.\nSon muy profesionales, muy creativas..."', {
+    this.add.text(W/2, H*0.73, '"Recomiendo 100% trabajar con Aida y Brenda.\nSon muy profesionales, muy creativas..."', {
       fontFamily:'Georgia, serif', fontSize:'11px', color:'#40ada9', fontStyle:'italic', align:'center', wordWrap:{width:W-70}
     }).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.74, '— Gabriel Rodríguez, CEO SinComisiones', {
+    this.add.text(W/2, H*0.80, '— Gabriel Rodríguez, CEO SinComisiones', {
       fontFamily:'Arial', fontSize:'10px', color:'#888', align:'center'
     }).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.82, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'13px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
+    this.add.text(W/2, H*0.88, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'13px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
   }
 
   gameOver(){
@@ -954,11 +980,18 @@ document.getElementById('thesis-input').addEventListener('keydown', e=>{
   e.stopPropagation(); // que las letras no se cuelen como controles del juego
 });
 
+// TECLADO. El tajo de la katana tiene MUCHAS teclas a propósito: Manuel pidió expresamente
+// "poder darle a la katana con una tecla del teclado" y lo importante es que le valga la que pulse,
+// no que acierte con la correcta. Están las de toda la vida (X, Z, Ctrl) más ENTER, MAYÚS,
+// la A y la flecha ABAJO. Las teclas del juego cancelan el scroll de la página.
+const TECLAS_TAJO = ['x','X','z','Z','a','A','Control','Shift','Enter','ArrowDown'];
 document.addEventListener('keydown', e=>{
+  if(e.repeat) return; // que mantener pulsado no dispare cien tajos
   if(e.key==='ArrowLeft') keys.left=true;
   if(e.key==='ArrowRight') keys.right=true;
   if(e.key==='ArrowUp' || e.key===' ') jumpRequested=true;
-  if(e.key==='x' || e.key==='X' || e.key==='z' || e.key==='Z' || e.key==='Control') attackRequested=true; // tecla dedicada para el tajo de la katana (además del botón ⚔️ táctil)
+  if(TECLAS_TAJO.includes(e.key)) attackRequested=true;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
 });
 document.addEventListener('keyup', e=>{
   if(e.key==='ArrowLeft') keys.left=false;
