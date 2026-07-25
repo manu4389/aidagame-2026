@@ -1,6 +1,14 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimocuarta vuelta — build v20)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoquinta vuelta — build v21)
+
+**🕐 CAUSA (al menos parcial) DEL DESFASE, MEDIDA HOY: GitHub Pages tarda entre 30 y 60 s en servir el commit nuevo.** Comprobado con `curl` al desplegar la v21: al primer intento seguía sirviendo la v20; 15 s después ya era la v21. Es decir, **si se le dice a Manuel "ya está subido" y él refresca al instante, se traga la versión anterior**. Protocolo: **antes de avisarle, comprobar con `curl -s <url>/index.html | grep 'build v'` que el número ya es el nuevo** (y de paso que los ficheros nuevos dan HTTP 200, no 404).
+
+**Ronda 15 (build v21) — dos peticiones por voz:**
+- **"Brenda sigue sin tener su propia cara"** (2.ª vez que lo dice). Se verificó que la v20 estaba bien desplegada y que su PNG se servía a 200, así que **no era un fallo, era que su cara se veía pequeña de lejos**. Solución: `fotos/brenda_face.png`, recorte redondo de su cara con borde difuminado, y su cara ahora sale en **TRES sitios**: ficha de personaje casi a pantalla completa al conocerla (con su nombre), insignia fija en el HUD mientras te acompaña, y en la pantalla final junto a Aida presidiendo el testimonio del cliente que las nombra a las dos.
+- **"Poder darle a la katana con una tecla del teclado"** — ya existían X/Z/Ctrl, pero **no se decían en ninguna parte**. Ahora valen **X, Z, A, Ctrl, Mayús, ENTER y flecha ABAJO** (a propósito muchas: lo importante es que le valga la que pulse, no que acierte), se ignora la repetición de tecla mantenida, y hay una **línea de ayuda bajo los controles** que las nombra. **Lección: si pide algo que YA existe, casi siempre el problema es que no era descubrible — no repetir "ya está", hacerlo visible.**
+
+## Ronda 14 (build v20)
 
 **🔴 MANUEL ESTABA VIENDO LA v18 CUANDO PIDIÓ LA v19.** En su feedback del 25 jul pidió literalmente "Brenda tiene que tener la cara que te he pasado" y "puedes poner el ojo de Instante al fondo" — **las dos cosas ya estaban subidas en la v19 desde hacía un rato**. Es decir: **el desfase de caché es REAL y sigue pasando**, no era una sospecha. **Protocolo obligatorio: cuando diga que algo no está, lo PRIMERO es preguntarle qué build ve abajo del todo**, antes de tocar una sola línea. Pista descartada esta vez: `sw.js` NO existía, así que no había service worker cacheando; el registro muerto se quitó. La caché es del navegador/GitHub Pages sin más.
 
