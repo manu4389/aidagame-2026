@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v29 — 25 jul, la risa malvada del Bigote (MUAJAJAJA) antes de la amenaza de Instante</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v30 — 25 jul, música propia en cada capítulo: FLAMENQUITO en el Corpus de Instante</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -249,6 +249,7 @@ const sfxHurt  = s => playBlip(s, 400,   90, 0.30, 'sawtooth', 0.34);
 let currentMusic = null;
 let isMuted = false;
 function playMusic(scene, key, opts){
+  if(typeof paraMusicaPropia === 'function') paraMusicaPropia(); // que no se solapen
   opts = opts || {};
   const loop = opts.loop !== undefined ? opts.loop : true;
   const volume = opts.volume !== undefined ? opts.volume : 0.45;
@@ -261,7 +262,217 @@ function playMusic(scene, key, opts){
 function toggleMute(){
   isMuted = !isMuted;
   if(currentMusic) currentMusic.setVolume(isMuted ? 0 : currentMusic.baseVolume);
+  if(motorMusica) motorMusica.master.gain.value = isMuted ? 0 : motorMusica.volBase;
   document.getElementById('mute-btn').textContent = isMuted ? '🔇' : '🔊';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MÚSICA PROPIA DE CADA CAPÍTULO — sintetizada aquí mismo (Web Audio)
+   Manuel: "en la de Corpus pon algo de flamenquito, en vez de la música de
+   siempre". En vez de bajar pistas de terceros (licencias, peso, permisos),
+   se toca en directo en el navegador: guitarra de cuerda pulsada de verdad
+   (Karplus-Strong), palmas, cajón y bajo. Cero ficheros, cero licencias, y
+   cada capítulo suena distinto.
+   ══════════════════════════════════════════════════════════════════════════ */
+let motorMusica = null;   // el que esté sonando ahora, para poder pararlo
+
+// notas -> frecuencia (La4 = 440)
+const NOTA = {
+  E2:82.41, F2:87.31, G2:98.00, A2:110.00, B2:123.47, C3:130.81, D3:146.83,
+  E3:164.81, F3:174.61, G3:196.00, Gs3:207.65, A3:220.00, B3:246.94, C4:261.63,
+  D4:293.66, E4:329.63, F4:349.23, Gs4:415.30, A4:440.00, B4:493.88, C5:523.25, E5:659.25,
+};
+
+/* cuerda pulsada de verdad: Karplus-Strong (ruido + retardo con promediado).
+   Suena a guitarra española, no a pitido de sintetizador. */
+const _cacheCuerda = new Map();
+function bufferCuerda(ctx, freq, dur){
+  const clave = Math.round(freq*2) + '|' + Math.round(dur*20);
+  let buf = _cacheCuerda.get(clave);
+  if(buf) return buf;
+  const N = Math.max(2, Math.round(ctx.sampleRate/freq));
+  buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  const anillo = new Float32Array(N);
+  for(let i=0;i<N;i++) anillo[i] = Math.random()*2-1;
+  let k = 0;
+  for(let i=0;i<d.length;i++){
+    const actual = anillo[k], siguiente = anillo[(k+1)%N];
+    d[i] = actual;
+    anillo[k] = (actual + siguiente) * 0.5 * 0.996;   // el 0.996 es cuánto tarda en apagarse
+    k = (k+1)%N;
+  }
+  _cacheCuerda.set(clave, buf);
+  return buf;
+}
+function cuerda(ctx, dest, freq, t, dur, vol){
+  const src = ctx.createBufferSource(); src.buffer = bufferCuerda(ctx, freq, dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  src.connect(g); g.connect(dest);
+  src.start(t);
+}
+
+/* rasgueo: las cuerdas del acorde una detrás de otra, muy juntas — eso es lo que
+   distingue un rasgueo flamenco de tocar un acorde de golpe */
+function rasgueo(ctx, dest, notas, t, vol, arriba){
+  const orden = arriba ? notas : notas.slice().reverse();
+  orden.forEach((n,i)=> cuerda(ctx, dest, NOTA[n], t + i*0.014, 1.1, vol*(0.75+i*0.06)));
+}
+
+/* palmas: ruido corto y seco, filtrado, con un pelín de variación para que no
+   suene a máquina (dos palmeros nunca dan igual) */
+let _cachePalmas = null;
+function palma(ctx, dest, t, vol){
+  const dur = 0.09;
+  if(!_cachePalmas){
+    _cachePalmas = [];
+    for(let v=0;v<6;v++){                       // 6 palmas distintas: dos palmeros nunca dan igual
+      const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+      const dd = b.getChannelData(0);
+      for(let i=0;i<dd.length;i++) dd[i] = (Math.random()*2-1) * Math.pow(1-i/dd.length, 2.2);
+      _cachePalmas.push(b);
+    }
+  }
+  const src = ctx.createBufferSource(); src.buffer = _cachePalmas[(Math.random()*6)|0];
+  const f = ctx.createBiquadFilter();
+  f.type='bandpass'; f.frequency.value = 1500 + Math.random()*900; f.Q.value = 1.1;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol*(0.85+Math.random()*0.3), t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  src.connect(f); f.connect(g); g.connect(dest);
+  src.start(t);
+}
+
+/* golpe grave: sirve de cajón, de bombo y de bajo según la frecuencia */
+function golpe(ctx, dest, t, f0, f1, dur, vol, tipo){
+  const o = ctx.createOscillator();
+  o.type = tipo || 'sine';
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t+dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol, t);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(dest);
+  o.start(t); o.stop(t+dur+0.02);
+}
+
+/* nota de sintetizador con filtro, para los capítulos que no son flamencos */
+function sinte(ctx, dest, freq, t, dur, vol, tipo, corte){
+  const o = ctx.createOscillator();
+  o.type = tipo || 'sawtooth';
+  o.frequency.setValueAtTime(freq, t);
+  const f = ctx.createBiquadFilter();
+  f.type='lowpass';
+  f.frequency.setValueAtTime(corte || 1800, t);
+  f.frequency.exponentialRampToValueAtTime(420, t+dur);
+  f.Q.value = 6;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t+0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(f); f.connect(g); g.connect(dest);
+  o.start(t); o.stop(t+dur+0.02);
+}
+
+/* ---------- LOS ESTILOS: un compás por función ---------- */
+// CORPUS — tangos flamencos en 4/4, cadencia andaluza (Am-G-F-E), palmas a
+// contratiempo y rasgueo. Es lo que pidió: flamenquito.
+const ACORDES_ANDALUZ = [
+  ['A2','E3','A3','C4','E4'],   // Am
+  ['G2','D3','G3','B3','D4'],   // G
+  ['F2','C3','F3','A3','C4'],   // F
+  ['E2','B2','E3','Gs3','B3'],  // E  ← el que hace que suene a flamenco
+];
+function compasFlamenco(ctx, dest, t, compas, tiempo){
+  const ac = ACORDES_ANDALUZ[compas % 4];
+  rasgueo(ctx, dest, ac, t,              0.16, false);
+  rasgueo(ctx, dest, ac, t + tiempo*1.5, 0.10, true);
+  rasgueo(ctx, dest, ac, t + tiempo*2.5, 0.13, false);
+  rasgueo(ctx, dest, ac, t + tiempo*3.5, 0.09, true);
+  // palmas: los tangos van a 2 y 4, con un remate en el 4 y medio
+  [1, 3, 3.5].forEach(b=> palma(ctx, dest, t + tiempo*b, 0.16));
+  if(compas % 2 === 1) palma(ctx, dest, t + tiempo*2.5, 0.11);
+  // cajón
+  [0, 2].forEach(b=> golpe(ctx, dest, t + tiempo*b, 150, 55, 0.16, 0.30));
+  // falseta suelta cada cuatro compases, para que respire
+  if(compas % 4 === 3){
+    ['A4','G3','F3','E3'].forEach((n,i)=> cuerda(ctx, dest, NOTA[n], t + tiempo*(2+i*0.4), 0.9, 0.13));
+  }
+}
+
+// LA BARRA — neón: arpegio de sintetizador y bombo a negras
+function compasNeon(ctx, dest, t, compas, tiempo){
+  const escalas = [['A3','C4','E4','A4'], ['G3','B3','D4','G3'], ['F3','A3','C4','F3'], ['E3','Gs3','B3','E4']];
+  const arp = escalas[compas % 4];
+  for(let i=0;i<8;i++) sinte(ctx, dest, NOTA[arp[i%4]] * (i>=4?2:1), t + tiempo*i*0.5, 0.26, 0.075, 'sawtooth', 2400);
+  for(let b=0;b<4;b++) golpe(ctx, dest, t + tiempo*b, 130, 44, 0.17, 0.34);
+  [1,3].forEach(b=> palma(ctx, dest, t + tiempo*b, 0.10));
+  golpe(ctx, dest, t, NOTA[['A2','G2','F2','E2'][compas%4]], NOTA[['A2','G2','F2','E2'][compas%4]], tiempo*3.6, 0.16, 'triangle');
+}
+
+// LA MILLA — carrera: pulso rápido y brillante, para correr
+function compasCarrera(ctx, dest, t, compas, tiempo){
+  const notas = [['A3','E4','A4','E4'], ['G3','D4','G4','D4'], ['F3','C4','F4','C4'], ['E3','B3','E4','B3']][compas%4];
+  for(let i=0;i<8;i++) sinte(ctx, dest, NOTA[notas[i%4]]||440, t + tiempo*i*0.5, 0.18, 0.06, 'square', 3000);
+  for(let b=0;b<4;b++) golpe(ctx, dest, t + tiempo*b, 120, 42, 0.14, 0.30);
+  for(let b=0;b<8;b++) palma(ctx, dest, t + tiempo*(b*0.5+0.25), 0.055);
+}
+
+// INSTANTE HQ — tensión de oficina: bordón grave y pinchazos sueltos
+function compasOficina(ctx, dest, t, compas, tiempo){
+  golpe(ctx, dest, t, NOTA.E2, NOTA.E2, tiempo*4, 0.13, 'sawtooth');
+  const pin = [['A3','C4'],['G3','B3'],['F3','A3'],['E3','Gs3']][compas%4];
+  pin.forEach((n,i)=> sinte(ctx, dest, NOTA[n], t + tiempo*(i*1.5), 0.7, 0.075, 'triangle', 1100));
+  golpe(ctx, dest, t, 160, 50, 0.2, 0.26);
+  if(compas%2===1) golpe(ctx, dest, t + tiempo*2.5, 160, 50, 0.18, 0.20);
+  if(compas%4===3) palma(ctx, dest, t + tiempo*3.5, 0.12);
+}
+
+// volúmenes medidos con el pico real de cada estilo (0,29-0,49) para que suenen igual de
+// fuerte que la música de fichero de antes, sin llegar a saturar
+const ESTILOS = {
+  flamenco: {bpm:104, compas: compasFlamenco, vol:1.00},
+  neon:     {bpm:124, compas: compasNeon,     vol:0.85},
+  carrera:  {bpm:150, compas: compasCarrera,  vol:1.05},
+  oficina:  {bpm: 92, compas: compasOficina,  vol:0.95},
+};
+
+/* arranca la banda: va escribiendo compases por delante, con un poco de colchón,
+   para que no se oigan cortes aunque el navegador vaya justo */
+function arrancaMusicaPropia(scene, estilo){
+  paraMusicaPropia();
+  if(currentMusic){ currentMusic.stop(); currentMusic = null; }
+  const cfg = ESTILOS[estilo];
+  const ctx = scene.sound.context;
+  if(!cfg || !ctx) return null;
+  const master = ctx.createGain();
+  master.gain.value = isMuted ? 0 : cfg.vol;
+  master.connect(ctx.destination);
+  const tiempo = 60/cfg.bpm;         // duración de una negra
+  const largoCompas = tiempo*4;
+  let compas = 0;
+  let siguiente = ctx.currentTime + 0.15;
+  const escribe = ()=>{
+    // escribe todo lo que quepa en el próximo segundo y medio
+    while(siguiente < ctx.currentTime + 1.5){
+      cfg.compas(ctx, master, siguiente, compas, tiempo);
+      siguiente += largoCompas;
+      compas++;
+    }
+  };
+  escribe();
+  const reloj = scene.time.addEvent({delay:500, loop:true, callback:escribe});
+  motorMusica = {
+    master, reloj, volBase: cfg.vol,
+    para(){ try{ reloj.remove(); master.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+                 setTimeout(()=>{ try{ master.disconnect(); }catch(e){} }, 400); }catch(e){} },
+  };
+  return motorMusica;
+}
+function paraMusicaPropia(){
+  if(motorMusica){ motorMusica.para(); motorMusica = null; }
 }
 
 /* ---------- BOOT / PRELOAD ---------- */
@@ -454,7 +665,7 @@ const ENEMIGOS = {
 // t = índice del TRAMO de suelo donde va la cosa; off = desplazamiento desde su centro.
 const CAPITULOS = [
   {
-    n:1, key:'Cap1', nombre:'El Contrato', sub:'que no se te escape entre papeleo y machirulos',
+    n:1, musica:'western', key:'Cap1', nombre:'El Contrato', sub:'que no se te escape entre papeleo y machirulos',
     anchos:[560,500,520,480,520,460,380,300], hueco:100,
     cielo:[0x3a1113, 0x140a0a], camara:'#2a0f10', estilo:'granada_noche',
     rotulosRojos:['LA COMPETENCIA VIGILA','QUIEREN QUEDARSE\nCON INSTANTE','OFERTA PARA COMPRAROS'],
@@ -469,7 +680,7 @@ const CAPITULOS = [
     meta:{tipo:'contrato', titulo:'¡CONTRATO FIRMADO!', grito:'¡Olé Instante! ¡Viva la agencia Instante!'},
   },
   {
-    n:2, key:'Cap2', nombre:'Corpus', sub:'lunares, volantes y ni un paso en falso',
+    n:2, musica:'flamenco', key:'Cap2', nombre:'Corpus', sub:'lunares, volantes y ni un paso en falso',
     anchos:[520,480,500,460,500,440,320], hueco:100,
     cielo:[0x2b1450, 0x120626], camara:'#1a0b2e', estilo:'corpus',
     rotulosRojos:['SE CIERRA LA CASETA','NO HAY SITIO EN LA BARRA'],
@@ -482,7 +693,7 @@ const CAPITULOS = [
     meta:{tipo:'farolillo', titulo:'¡EL CORPUS ES TUYO!', grito:'¡Y olé, olé, los caracoles!'},
   },
   {
-    n:3, key:'Cap3', nombre:'La Barra', sub:'con Conchita, y que mire quien quiera',
+    n:3, musica:'neon', key:'Cap3', nombre:'La Barra', sub:'con Conchita, y que mire quien quiera',
     anchos:[500,460,480,460,480,440,320], hueco:105,
     cielo:[0x0d2b2a, 0x05100f], camara:'#07100f', estilo:'neon',
     rotulosRojos:['¿ESO NO ES DE...?','LA GENTE HABLA'],
@@ -497,7 +708,7 @@ const CAPITULOS = [
     meta:{tipo:'barra', titulo:'¡ARRIBA DEL TODO!', grito:'¡Qué arte, mi coño moreno!'},
   },
   {
-    n:4, key:'Cap4', nombre:'La Milla', sub:'contrarreloj: Granada entera antes de que se acabe el tiempo',
+    n:4, musica:'carrera', key:'Cap4', nombre:'La Milla', sub:'contrarreloj: Granada entera antes de que se acabe el tiempo',
     anchos:[520,480,500,480,500,480,440,320], hueco:110,
     cielo:[0x2f6fa8, 0x8fc3e0], camara:'#3b7db4', estilo:'calle_dia',
     rotulosRojos:['SE TE VA EL TIEMPO','QUEDA CUESTA'],
@@ -511,7 +722,7 @@ const CAPITULOS = [
     meta:{tipo:'meta', titulo:'¡MILLA COMPLETADA!', grito:'¡Lo que sucede conviene, los cojones!'},
   },
   {
-    n:5, key:'Cap5', nombre:'Instante HQ', sub:'tu gente está encerrada y el Cliente Imposible te espera',
+    n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'tu gente está encerrada y el Cliente Imposible te espera',
     anchos:[520,480,500,480,520,480,380], hueco:100,
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
     rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
@@ -590,7 +801,16 @@ class Capitulo extends Phaser.Scene {
     this.win = false; this.respawnX = 80; this.saltoExtra = false; this.saltosDados = 0;
     this.drawBackground();
 
-    this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.7}); });
+    // MÚSICA PROPIA DE CADA CAPÍTULO (Manuel: "en la de Corpus, flamenquito, no la de siempre").
+    // Entra cuando se apaga la fanfarria de Verdi. El Vol. 1 conserva el silbido de spaghetti
+    // western, que es su referencia de Kill Bill y ya le gustaba.
+    this.time.delayedCall(8500, ()=>{
+      if(!this.sys.isActive()) return;
+      if(C.musica && C.musica !== 'western') arrancaMusicaPropia(this, C.musica);
+      else playMusic(this, 'tension', {loop:true, volume:0.7});
+    });
+    // al salir del capítulo, que se calle
+    this.events.once('shutdown', ()=> paraMusicaPropia());
     // cada capítulo arranca con SU frase y tiene SUS frases: antes los cinco empezaban igual
     // y decían lo mismo (Manuel: "todas las pantallas dicen lo mismo y empiezan haciendo lo mismo")
     this.frases = (C.frases || []).concat(CATCHPHRASES);
