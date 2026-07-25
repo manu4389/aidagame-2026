@@ -1,6 +1,19 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimotercera vuelta — build v19)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimocuarta vuelta — build v20)
+
+**🔴 MANUEL ESTABA VIENDO LA v18 CUANDO PIDIÓ LA v19.** En su feedback del 25 jul pidió literalmente "Brenda tiene que tener la cara que te he pasado" y "puedes poner el ojo de Instante al fondo" — **las dos cosas ya estaban subidas en la v19 desde hacía un rato**. Es decir: **el desfase de caché es REAL y sigue pasando**, no era una sospecha. **Protocolo obligatorio: cuando diga que algo no está, lo PRIMERO es preguntarle qué build ve abajo del todo**, antes de tocar una sola línea. Pista descartada esta vez: `sw.js` NO existía, así que no había service worker cacheando; el registro muerto se quitó. La caché es del navegador/GitHub Pages sin más.
+
+**Ronda 14 (build v20), pedido por voz y ya hecho:**
+- **"La espada tiene que tener un botón específico o que se accione sola"** → LAS DOS. (a) La katana ahora **tiene alcance de verdad**: mata a quien tenga delante (de −24 a +96 px), en vez de exigir que el cuerpo tocara al enemigo justo en los 160 ms del tajo — **esto era un fallo real de diseño, por eso atacar "no hacía nada" si no la pegabas pegadísima**. (b) **Se acciona sola**: si un malo entra a menos de 92 px, ella se gira hacia él y tira el tajo sin que Manuel toque nada. (c) El botón TAJO sigue estando, más grande (78 px) y con la palabra KATANA debajo.
+- **"Los malos más grandes para que se vean"** → 56 → 76 px, con sombra y etiqueta a juego.
+- **"Brenda tiene que tener la cara que te he pasado"** → ya la tenía (v19); se le sube el tamaño a 92×169 para que la cara se lea sin dudas.
+- **"Todo mucho más los colores de Instante y el fondo en grande"** → mosaico de ojos a escala 1.7, **cinco ojos gigantes** de fondo, collage de círculos y barras planas en los 4 colores de marca (parallax 0.22) y una franja turquesa/rosa/amarilla fija en pantalla.
+- **"Tienen que sonar también"** → sonidos nuevos de moneda, bonus, salto y daño (`playBlip` + los cuatro `sfx*`), además del impacto del tajo que ya se añadió en la v18.
+
+**Ojo con el equilibrio del juego:** con el tajo automático los enemigos caen prácticamente solos. Es lo que pidió (jugabilidad por encima de dificultad), pero **si algún día dice "es muy fácil", el sitio donde tocar es el bloque de auto-tajo en `update()`** — subir el cooldown (ahora 360 ms) o bajar el radio (92 px).
+
+## Ronda 13 (build v19)
 
 **✅ RESUELTO EL BLOQUEANTE MÁS VIEJO DEL PROYECTO: Brenda ya tiene su foto real en el juego.** Manuel dejó los archivos directamente en `fotos/` (esa es la vía que funciona: **soltar los ficheros en la carpeta**, NO pegarlos en el chat) y confirmó por fin quién es quién: **Brenda es la del pelo oscuro liso, brazos cruzados y vestido gris**; la otra foto de esa pareja es Aida. Recortada con `rembg` + `u2net_human_seg` → `fotos/brenda_hero_real.png` (323×592), ya sustituye al emoji 💁‍♀️, con sombra en el suelo y etiqueta encima. Sigue peleando como aliada.
 
