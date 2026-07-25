@@ -1,6 +1,16 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimosexta vuelta — build v22)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoséptima vuelta — build v23)
+
+**🔧 TÉCNICA NUEVA QUE FUNCIONA — MONTAR UN PNG Y MIRARLO.** Este entorno no renderiza Phaser (frames clavados en 0), pero **sí puede componer una imagen con PIL y leerla**. Cuando haya que juzgar tamaños, proporciones o encuadres, **montar las piezas a tamaño real de juego sobre una línea de suelo, guardarlo en el scratchpad y abrirlo con `Read`**. Es lo que por fin resolvió lo de Brenda. **Usar esto siempre antes de dar por buena una proporción.**
+
+**⚠️ Y LA LECCIÓN QUE VA CON ELLO: una medición puede engañar y hay que contrastarla mirando.** En la ronda 16 se midió el "ancho de cabeza" de cada foto y salió que Aida a 160 y Brenda a 150 quedaban igualadas. **Era falso**: el peinado y la flor de la foto de flamenca hinchaban la medida de Aida, y Brenda seguía siendo un gigante — Manuel lo vio al instante. Al montarlo y mirarlo, la escala real resultó ser **Aida 168 / Brenda 96**, muy lejos de lo que decía el número.
+
+**Ronda 17 (build v23):**
+- **Tamaños, 2.º intento y ya validado a ojo:** Aida **168**, Brenda **96**. Katana y cigarrillo recolocados (×1,12 sobre el original de 150). **Brenda sale bajita a propósito**: su foto está cortada a medio muslo, así que para que su cara case con la de Aida tiene que ir a esa altura. 🔴 **Si Manuel quiere a Brenda alta Y proporcionada, hace falta una foto suya DE CUERPO ENTERO** — no hay forma de sacarla de la que hay.
+- **"Está demasiado recargado, no se aprecian ni las plataformas"** → fuera las franjas de collage de la cara frontal del suelo y el ojo grabado cada 170px (queda **uno por tramo al 12%**); se mantiene el **filo de color por tramo**, que es lo que hace legible dónde se pisa. Todo el fondo de marca bajado: mosaico de ojos 0,17→0,09, ojos gigantes 0,20→0,12 y de 5 a 3, collage de fondo de 18 a 10 piezas y a la mitad de opacidad, capa cercana de 14 a 6, ojo rojo 0,30→0,18. **Los rótulos de la narrativa se bajan poco a propósito: son los que cuentan la historia.**
+
+## Ronda 16 (build v22)
 
 **🐛 BUG DE FONDO GORDO, ENCONTRADO Y ARREGLADO — apuntar la regla, que se repetirá:** un objeto con `scrollFactor` s **solo llega a verse si su x del mundo cae dentro de `[0, s*(WORLD_W-W) + W]`**. Todo el decorado estaba repartido a lo largo de los 3600px del mundo sin tener eso en cuenta, así que **buena parte NO SE VEÍA NUNCA**: de los 3 soles solo aparecía 1, se perdían 4 torres de la Alhambra, 3 edificios del skyline y casi todos los rótulos de marca. Ahora hay un helper `reparte(n, sf)` en `drawBackground()` que coloca cada capa dentro de su alcance real, y una comprobación numérica que confirma que las 10 capas se ven enteras. **Siempre que se añada algo al fondo con scrollFactor, usar `reparte()` — no poner x a mano.**
 
