@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v26 — 25 jul, Manuel y Diego con su cara real en el cameo final</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v27 — 25 jul, la familia con su cara · Conchita gimnasta · ya se instala en el móvil</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -276,7 +276,10 @@ class Boot extends Phaser.Scene {
     // (retrato profesional suyo en B/N de 07_PERSONAL_FAMILIA\MEDIA\_retratos_manu, y Diego
     //  Prados de la foto que él mismo dejó en fotos/). Falta mamá: no hay ninguna identificable.
     this.load.image('manuelFace', 'fotos/manuel_face.png');
-    this.load.image('primoFace', 'fotos/primo_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
+    this.load.image('primoFace', 'fotos/primo_face.png');
+    // mamá (Belén): su retrato estaba en el juego que Manuel le hizo a ella, en Escritorio\JUEGO_MAMA.
+    // Se reutiliza incluso SU MISMO encuadre (CROPS.mama de aquel index.html), que él ya dio por bueno.
+    this.load.image('mamaFace', 'fotos/mama_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
     this.load.image('ojosInstante', 'fotos/instante_ojos_tile.png'); // mosaico del ojo de la marca, con el blanco pasado a transparente, para el fondo del nivel
     // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
     this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
@@ -710,13 +713,21 @@ class Capitulo extends Phaser.Scene {
       this.aliada = this.add.container(ax, GROUND_Y-84);
       const cuerpo = this.add.graphics();
       cuerpo.fillStyle(PALETTE.pink, 1);
-      cuerpo.fillCircle(0,-52,15);                       // cabeza
-      cuerpo.fillRoundedRect(-11,-36,22,46,9);           // torso
-      cuerpo.fillRoundedRect(-20,-30,10,34,5);           // brazo agarrado a la barra
-      cuerpo.fillRoundedRect(-9,8,9,44,4); cuerpo.fillRoundedRect(2,8,9,38,4); // piernas
-      cuerpo.lineStyle(3, PALETTE.turquoise, 0.9); cuerpo.strokeCircle(0,-52,19);
-      const barra = this.add.rectangle(-26, -18, 6, 168, 0xdfe6ea).setAlpha(0.85);
-      this.aliada.add([barra, cuerpo]);
+      cuerpo.fillCircle(0,-54,15);                        // cabeza
+      cuerpo.fillCircle(-13,-58,7); cuerpo.fillCircle(13,-58,7); // moño recogido de gimnasta
+      cuerpo.fillRoundedRect(-11,-38,22,44,9);            // maillot
+      cuerpo.fillRoundedRect(-40,-46,32,9,4.5);           // brazo izquierdo en alto, estirado
+      cuerpo.fillRoundedRect(10,-30,30,9,4.5);            // brazo derecho abierto
+      cuerpo.fillRoundedRect(-8,4,9,48,4);                // pierna de apoyo
+      cuerpo.fillRoundedRect(4,4,42,9,4.5);               // la otra pierna, en spagat
+      cuerpo.lineStyle(3, PALETTE.turquoise, 0.9); cuerpo.strokeCircle(0,-54,20);
+      // la cinta de gimnasia rítmica, ondeando desde su mano
+      const cinta = this.add.graphics();
+      cinta.lineStyle(4, PALETTE.yellow, 0.95);
+      cinta.beginPath(); cinta.moveTo(-40,-46);
+      for(let i=1;i<=22;i++){ const t=i/22; cinta.lineTo(-40-t*54, -46 + Math.sin(t*7)*24 - t*10); }
+      cinta.strokePath();
+      this.aliada.add([cinta, cuerpo]);
       this.physics.add.existing(this.aliada);
       this.aliada.body.setSize(70, 168).setOffset(-35,-84);
       this.aliadaNombre = 'CONCHITA';
@@ -1139,7 +1150,7 @@ class Capitulo extends Phaser.Scene {
     const ring = this.add.circle(0, 0, 64, PALETTE.purple, 1).setStrokeStyle(4, PALETTE.turquoise);
     const cara = this.aliadaCara
       ? this.add.image(0, 0, this.aliadaCara).setDisplaySize(120,120)
-      : this.add.text(0, 0, '💃', {fontSize:'78px'}).setOrigin(0.5);
+      : this.add.text(0, 0, '🤸‍♀️', {fontSize:'70px'}).setOrigin(0.5);
     const nombre = this.add.text(0, 82, this.aliadaNombre, {
       fontFamily:'Impact', fontSize:'26px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:10,right:10,top:3,bottom:3}
     }).setOrigin(0.5);
@@ -1152,7 +1163,7 @@ class Capitulo extends Phaser.Scene {
     if(this.aliadaCara){
       this.add.image(30, 62, this.aliadaCara).setDisplaySize(42,42).setScrollFactor(0).setDepth(60);
     } else {
-      this.add.text(30, 62, '💃', {fontSize:'30px'}).setOrigin(0.5).setScrollFactor(0).setDepth(60);
+      this.add.text(30, 62, '🤸‍♀️', {fontSize:'26px'}).setOrigin(0.5).setScrollFactor(0).setDepth(60);
     }
     this.add.circle(30, 62, 23, 0x000000, 0).setStrokeStyle(2, PALETTE.turquoise).setScrollFactor(0).setDepth(60);
     this.add.text(56, 62, 'contigo', {fontFamily:'Impact', fontSize:'11px', color:'#40ada9'}).setOrigin(0,0.5).setScrollFactor(0).setDepth(60);
@@ -1337,7 +1348,7 @@ class Final extends Phaser.Scene {
     this.add.image(cx, 176, 'aidaFace').setDisplaySize(104,104);
     const gente = [
       {x:cx-116, y:150, cara:'brendaFace', nom:'BRENDA'},
-      {x:cx+116, y:150, emoji:'👩',        nom:'MAMÁ'},
+      {x:cx+116, y:150, cara:'mamaFace',   nom:'MAMÁ'},
       {x:cx-116, y:246, cara:'primoFace',  nom:'DIEGO'},
       {x:cx+116, y:246, cara:'manuelFace', nom:'MANUEL'},
     ];
@@ -1430,9 +1441,12 @@ document.addEventListener('keyup', e=>{
   if(e.key==='ArrowRight') keys.right=false;
 });
 
-// (Quitado el registro del service worker: `sw.js` NO existe en este proyecto todavía, así que
-//  fallaba siempre y llenaba la consola de avisos que tapaban los errores de verdad.
-//  Cuando se haga la Fase 6 (PWA) se vuelve a poner, junto con el sw.js y el manifest.json.)
+// PWA: ya se puede instalar en el móvil, con su icono. El sw.js es NETWORK-FIRST para el HTML
+// (ver el comentario de arriba del propio sw.js): la página se pide siempre a la red, así que
+// NO puede volver el problema de ver versiones viejas. Solo las fotos y el audio van de caché.
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
