@@ -1,6 +1,14 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoséptima vuelta — build v23)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoctava vuelta — build v24)
+
+**🔧 LA TÉCNICA QUE HAY QUE USAR SIEMPRE: MAQUETAR LA PANTALLA EN UN PNG Y MIRARLA.** Phaser no renderiza aquí, pero **PIL sí puede recomponer la pantalla entera** —capas de parallax con sus scrollFactor y sus alphas, el suelo, los personajes a tamaño real— y luego se abre con `Read`. Hecho en esta ronda: al mirarlo se vio de golpe que el mosaico de ojos era papel pintado y que Brenda seguía descompensada. **Dos rondas de "no, sigue mal" se habrían ahorrado maquetando antes.** El script está en el historial de esta sesión; rehacerlo es media hora bien gastada cuando haya que juzgar cualquier cosa visual.
+
+**Ronda 18 (build v24) — Manuel: "siguen descompensadas y sigue muy recargado":**
+- **Brenda, 3.er intento y por fin resuelto.** El problema **no tenía solución limpia** y hubo que decírselo: la foto de Aida es de cuerpo entero y la de Brenda está cortada a medio muslo, así que **igualar la altura le dejaba la cara enorme e igualar la cara la dejaba enana**. Se le montaron **tres opciones en un PNG a tamaño real** (`_opciones_brenda.png`, ignorado en git) y **eligió la C**: Brenda a la escala buena del mundo (97px, cabeza a la misma altura y del mismo tamaño que la de Aida) con un **mostrador de Instante delante que tapa las piernas que su foto no tiene**; al unirse, el mostrador la acompaña. 🔴 **Sigue en pie: con una foto suya DE CUERPO ENTERO esto se resuelve sin muleta.**
+- **Fondo, 2.ª poda.** Lo que de verdad recargaba era **el mosaico de ojos de pared a pared** (quitado; si se recupera, al 4% como mucho) y **el "AIDA" gigante** (quitado: era una mancha amarilla y encima sobraba, porque Aida ya está en pantalla). Además: ojos grandes 3→2 y 0,12→0,07 · ojo rojo 3→2 y 0,18→0,13 · collage de fondo 10→6 piezas a media opacidad · capa cercana 6→4 · ojo del suelo 0,12→0,08 · "INSTANTE" de 46px a 30px y de 5 a 3. **Los rótulos de la narrativa se mantienen legibles a propósito: son los que cuentan la historia y no tapan el suelo.**
+
+## Ronda 17 (build v23)
 
 **🔧 TÉCNICA NUEVA QUE FUNCIONA — MONTAR UN PNG Y MIRARLO.** Este entorno no renderiza Phaser (frames clavados en 0), pero **sí puede componer una imagen con PIL y leerla**. Cuando haya que juzgar tamaños, proporciones o encuadres, **montar las piezas a tamaño real de juego sobre una línea de suelo, guardarlo en el scratchpad y abrirlo con `Read`**. Es lo que por fin resolvió lo de Brenda. **Usar esto siempre antes de dar por buena una proporción.**
 
