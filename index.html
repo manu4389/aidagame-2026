@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v37 — 25 jul, ARREGLADO el Vol. 5, que reventaba al empezar (faltaba el bloque del ángel)</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v38 — 25 jul, la intro ya NO se puede quedar pillada: pasa sola cada 4,5 s</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -559,13 +559,20 @@ class Intro extends Phaser.Scene {
     this.smallText = this.add.text(this.cx, this.cy+56, '', {
       fontFamily:'Georgia, serif', fontSize:'15px', color:'#ffffff', align:'center', lineSpacing:6, wordWrap:{width:W-70}
     }).setOrigin(0.5).setAlpha(0);
-    this.hint = this.add.text(this.cx, H-24, 'toca para seguir', {
+    this.hint = this.add.text(this.cx, H-24, 'pasa sola · toca para ir más rápido', {
       fontFamily:'Arial', fontSize:'12px', color:'#40ada9'
     }).setOrigin(0.5).setAlpha(0.7);
-    this.skip = this.add.text(W-10, 10, 'saltar ›', {fontFamily:'Arial', fontSize:'12px', color:'#68416c'})
-      .setOrigin(1,0).setInteractive({useHandCursor:true});
+    // ⚠️ EL BOTÓN DE SALTAR VA ABAJO, NO ARRIBA A LA DERECHA: ahí está el botón de silenciar,
+    // que es un elemento HTML por encima del canvas y se lo comía. Se veía medio tapado y no
+    // se podía pulsar. Ahora es un botón grande, con su recuadro, imposible de no ver.
+    this.skip = this.add.text(W-14, H-52, 'SALTAR ›', {
+      fontFamily:'Impact', fontSize:'14px', color:'#141617', backgroundColor:'#f2c749',
+      padding:{left:10,right:10,top:5,bottom:5}
+    }).setOrigin(1,0.5).setInteractive({useHandCursor:true});
     this.skip.on('pointerdown', ()=> this.goTitle());
-    this.input.on('pointerdown', (p)=>{ if(p.y < H-40) this.next(); });
+    // TODA la pantalla avanza (antes la franja de abajo no hacía nada y parecía que se colgaba)
+    this.input.on('pointerdown', (p)=>{ if(!this.skip.getBounds().contains(p.x, p.y)) this.next(); });
+    this.input.keyboard.on('keydown', ()=> this.next());
     this.showBeat();
   }
   showBeat(){
@@ -573,14 +580,35 @@ class Intro extends Phaser.Scene {
     this.bigText.setText(b.big).setFontSize(b.tarantino ? '22px':'34px').setColor(b.tarantino ? '#ffffff':'#f2c749');
     this.smallText.setText(b.small).setFontSize(b.smallSize || (b.tarantino ? '30px':'15px')).setColor(b.tarantino ? '#f2c749':'#ffffff')
       .setFontFamily(b.tarantino ? 'Impact, Arial Narrow, sans-serif':'Georgia, serif');
+    this.tweens.killTweensOf([this.bigText, this.smallText]);   // que no se peleen dos desvanecidos
     this.bigText.setAlpha(0); this.smallText.setAlpha(0);
     this.tweens.add({targets:[this.bigText,this.smallText], alpha:1, duration:500});
+    // ⚠️ LO IMPORTANTE: la intro era la ÚNICA pantalla del juego que solo avanzaba al tocar.
+    // Si un toque no entraba —por lo que fuera— te quedabas ahí para siempre, como le pasó a
+    // Manuel en la última cartela. Ahora pasa sola cada 4,5 s, igual que el resto de narrativas:
+    // tocar solo sirve para ir más rápido. Así es IMPOSIBLE que se quede pillada.
+    if(this.reloj) this.reloj.remove();
+    this.reloj = this.time.delayedCall(4500, ()=> this.next());
   }
   next(){
+    // ⚠️ El antirrebote va POR TIEMPO, no con un booleano de "estoy pasando". Un booleano que
+    // se apaga en el onComplete de un desvanecido se queda encendido para siempre si ese
+    // desvanecido no termina (pestaña en segundo plano, móvil bloqueado...) y entonces la
+    // intro no avanza NUNCA MÁS. Con una marca de tiempo eso no puede pasar.
+    const ahora = this.time.now;
+    if(this.ultimoPaso && ahora - this.ultimoPaso < 260) return;
+    this.ultimoPaso = ahora;
+    if(this.reloj) this.reloj.remove();
     if(this.i >= INTRO_BEATS.length-1){ this.goTitle(); return; }
+    const iObjetivo = this.i + 1;
+    this.tweens.killTweensOf([this.bigText, this.smallText]);
     this.tweens.add({targets:[this.bigText,this.smallText], alpha:0, duration:250, onComplete:()=>{
-      this.i++; this.showBeat();
+      if(this.i < iObjetivo){ this.i = iObjetivo; this.showBeat(); }
     }});
+    // cinturón y tirantes: si el desvanecido no llegara a terminar, se pasa igual a los 400 ms
+    this.time.delayedCall(400, ()=>{
+      if(this.i < iObjetivo){ this.i = iObjetivo; this.showBeat(); }
+    });
   }
   goTitle(){
     this.scene.start('Menu'); // la intro desemboca en el selector de capítulos
