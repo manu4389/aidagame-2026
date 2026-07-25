@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v25 — 25 jul, LOS 5 CAPÍTULOS + selector + jefe final + cierre de cumpleaños</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v26 — 25 jul, Manuel y Diego con su cara real en el cameo final</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -271,7 +271,12 @@ class Boot extends Phaser.Scene {
     this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
     this.load.image('aidaHeroReal', 'fotos/aida_hero_real.png'); // ELLA TAL CUAL — recorte real de cuerpo entero (IA de segmentación, rembg/u2net), sin dibujo vectorial de por medio
     this.load.image('brendaHeroReal', 'fotos/brenda_hero_real.png'); // Brenda, por fin con su foto real (Manuel la dejó en fotos/ el 25 jul) — mismo proceso: rembg + u2net_human_seg + crop
-    this.load.image('brendaFace', 'fotos/brenda_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
+    this.load.image('brendaFace', 'fotos/brenda_face.png');
+    // el cameo familiar del final, con caras REALES sacadas del propio archivo de Manuel
+    // (retrato profesional suyo en B/N de 07_PERSONAL_FAMILIA\MEDIA\_retratos_manu, y Diego
+    //  Prados de la foto que él mismo dejó en fotos/). Falta mamá: no hay ninguna identificable.
+    this.load.image('manuelFace', 'fotos/manuel_face.png');
+    this.load.image('primoFace', 'fotos/primo_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
     this.load.image('ojosInstante', 'fotos/instante_ojos_tile.png'); // mosaico del ojo de la marca, con el blanco pasado a transparente, para el fondo del nivel
     // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
     this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
@@ -1333,8 +1338,8 @@ class Final extends Phaser.Scene {
     const gente = [
       {x:cx-116, y:150, cara:'brendaFace', nom:'BRENDA'},
       {x:cx+116, y:150, emoji:'👩',        nom:'MAMÁ'},
-      {x:cx-116, y:246, emoji:'🧑‍🤝‍🧑',   nom:'PRIMOS'},
-      {x:cx+116, y:246, emoji:'🎸',        nom:'MANUEL'},
+      {x:cx-116, y:246, cara:'primoFace',  nom:'DIEGO'},
+      {x:cx+116, y:246, cara:'manuelFace', nom:'MANUEL'},
     ];
     gente.forEach(p=>{
       this.add.circle(p.x, p.y, 27, PALETTE.purple, 1).setStrokeStyle(3, PALETTE.turquoise);
