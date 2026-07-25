@@ -1,6 +1,26 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 21 — build v28)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 23 — build v32)
+
+**🎭 LO NUEVO Y GORDO DE ESTA RONDA:**
+- **`Interludio`, escena nueva:** narrativa ENTRE capítulos. Al acabar uno ya no se salta al siguiente; entran cartelas lentas (3,4 s). Las de antes del Vol. 5 preparan lo de la gente encerrada. El texto vive en `INTERLUDIOS`, indexado por el capítulo que se acaba de terminar.
+- **Mamá, en forma de ángel, antes de la pelea final** (`escenaAngel`): se dispara al entrar en el tramo del jefe. **Cámara lenta de verdad** (`camaraLenta()`: física ×3,2 y tweens ×0,45). ⚠️ **NO tocar `this.time.timeScale`**: los tiempos del propio guion son `delayedCall`, así que ralentizarlos alargaría la escena al triple sin querer. La música cambia al estilo `angel`, ella aparece con alas y su cara real, y le da la **ESPADA DE FUEGO** (`entregaEspadaDeFuego`): repinta la MISMA hoja de la katana en llamas —por eso se guarda `this.bladePoly` al construirla— y pasa a pegar **el doble** al jefe.
+- **El jefe final ya es un DRAGÓN** («el cliente final… monstruo grande con un gran bigote, tipo dragón chino»): cuerpo serpenteante de 7 anillos, melena, cuernos, colmillos y **las dos barbas doradas ondeando**. Se dibujó a ciegas y **se comprobó renderizándolo en PNG junto a Aida a tamaño real** — así se vieron dos fallos: flotaba 42 px sobre el suelo y las garras iban sueltas. Corregidos.
+- **Dos estilos de música más:** `angel` (lento, alto) y `jefe` (grave y machacón). La música cambia también al empezar la pelea de la cárcel.
+- **Correcciones de texto:** es **BICHOTE**, no bigote («te voy a rebanar el bichote»). Y el «¿Qué pasa, chocho? ¡Vamos a machacarles!» **lo dice BRENDA** y se escucha.
+
+**🔍 REVISIÓN DEL JUEGO (ronda 22, build v31) — 5 hallazgos, 3 serios, todos corregidos.** Vale la pena releerlos porque son el tipo de fallo que ninguna comprobación automática pilla:
+1. **Salto fantasma:** al caminar por el borde quedaba un salto de regalo en el aire (dos en La Barra). Los pozos no daban miedo en ningún nivel.
+2. **El diálogo de la cárcel no paraba el juego:** `physics.pause()` congela la física pero `update()` seguía corriendo, así que se podía matar enemigos durante la escena.
+3. **La katana automática ignoraba a los dos jefes**, y a ninguno se le puede esquivar: Aida podía morir en bucle sin entender que ahí había que pulsar TAJO.
+4. `children.removeAll()` sin destruir en la pantalla final.
+5. Monedas encima de los barrotes.
+
+**⏳ OJO CON GITHUB PAGES:** esta ronda tardó **más de 6 minutos** y un build salió como `errored` aunque el contenido se publicó bien. Si tarda, `gh api -X POST repos/manu4389/aidagame-2026/pages/builds` fuerza un rebuild. **Comprobar siempre con `curl` el número de build antes de decirle a Manuel que está subido.**
+
+**🟡 SIGUE PENDIENTE Y ES SUYO:** el **año de fundación de Instante** (para la primera cartela del currículum final; no se inventa) y, sobre todo, **que juegue**: nadie ha jugado todavía la cárcel, el ángel ni el dragón.
+
+## Ronda 21 (build v28)
 
 **📁 LA CARPETA SE MOVIÓ: el juego ya NO está en `Desktop\JUEGO_AIDA` sino en `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA`.** Se movió a mitad de sesión (también `JUEGO_MAMA` y `PARA_SAMARA`). El repo quedó intacto. Si un comando falla con "no such file", es esto.
 
