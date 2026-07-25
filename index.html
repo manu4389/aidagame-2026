@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v35 — 25 jul, ARREGLADO el dragón que se iba andando · cliente final de esmoquin y demonio</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v36 — 25 jul, los 5 capítulos abiertos desde el principio (el 5 no dejaba entrar)</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -793,7 +793,11 @@ class Menu extends Phaser.Scene {
     const hechos = progresoLeer();
     CAPITULOS.forEach((c,i)=>{
       const y = 152 + i*66;
-      const abierto = i <= hechos;           // se abre el siguiente al terminar el anterior
+      // LOS CINCO, ABIERTOS DESDE EL PRINCIPIO. Antes se iban desbloqueando y Manuel no podía
+      // ni entrar al 5 para probarlo. Y para Aida, que no juega a videojuegos, un candado que le
+      // dice "esto no puedes" el día de su cumpleaños es justo lo que no queremos: que entre
+      // donde le apetezca. El ✅ sigue marcando los que ya se ha pasado.
+      const abierto = true;
       const completo = i < hechos;
       const col = abierto ? PALETTE.purple : 0x24262a;
       const caja = this.add.rectangle(cx, y, W-44, 56, col, abierto?1:0.55)
@@ -806,7 +810,7 @@ class Menu extends Phaser.Scene {
         caja.on('pointerdown', ()=> this.scene.start('Title', {key:c.key}));
       }
     });
-    this.add.text(cx, H-26, hechos>=CAPITULOS.length ? '¡los cinco, completados! 🦄' : 'se abre el siguiente al terminar el anterior',
+    this.add.text(cx, H-26, hechos>=CAPITULOS.length ? '¡los cinco, completados! 🦄' : 'entra por donde quieras',
       {fontFamily:'Arial', fontSize:'11px', color:'#5a5d61'}).setOrigin(0.5);
   }
 }
