@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v40 — 25 jul, la pelea del dragón ya se puede ganar: arena del doble y sitio para moverse</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v41 — 25 jul, arena del cliente final más grande y Brenda contigo desde el principio, pegando</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -771,7 +771,7 @@ const CAPITULOS = [
   },
   {
     n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'un dragón, el cliente final, y tu gente encerrada detrás',
-    anchos:[520,480,1020,480,540,480,900,480,400], hueco:100,  // los tramos 2 y 6 son ANCHOS: son las arenas de las peleas
+    anchos:[520,480,1020,480,540,480,1300,480,400], hueco:100, // tramos 2 y 6: las arenas de las dos peleas, bien anchas
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
     rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
     rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
@@ -786,7 +786,7 @@ const CAPITULOS = [
     repisas:[{t:1, off:-60},{t:3, off:80},{t:5, off:-70},{t:7, off:60}],
     enemigos:[{t:1,tipo:'urgente'},{t:1,tipo:'burocracia',off:180},{t:3,tipo:'machirulo'},
               {t:5,tipo:'urgente'},{t:5,tipo:'machirulo2',off:180},{t:7,tipo:'burocracia'}],
-    aliada:{t:2, off:-180, quien:'brenda'},
+    aliada:{t:0, off:60, quien:'brenda'},   // con ella DESDE EL PRINCIPIO: es su socia
     jefe:{t:2, vidas:4},        // ACTO I   — el dragón (4 tajos: aún no tiene la espada de fuego)
     angel:{t:4},                // ACTO II  — la madre baja del cielo, en su propio tramo
     cliente:{t:6, vidas:14},    // ACTO III — el cliente final: 14 tajos, el más largo del juego
@@ -1423,13 +1423,13 @@ class Capitulo extends Phaser.Scene {
     this.cartelaActo('ACTO III', 'EL CLIENTE FINAL', 'El que tiene a los suyos.',
       ()=> this.escenaDialogo(BEATS_CLIENTE, ()=>{
         const t = this.segs[this.C.cliente.t];
-        this.bigote.x = t.x + t.w - 150;         // igual que el dragón: se retira y hay sitio
+        this.bigote.x = t.x + t.w - 170;         // se retira al fondo del todo: sitio de sobra para pelear
         this.cartelPelea();
       }));
   }
 
-  golpearBigote(){
-    if(this.carcelAbierta || this.bigoteInvuln) return;
+  golpearBigote(deBrenda){
+    if(this.carcelAbierta || (this.bigoteInvuln && !deBrenda)) return;
     this.bigoteInvuln = true;
     this.time.delayedCall(400, ()=> this.bigoteInvuln=false);
     this.carcelVidas -= this.espadaFuego ? 2 : 1;   // con la espada de su madre, el doble
@@ -1952,8 +1952,8 @@ class Capitulo extends Phaser.Scene {
     this.cameras.main.shake(150, 0.011);
   }
 
-  golpearJefe(){
-    if(this.jefeVidas<=0 || this.jefeInvuln) return;
+  golpearJefe(deBrenda){
+    if(this.jefeVidas<=0 || (this.jefeInvuln && !deBrenda)) return;
     this.jefeInvuln = true;
     this.time.delayedCall(420, ()=> this.jefeInvuln=false);
     this.jefeVidas -= this.espadaFuego ? 2 : 1;   // la espada que le dio su madre pega el doble
@@ -2033,6 +2033,24 @@ class Capitulo extends Phaser.Scene {
     }
     this.add.circle(30, 62, 23, 0x000000, 0).setStrokeStyle(2, PALETTE.turquoise).setScrollFactor(0).setDepth(60);
     this.add.text(56, 62, 'contigo', {fontFamily:'Impact', fontSize:'11px', color:'#40ada9'}).setOrigin(0,0.5).setScrollFactor(0).setDepth(60);
+  }
+
+  // el golpe de Brenda a un jefe — con destello y su nombre, que se vea que ha entrado ella
+  golpeDeBrenda(cual){
+    const objetivo = cual==='dragon' ? this.jefeCuerpo : this.bigote;
+    if(!objetivo) return;
+    playSwoosh(this);
+    const fx = this.add.graphics();
+    fx.lineStyle(6, PALETTE.pink, 0.95);
+    fx.beginPath(); fx.arc(0,0,48, Phaser.Math.DegToRad(-55), Phaser.Math.DegToRad(55), false); fx.strokePath();
+    fx.setPosition(this.aliada.x + (this.aliada.x < objetivo.x ? 30 : -30), GROUND_Y-110);
+    fx.setScale(this.aliada.x < objetivo.x ? 1 : -1, 1);
+    this.tweens.add({targets:fx, scaleX:(this.aliada.x<objetivo.x?1.5:-1.5), scaleY:1.5, alpha:0, duration:280, onComplete:()=>fx.destroy()});
+    const t = this.add.text(objetivo.x, GROUND_Y-210, 'BRENDA', {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#e4378c', padding:{left:6,right:6,top:2,bottom:2}
+    }).setOrigin(0.5);
+    this.tweens.add({targets:t, y:t.y-22, alpha:0, duration:800, onComplete:()=>t.destroy()});
+    if(cual==='dragon') this.golpearJefe(true); else this.golpearBigote(true);
   }
 
   meetTutor(){
@@ -2207,7 +2225,7 @@ class Capitulo extends Phaser.Scene {
       const t = this.segs[this.C.cliente.t];
       const dx = this.player.x - this.bigote.x;
       this.bigote.x = Phaser.Math.Clamp(this.bigote.x + Phaser.Math.Clamp(dx, -1.9, 1.9),
-                                        t.x + 200, t.x + t.w - 110);
+                                        t.x + 260, t.x + t.w - 110);   // deja una franja segura al entrar
       this.bigoteLabel.x = this.bigote.x;
       if(this.bigoteBarra) this.bigoteBarra.x = this.bigote.x - 80;
     }
@@ -2226,6 +2244,20 @@ class Capitulo extends Phaser.Scene {
           this.defeatEnemy(target);
           this.aliadaCooldown = true;
           this.time.delayedCall(450, ()=> this.aliadaCooldown=false);
+        }
+      }
+      // Y TAMBIÉN ENTRA A LOS JEFES: Manuel — "Brenda puede intervenir dando golpes".
+      // Pega más flojo y más espaciado que Aida (uno cada 1,6 s), pero se nota y se ve.
+      if(!this.aliadaGolpeJefe){
+        let jefe = null;
+        if(this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
+           Math.abs(this.jefeCuerpo.x - this.aliada.x) < 150) jefe = 'dragon';
+        else if(this.bigote && this.carcelVidas > 0 && this.dialogoHecho &&
+           Math.abs(this.bigote.x - this.aliada.x) < 150) jefe = 'cliente';
+        if(jefe){
+          this.aliadaGolpeJefe = true;
+          this.time.delayedCall(1600, ()=> this.aliadaGolpeJefe=false);
+          this.golpeDeBrenda(jefe);
         }
       }
     }
