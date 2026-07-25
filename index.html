@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v27 — 25 jul, la familia con su cara · Conchita gimnasta · ya se instala en el móvil</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v28 — 25 jul, niveles más largos · la cárcel y EL DEL BIGOTE · final con el currículum de Instante</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -279,7 +279,8 @@ class Boot extends Phaser.Scene {
     this.load.image('primoFace', 'fotos/primo_face.png');
     // mamá (Belén): su retrato estaba en el juego que Manuel le hizo a ella, en Escritorio\JUEGO_MAMA.
     // Se reutiliza incluso SU MISMO encuadre (CROPS.mama de aquel index.html), que él ya dio por bueno.
-    this.load.image('mamaFace', 'fotos/mama_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
+    this.load.image('mamaFace', 'fotos/mama_face.png');
+    this.load.image('primo2Face', 'fotos/primo2_face.png'); // SU CARA, recortada en redondo con borde difuminado — para que se le vea de verdad, no de lejos
     this.load.image('ojosInstante', 'fotos/instante_ojos_tile.png'); // mosaico del ojo de la marca, con el blanco pasado a transparente, para el fondo del nivel
     // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
     this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
@@ -446,6 +447,7 @@ const ENEMIGOS = {
   flato:         {icono:'😣', etiqueta:'EL FLATO',        color:'#141617', vel:0.6, taunt:'¡NI FLATO NI NADA, QUE ME QUEDA UNA MILLA!'},
   cochelisto:    {icono:'🚗', etiqueta:'EN EL CARRIL BICI',color:'#d83335', vel:1.1, taunt:'¡EL CARRIL ES MÍO, CAMPEÓN!'},
   urgente:       {icono:'📞', etiqueta:'"PARA AYER"',     color:'#68416c', vel:1.0, taunt:'¡PARA AYER LO TIENES, MAJO!'},
+  bigote:        {icono:'🥸', etiqueta:'EL DEL BIGOTE',   color:'#d83335', vel:0.0, taunt:'LUEGO TE PASO LA FACTURA. POR MÍ Y POR TODOS LOS MÍOS.'},
 };
 
 /* ---------- FICHAS DE LOS 5 CAPÍTULOS ---------- */
@@ -453,64 +455,75 @@ const ENEMIGOS = {
 const CAPITULOS = [
   {
     n:1, key:'Cap1', nombre:'El Contrato', sub:'que no se te escape entre papeleo y machirulos',
-    anchos:[520,460,480,460,480,340,260], hueco:100,
+    anchos:[560,500,520,480,520,460,380,300], hueco:100,
     cielo:[0x3a1113, 0x140a0a], camara:'#2a0f10', estilo:'granada_noche',
     rotulosRojos:['LA COMPETENCIA VIGILA','QUIEREN QUEDARSE\nCON INSTANTE','OFERTA PARA COMPRAROS'],
     rotulosSuyos:['INSTANTE NO SE VENDE','LO HAN LEVANTADO ELLAS','AUTÓNOMAS\nY A MUCHA HONRA','HECHO CON CARIÑO'],
-    repisa:{t:1, off:-70},
+    apertura:'¡Hoy se cena en vaso!',
+    frases:['¡Muerte a los caraduras!','¡Toma kit digital!','¡Este contrato es mío!','¡Lo que sucede conviene, los cojones!'],
+    repisas:[{t:1, off:-80},{t:4, off:70}],
     enemigos:[{t:1,tipo:'burocracia'},{t:2,tipo:'chirulo_viejo'},{t:3,tipo:'machirulo'},
-              {t:4,tipo:'burocracia',off:-110},{t:4,tipo:'machirulo2',off:140},{t:5,tipo:'chirulo_viejo'}],
-    aliada:{t:2, off:-170, quien:'brenda'},
-    tutor:{t:4, off:40},
+              {t:4,tipo:'burocracia',off:-130},{t:5,tipo:'machirulo2'},{t:6,tipo:'chirulo_viejo'}],
+    aliada:{t:2, off:-190, quien:'brenda'},
+    tutor:{t:5, off:150},
     meta:{tipo:'contrato', titulo:'¡CONTRATO FIRMADO!', grito:'¡Olé Instante! ¡Viva la agencia Instante!'},
   },
   {
     n:2, key:'Cap2', nombre:'Corpus', sub:'lunares, volantes y ni un paso en falso',
-    anchos:[480,440,460,440,460,300], hueco:100,
+    anchos:[520,480,500,460,500,440,320], hueco:100,
     cielo:[0x2b1450, 0x120626], camara:'#1a0b2e', estilo:'corpus',
     rotulosRojos:['SE CIERRA LA CASETA','NO HAY SITIO EN LA BARRA'],
     rotulosSuyos:['CORPUS DE GRANADA','TRAJE DE LUNARES','Y OLÉ, OLÉ,\nLOS CARACOLES'],
-    repisa:{t:2, off:-60},
+    apertura:'¡Y olé, olé, los caracoles!',
+    frases:['¡Que me pongan otra!','¡Toma kit digital!','¡A bailar, que son dos días!','¡Este volante no lo pisa nadie!'],
+    repisas:[{t:1, off:-70},{t:2, off:60},{t:4, off:-90},{t:5, off:40}],
     enemigos:[{t:1,tipo:'gorron'},{t:2,tipo:'pisotones'},{t:3,tipo:'machirulo'},
-              {t:4,tipo:'gorron',off:120},{t:4,tipo:'pisotones',off:-130}],
+              {t:4,tipo:'gorron',off:130},{t:5,tipo:'pisotones'}],
     meta:{tipo:'farolillo', titulo:'¡EL CORPUS ES TUYO!', grito:'¡Y olé, olé, los caracoles!'},
   },
   {
     n:3, key:'Cap3', nombre:'La Barra', sub:'con Conchita, y que mire quien quiera',
-    anchos:[460,420,440,420,440,300], hueco:105,
+    anchos:[500,460,480,460,480,440,320], hueco:105,
     cielo:[0x0d2b2a, 0x05100f], camara:'#07100f', estilo:'neon',
     rotulosRojos:['¿ESO NO ES DE...?','LA GENTE HABLA'],
     rotulosSuyos:['FUERZA Y AIRE','CADA MORATÓN\nES UN PASO MÁS','CON CONCHITA'],
-    repisa:{t:1, off:0},
-    enemigos:[{t:1,tipo:'juzgon'},{t:2,tipo:'machirulo'},{t:3,tipo:'juzgon',off:110},
-              {t:4,tipo:'chirulo_viejo'},{t:4,tipo:'machirulo2',off:130}],
-    aliada:{t:2, off:-150, quien:'conchita'},
+    apertura:'¡Qué arte, mi coño moreno!',
+    frases:['¡Arriba, que puedo!','¡Toma kit digital!','¡Poco para los que no lo merecemos!','¡Que hablen lo que quieran!'],
+    repisas:[{t:1, off:-60},{t:3, off:-70},{t:5, off:50}], trampolin:true,
+    enemigos:[{t:1,tipo:'juzgon'},{t:2,tipo:'machirulo'},{t:3,tipo:'juzgon',off:120},
+              {t:4,tipo:'chirulo_viejo'},{t:5,tipo:'machirulo2'}],
+    aliada:{t:2, off:-160, quien:'conchita'},
+    tutor:{t:4, off:140},
     meta:{tipo:'barra', titulo:'¡ARRIBA DEL TODO!', grito:'¡Qué arte, mi coño moreno!'},
   },
   {
-    n:4, key:'Cap4', nombre:'La Milla', sub:'contrarreloj: Granada entera en 80 segundos',
-    anchos:[500,460,480,460,480,460,300], hueco:110,
+    n:4, key:'Cap4', nombre:'La Milla', sub:'contrarreloj: Granada entera antes de que se acabe el tiempo',
+    anchos:[520,480,500,480,500,480,440,320], hueco:110,
     cielo:[0x2f6fa8, 0x8fc3e0], camara:'#3b7db4', estilo:'calle_dia',
     rotulosRojos:['SE TE VA EL TIEMPO','QUEDA CUESTA'],
     rotulosSuyos:['UNA MILLA MÁS','LO QUE SUCEDE CONVIENE','KILÓMETROS DE VENTAJA'],
-    tiempo:80,
-    repisa:{t:2, off:80},
+    apertura:'¡Lo que sucede conviene, los cojones!',
+    frases:['¡Una milla más!','¡Toma kit digital!','¡Que me como la cuesta!','¡Hoy se cena en vaso!'],
+    tiempo:95,
+    repisas:[{t:2, off:90},{t:5, off:-60}],
     enemigos:[{t:1,tipo:'flato'},{t:2,tipo:'cochelisto'},{t:3,tipo:'pisotones'},
-              {t:4,tipo:'flato',off:120},{t:5,tipo:'cochelisto'}],
+              {t:5,tipo:'flato',off:130},{t:6,tipo:'cochelisto'}],
     meta:{tipo:'meta', titulo:'¡MILLA COMPLETADA!', grito:'¡Lo que sucede conviene, los cojones!'},
   },
   {
-    n:5, key:'Cap5', nombre:'Instante HQ', sub:'el Cliente Imposible te está esperando',
-    anchos:[500,460,480,460,520,360], hueco:100,
+    n:5, key:'Cap5', nombre:'Instante HQ', sub:'tu gente está encerrada y el Cliente Imposible te espera',
+    anchos:[520,480,500,480,520,480,380], hueco:100,
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
-    rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','EL CLIENTE IMPOSIBLE'],
+    rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
     rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
-    repisa:{t:1, off:-50},
-    enemigos:[{t:1,tipo:'urgente'},{t:2,tipo:'burocracia'},{t:2,tipo:'machirulo',off:150},
-              {t:3,tipo:'urgente'},{t:3,tipo:'machirulo2',off:150}],
-    aliada:{t:3, off:-160, quien:'brenda'},
-    tutor:{t:2, off:-60},
-    jefe:{t:4, vidas:6}, // penúltimo tramo: la pelea tiene su sitio y la meta queda detrás
+    apertura:'¡Muerte a los caraduras!',
+    frases:['¡Soltad a mi gente!','¡Toma kit digital!','¡Aquí mando yo!','¡Ni un euro por Instante!'],
+    repisas:[{t:1, off:-60},{t:4, off:80}],
+    enemigos:[{t:1,tipo:'urgente'},{t:2,tipo:'burocracia'},{t:2,tipo:'machirulo',off:170},
+              {t:4,tipo:'urgente'},{t:4,tipo:'machirulo2',off:170}],
+    aliada:{t:2, off:-180, quien:'brenda'},
+    carcel:{t:3, vidas:7},
+    jefe:{t:5, vidas:6},
     meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
     ultimo:true,
   },
@@ -578,7 +591,10 @@ class Capitulo extends Phaser.Scene {
     this.drawBackground();
 
     this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.7}); });
-    this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(CATCHPHRASES[0]); this.phraseIndex = 1; });
+    // cada capítulo arranca con SU frase y tiene SUS frases: antes los cinco empezaban igual
+    // y decían lo mismo (Manuel: "todas las pantallas dicen lo mismo y empiezan haciendo lo mismo")
+    this.frases = (C.frases || []).concat(CATCHPHRASES);
+    this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(C.apertura || CATCHPHRASES[0]); });
 
     this.construyePlataformas();
     this.construyeJugadora();
@@ -594,6 +610,7 @@ class Capitulo extends Phaser.Scene {
 
     if(C.aliada) this.construyeAliada();
     if(C.tutor)  this.construyeTutor();
+    if(C.carcel) this.construyeCarcel();
     if(C.jefe)   this.construyeJefe();
     this.construyeMonedas();
     this.construyeMeta();
@@ -633,14 +650,23 @@ class Capitulo extends Phaser.Scene {
       this.add.rectangle(centro(s), GROUND_Y+7, s.w, 3, 0xffffff, 0.35);
       this.add.image(centro(s), GROUND_Y+40, 'instanteLogo').setDisplaySize(52,33).setAlpha(0.08);
     });
-    if(C.repisa){
-      const s = this.segs[C.repisa.t];
-      this.repisaX = centro(s) + (C.repisa.off||0);
-      const l = this.add.rectangle(this.repisaX, GROUND_Y-110, 140, 24, 0x2e1b33);
-      this.add.rectangle(this.repisaX, GROUND_Y-121, 140, 6, PALETTE.pink);
+    // varias repisas por nivel (antes solo una): más sitios a los que subirse, menos monotonía.
+    // En La Barra son TRAMPOLINES: al pisarlas te impulsan, que es lo suyo en el capítulo de volar.
+    this.repisasX = [];
+    this.trampolines = [];
+    (C.repisas || []).forEach(r=>{
+      const seg = this.segs[r.t];
+      const x = centro(seg) + (r.off||0);
+      this.repisasX.push(x);
+      const l = this.add.rectangle(x, GROUND_Y-110, 140, 24, C.trampolin ? 0x123b3a : 0x2e1b33);
+      this.add.rectangle(x, GROUND_Y-121, 140, 6, C.trampolin ? PALETTE.turquoise : PALETTE.pink);
+      if(C.trampolin){
+        this.add.text(x, GROUND_Y-134, '⬆', {fontSize:'17px', color:'#40ada9'}).setOrigin(0.5);
+        this.trampolines.push(x);
+      }
       this.physics.add.existing(l, true);
       this.platforms.add(l);
-    }
+    });
   }
 
   construyeJugadora(){
@@ -784,6 +810,186 @@ class Capitulo extends Phaser.Scene {
     }, null, this);
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  //  LA CÁRCEL — el monstruo intermedio del Vol. 5
+  //  Manuel lo pidió así: su gente encerrada, un tío grande con bigote
+  //  custodiándolos, y un INTERCAMBIO DE DIÁLOGOS MUY LENTO que frene a
+  //  propósito el ritmo de la narrativa antes de la pelea. Las frases son
+  //  literalmente las que dictó él; no se han suavizado ni adornado.
+  // ══════════════════════════════════════════════════════════════════════════
+  construyeCarcel(){
+    const s = this.segs[this.C.carcel.t];
+    const cx = centro(s) + (this.C.carcel.off||0);
+    this.carcelX = cx;
+    this.carcelVidas = this.C.carcel.vidas || 7;
+    this.carcelAbierta = false;
+    this.dialogoHecho = false;
+
+    // la celda
+    this.add.rectangle(cx-70, GROUND_Y-84, 210, 168, 0x0a1412).setStrokeStyle(5, 0x53585c);
+    this.add.rectangle(cx-70, GROUND_Y-172, 226, 14, 0x53585c);
+    this.presos = [];
+    const gente = [
+      {dx:-140, cara:'mamaFace',   nom:'MAMÁ'},
+      {dx:-93,  cara:'primoFace',  nom:'DIEGO'},
+      {dx:-47,  cara:'primo2Face', nom:'ALBERTO'},
+      {dx:0,    cara:'manuelFace', nom:'MANUEL'},
+    ];
+    gente.forEach(g=>{
+      const c = this.add.circle(cx+g.dx, GROUND_Y-104, 22, PALETTE.purple, 1).setStrokeStyle(2, 0x53585c);
+      const f = this.add.image(cx+g.dx, GROUND_Y-104, g.cara).setDisplaySize(40,40);
+      const n = this.add.text(cx+g.dx, GROUND_Y-74, g.nom, {fontFamily:'Impact', fontSize:'10px', color:'#ffffff'}).setOrigin(0.5);
+      this.presos.push({c,f,n});
+    });
+    // los barrotes, delante de ellos
+    this.barrotes = [];
+    for(let i=0;i<9;i++){
+      this.barrotes.push(this.add.rectangle(cx-166+i*24, GROUND_Y-84, 7, 166, 0x9aa2a8).setStrokeStyle(1, 0x53585c));
+    }
+    this.add.text(cx-70, GROUND_Y-192, 'TU GENTE', {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:2,bottom:2}
+    }).setOrigin(0.5);
+
+    // EL DEL BIGOTE — grandote, plantado delante de la celda, no patrulla
+    const bx = cx + 120;
+    this.bigoteX = bx;
+    this.add.ellipse(bx, GROUND_Y-2, 104, 20, 0x000000, 0.45);
+    this.bigote = this.add.container(bx, GROUND_Y-104);
+    const g = this.add.graphics();
+    g.fillStyle(0x232323,1); g.fillRoundedRect(-52,-62,104,128,14);      // corpachón
+    g.fillStyle(0x3a3a3a,1); g.fillRoundedRect(-52,-62,104,22,10);       // hombreras
+    g.fillStyle(0xe0bd97,1); g.fillCircle(0,-84,30);                     // cabezón
+    g.fillStyle(0x141414,1); g.fillRect(-31,-108,62,16);                 // pelo
+    g.fillStyle(0xffffff,1); g.fillCircle(-11,-88,7); g.fillCircle(11,-88,7);
+    g.fillStyle(0x141617,1); g.fillCircle(-11,-88,3.6); g.fillCircle(11,-88,3.6);
+    g.fillStyle(0x141414,1);                                             // EL BIGOTE, bien gordo
+    g.fillEllipse(-13,-70,26,12); g.fillEllipse(13,-70,26,12);
+    g.fillStyle(0x8a1114,1); g.fillRoundedRect(-16,-58,32,8,4);          // boca torcida
+    this.bigote.add([g]);
+    this.physics.add.existing(this.bigote);
+    this.bigote.body.setSize(112,196).setOffset(-56,-116);
+    this.bigote.body.setAllowGravity(false);
+    this.bigoteLabel = this.add.text(bx, GROUND_Y-234, 'EL DEL BIGOTE', {
+      fontFamily:'Impact', fontSize:'16px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:8,right:8,top:3,bottom:3}
+    }).setOrigin(0.5);
+    this.add.rectangle(bx-62, GROUND_Y-212, 124, 10, 0x000000, 0.55).setOrigin(0,0.5);
+    this.bigoteBarra = this.add.rectangle(bx-62, GROUND_Y-212, 124, 10, PALETTE.red).setOrigin(0,0.5);
+    this.physics.add.overlap(this.player, this.bigote, ()=>{
+      if(!this.dialogoHecho) return;                 // primero se habla, luego se pega
+      if(this.attacking) this.golpearBigote(); else this.hitEnemy({x:this.bigote.x});
+    }, null, this);
+
+    // zona que dispara la conversación al acercarse
+    this.zonaDialogo = this.add.zone(cx+30, GROUND_Y-100, 260, 220);
+    this.physics.add.existing(this.zonaDialogo);
+    this.zonaDialogo.body.setAllowGravity(false);
+    this.physics.add.overlap(this.player, this.zonaDialogo, ()=>this.dialogoCarcel(), null, this);
+  }
+
+  // el intercambio LENTO, cartel a cartel, con el juego parado
+  dialogoCarcel(){
+    if(this.dialogoHecho || this.dialogando) return;
+    this.dialogando = true;
+    this.physics.pause();
+    const BEATS = [
+      {quien:'EL DEL BIGOTE', txt:'VOY A DESTROZAR TU EMPRESA...',        color:'#d83335'},
+      {quien:'EL DEL BIGOTE', txt:'...Y A TU FAMILIA.',                   color:'#d83335'},
+      {quien:'AIDA',          txt:'¡ME CAGO EN TU PUTA MADRE, CABRÓN!',   color:'#f2c749'},
+      {quien:'AIDA',          txt:'¡SUÉLTAME EL BRAZO!',                  color:'#f2c749'},
+      {quien:'AIDA',          txt:'TE VOY A REBANAR EL BIGOTE.',          color:'#f2c749'},
+      {quien:'AIDA',          txt:'NOT TODAY.',                           color:'#ffffff'},
+    ];
+    const velo = this.add.rectangle(W/2, H/2, W, H, 0x000000, 0.72).setScrollFactor(0).setDepth(90);
+    const quien = this.add.text(W/2, H*0.34, '', {fontFamily:'Impact', fontSize:'15px', color:'#8a8f94'}).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+    const linea = this.add.text(W/2, H*0.45, '', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'27px', color:'#ffffff',
+      align:'center', wordWrap:{width:W-52}, lineSpacing:6
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+    const pista = this.add.text(W/2, H-40, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
+      .setOrigin(0.5).setScrollFactor(0).setDepth(91).setAlpha(0.75);
+
+    let i = -1, temporizador = null;
+    const cerrar = ()=>{
+      if(temporizador) temporizador.remove();
+      this.input.off('pointerdown', siguiente);
+      [velo,quien,linea,pista].forEach(o=>o.destroy());
+      this.dialogando = false; this.dialogoHecho = true;
+      this.physics.resume();
+      // cartela de pelea, y a repartir
+      const ya = this.add.text(W/2, H*0.42, 'PELEA', {
+        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#d83335'
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+      this.tweens.add({targets:ya, scale:1.6, alpha:0, duration:900, onComplete:()=>ya.destroy()});
+      playSwoosh(this);
+    };
+    const siguiente = ()=>{
+      i++;
+      if(i >= BEATS.length){ cerrar(); return; }
+      const b = BEATS[i];
+      quien.setText(b.quien);
+      linea.setText(b.txt).setColor(b.color);
+      linea.setAlpha(0); quien.setAlpha(0);
+      this.tweens.add({targets:[quien,linea], alpha:1, duration:320});
+      speakPhrase(b.txt);
+      if(temporizador) temporizador.remove();
+      temporizador = this.time.delayedCall(3200, siguiente); // LENTO a propósito
+    };
+    this.input.on('pointerdown', siguiente);
+    siguiente();
+  }
+
+  golpearBigote(){
+    if(this.carcelAbierta || this.bigoteInvuln) return;
+    this.bigoteInvuln = true;
+    this.time.delayedCall(400, ()=> this.bigoteInvuln=false);
+    this.carcelVidas--;
+    playImpact(this);
+    this.cameras.main.shake(200, 0.014);
+    this.bigoteBarra.setScale(Math.max(0,this.carcelVidas)/(this.C.carcel.vidas||7), 1);
+    this.tweens.add({targets:this.bigote, alpha:0.35, duration:80, yoyo:true, repeat:1});
+    if(this.carcelVidas<=0) this.liberarFamilia();
+  }
+
+  liberarFamilia(){
+    this.carcelAbierta = true;
+    this.bigote.body.enable = false;
+    this.bigoteLabel.setText('DERROTADO').setBackgroundColor('#40ada9');
+    this.bigoteBarra.destroy();
+    this.tweens.add({targets:this.bigote, alpha:0, y:this.bigote.y+50, angle:80, duration:800});
+    this.score += 20; this.lives = Math.min(5, this.lives+1);
+    this.updateHud();
+    // los barrotes se abren
+    this.barrotes.forEach((b,i)=> this.tweens.add({targets:b, y:b.y-190, alpha:0, duration:700, delay:i*45}));
+    // y las tres frases, una detrás de otra, con su tiempo
+    const decir = (txt, color, retraso, y)=>{
+      this.time.delayedCall(retraso, ()=>{
+        if(!this.sys.isActive()) return;
+        speakPhrase(txt);
+        const t = this.add.text(W/2, y, txt, {
+          fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#141617',
+          backgroundColor:color, padding:{left:10,right:10,top:5,bottom:5}, align:'center', wordWrap:{width:W-60}
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(92);
+        this.tweens.add({targets:t, alpha:0, duration:600, delay:2600, onComplete:()=>t.destroy()});
+      });
+    };
+    decir('LUEGO TE PASO LA FACTURA.\nPOR MÍ Y POR TODOS LOS MÍOS.', '#f2c749', 300,  H*0.30);
+    decir('¡VENGA, CHULOS, A DAROS UNA VUELTA!',                     '#40ada9', 3600, H*0.30);
+    decir('¡GRACIAS, AIDA, ERES LA MEJOR!',                          '#e4378c', 6600, H*0.30);
+    // la familia sale de la celda dando saltitos
+    this.time.delayedCall(3600, ()=>{
+      this.presos.forEach((p,i)=>{
+        [p.c,p.f,p.n].forEach(o=> this.tweens.add({
+          targets:o, x:o.x - 90 - i*30, y:o.y-16, duration:1500, delay:i*180, ease:'Sine.easeOut', yoyo:false
+        }));
+      });
+      for(let i=0;i<26;i++){
+        const c = [PALETTE.turquoise,PALETTE.pink,PALETTE.yellow,0xffffff][i%4];
+        const p = this.add.rectangle(this.carcelX-70+Phaser.Math.Between(-90,90), GROUND_Y-150, 7, 10, c);
+        this.tweens.add({targets:p, y:GROUND_Y-10, angle:Phaser.Math.Between(-300,300), alpha:0, duration:Phaser.Math.Between(900,1800), onComplete:()=>p.destroy()});
+      }
+    });
+  }
+
   construyeMonedas(){
     this.collectibles = this.physics.add.group({ allowGravity:false });
     let n = 0;
@@ -795,7 +1001,7 @@ class Capitulo extends Phaser.Scene {
         n++;
       }
     });
-    if(this.repisaX) this.spawnCollectible(this.repisaX, GROUND_Y-150, '⚡'); // premio de la repisa alta
+    (this.repisasX||[]).forEach(x=> this.spawnCollectible(x, GROUND_Y-150, '⚡')); // premio de cada repisa alta
   }
 
   construyeMeta(){
@@ -1008,7 +1214,7 @@ class Capitulo extends Phaser.Scene {
     (t.icon==='⚡' ? sfxBonus : sfxCoin)(this);
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
-    this.sayPhrase(CATCHPHRASES[this.phraseIndex % CATCHPHRASES.length]);
+    this.sayPhrase(this.frases[this.phraseIndex % this.frases.length]);
     this.phraseIndex++;
   }
 
@@ -1052,6 +1258,10 @@ class Capitulo extends Phaser.Scene {
     if(this.jefeCuerpo && this.jefeVidas > 0){
       const dx = (this.jefeCuerpo.x - this.player.x) * dir;
       if(dx > -40 && dx < 116) this.golpearJefe();
+    }
+    if(this.bigote && this.dialogoHecho && !this.carcelAbierta){
+      const dx = (this.bigote.x - this.player.x) * dir;
+      if(dx > -40 && dx < 122) this.golpearBigote();
     }
     this.time.delayedCall(160, ()=> this.attacking=false);
     this.time.delayedCall(360, ()=> this.attackCooldown=false);
@@ -1142,9 +1352,9 @@ class Capitulo extends Phaser.Scene {
     const esConchita = this.aliadaTipo === 'conchita';
     let sub;
     if(esConchita){ this.saltoExtra = true; sub = '¡Salto doble!  ⬆⬆'; }
-    else { this.lives = Math.min(4, this.lives+1); sub = '¡Voy contigo!  +1 ❤️'; }
+    else { this.lives = Math.min(4, this.lives+1); sub = 'Brenda, ¿qué pasa, chocho?\n¡Vamos a machacarles!   +1 ❤️'; }
     this.updateHud();
-    speakPhrase(esConchita ? '¡Arriba, que tú puedes!' : '¡Voy contigo!');
+    speakPhrase(esConchita ? '¡Arriba, que tú puedes!' : 'Brenda, ¿qué pasa, chocho? ¡Vamos a machacarles!');
     // ficha de personaje a media pantalla, con su nombre — que se vea quién es
     const card = this.add.container(W/2, H*0.42).setScrollFactor(0).setDepth(70);
     const ring = this.add.circle(0, 0, 64, PALETTE.purple, 1).setStrokeStyle(4, PALETTE.turquoise);
@@ -1254,6 +1464,17 @@ class Capitulo extends Phaser.Scene {
     else if(keys.right){ this.player.setVelocityX(speed); this.player.flipX = false; }
     const enSuelo = this.player.body.blocked.down || this.player.body.touching.down;
     if(enSuelo) this.saltosDados = 0;
+    // trampolines de La Barra: si aterrizas encima de una, sales disparada
+    if(enSuelo && this.trampolines && this.trampolines.length){
+      const sobre = this.trampolines.some(tx => Math.abs(this.player.x - tx) < 74)
+                    && this.player.y < GROUND_Y - 90;
+      if(sobre && !this.reboteEspera){
+        this.reboteEspera = true;
+        this.player.setVelocityY(-820);
+        sfxJump(this);
+        this.time.delayedCall(400, ()=> this.reboteEspera=false);
+      }
+    }
     if(jumpRequested){
       const maxSaltos = this.saltoExtra ? 2 : 1; // el salto doble lo regala Conchita
       if(enSuelo || this.saltosDados < maxSaltos){
@@ -1331,52 +1552,115 @@ const BRIEFS_IMPOSIBLES = [
   'Ponle un poco más de... ya sabes, más.',
 ];
 
-/* ---------- FINAL DEL JUEGO ---------- */
+/* ══════════════════════════════════════════════════════════════════════════
+   FINAL DEL JUEGO — dos partes
+   1) EL CURRÍCULUM: cartelas LENTAS contando lo que Aida y Brenda han
+      levantado en Instante, y el "no nos lo vais a arrebatar / Not today".
+      Pedido de Manuel: que frene el ritmo, como la escena de la cárcel.
+      ⚠️ Los servicios son los REALES de agenciainstante.com. NO se pone año
+      de fundación porque nadie lo ha dicho — si Manuel lo da, va en la 1.ª.
+   2) LA CELEBRACIÓN: su gente, su frase y el cumpleaños.
+   ══════════════════════════════════════════════════════════════════════════ */
+const CURRICULUM = [
+  {gr:'INSTANTE',              pe:'Lo que Aida y Brenda\nhan levantado desde cero.'},
+  {gr:'REDES SOCIALES',        pe:'Cuenta a cuenta.'},
+  {gr:'DISEÑO WEB',            pe:'Página a página.'},
+  {gr:'CAMPAÑAS SEM',          pe:'Euro a euro, y que salga rentable.'},
+  {gr:'DISEÑO GRÁFICO',        pe:'Porque la primera impresión\nsiempre cuenta.'},
+  {gr:'INFLUENCER MARKETING',  pe:'Y que además funcione.'},
+  {gr:'KIT DIGITAL',           pe:'Con todo el papeleo que eso trae.'},
+  {gr:'ESTUDIOS DE MERCADO',   pe:'Para saber dónde se pisa.'},
+  {gr:'INSTANTE WEDDINGS',     pe:'Y las bodas, ya de paso.'},
+  {gr:'SIENDO AUTÓNOMAS',      pe:'Sin red, sin horario\ny sin pedirle permiso a nadie.'},
+  {gr:'Y AHORA VENÍS',         pe:'a querer quedaros con todo eso.', rojo:true},
+  {gr:'NO NOS LO VAIS\nA ARREBATAR.', pe:'— dicen Brenda y Aida', tq:true},
+  {gr:'NOT TODAY.',            pe:'', blanco:true},
+];
+
 class Final extends Phaser.Scene {
   constructor(){ super('Final'); }
   init(data){ this.puntos = (data && data.score) || 0; }
+
   create(){
     this.cameras.main.setBackgroundColor('#0c0d0e');
-    const cx = W/2;
     playMusic(this, 'marchIntro', {loop:false, volume:0.85});
-    this.add.image(cx, 46, 'instanteLogo').setDisplaySize(80,51);
-    this.add.text(cx, 92, '¡INSTANTE SIGUE SIENDO SUYA!', {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#f2c749', align:'center', wordWrap:{width:W-40}
+    this.i = -1;
+    this.logo = this.add.image(W/2, 70, 'instanteLogo').setDisplaySize(74,47).setAlpha(0.9);
+    this.gr = this.add.text(W/2, H*0.40, '', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'32px', color:'#f2c749',
+      align:'center', wordWrap:{width:W-44}, lineSpacing:4
     }).setOrigin(0.5);
-    // ella, en grande, y su gente alrededor celebrando
-    this.add.circle(cx, 176, 56, 0x000000, 0).setStrokeStyle(5, PALETTE.yellow);
-    this.add.image(cx, 176, 'aidaFace').setDisplaySize(104,104);
+    this.pe = this.add.text(W/2, H*0.55, '', {
+      fontFamily:'Georgia, serif', fontSize:'14px', color:'#ffffff',
+      align:'center', wordWrap:{width:W-70}, lineSpacing:7
+    }).setOrigin(0.5);
+    this.pista = this.add.text(W/2, H-30, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
+      .setOrigin(0.5).setAlpha(0.7);
+    this.saltar = this.add.text(W-10, 10, 'saltar ›', {fontFamily:'Arial', fontSize:'12px', color:'#68416c'})
+      .setOrigin(1,0).setInteractive({useHandCursor:true});
+    this.saltar.on('pointerdown', ()=> this.celebracion());
+    this.input.on('pointerdown', (p)=>{ if(p.y > 40) this.siguiente(); });
+    this.siguiente();
+  }
+
+  siguiente(){
+    if(this.acabado) return;
+    this.i++;
+    if(this.i >= CURRICULUM.length){ this.celebracion(); return; }
+    const c = CURRICULUM[this.i];
+    const color = c.rojo ? '#d83335' : c.tq ? '#40ada9' : c.blanco ? '#ffffff' : '#f2c749';
+    this.gr.setText(c.gr).setColor(color).setFontSize(c.blanco ? '52px' : '32px');
+    this.pe.setText(c.pe);
+    this.gr.setAlpha(0); this.pe.setAlpha(0);
+    this.tweens.add({targets:[this.gr,this.pe], alpha:1, duration:420});
+    speakPhrase(c.gr.replace(/\n/g,' '));
+    if(this.reloj) this.reloj.remove();
+    this.reloj = this.time.delayedCall(c.blanco ? 2600 : 2900, ()=> this.siguiente()); // lento a propósito
+  }
+
+  celebracion(){
+    if(this.acabado) return;
+    this.acabado = true;
+    if(this.reloj) this.reloj.remove();
+    this.input.removeAllListeners('pointerdown');
+    this.children.removeAll();
+    const cx = W/2;
+    this.add.image(cx, 42, 'instanteLogo').setDisplaySize(74,47);
+    this.add.text(cx, 86, '¡INSTANTE SIGUE SIENDO SUYA!', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'20px', color:'#f2c749', align:'center', wordWrap:{width:W-40}
+    }).setOrigin(0.5);
+    // ella, en grande, y su gente alrededor
+    this.add.circle(cx, 168, 54, 0x000000, 0).setStrokeStyle(5, PALETTE.yellow);
+    this.add.image(cx, 168, 'aidaFace').setDisplaySize(100,100);
     const gente = [
-      {x:cx-116, y:150, cara:'brendaFace', nom:'BRENDA'},
-      {x:cx+116, y:150, cara:'mamaFace',   nom:'MAMÁ'},
-      {x:cx-116, y:246, cara:'primoFace',  nom:'DIEGO'},
-      {x:cx+116, y:246, cara:'manuelFace', nom:'MANUEL'},
+      {x:cx-118, y:142, cara:'brendaFace', nom:'BRENDA'},
+      {x:cx+118, y:142, cara:'mamaFace',   nom:'MAMÁ'},
+      {x:cx-118, y:236, cara:'primoFace',  nom:'DIEGO'},
+      {x:cx+118, y:236, cara:'primo2Face', nom:'ALBERTO'},
+      {x:cx,     y:268, cara:'manuelFace', nom:'MANUEL'},
     ];
     gente.forEach(p=>{
-      this.add.circle(p.x, p.y, 27, PALETTE.purple, 1).setStrokeStyle(3, PALETTE.turquoise);
-      if(p.cara) this.add.image(p.x, p.y, p.cara).setDisplaySize(48,48);
-      else this.add.text(p.x, p.y, p.emoji, {fontSize:'28px'}).setOrigin(0.5);
-      this.add.text(p.x, p.y+38, p.nom, {fontFamily:'Impact', fontSize:'11px', color:'#ffffff'}).setOrigin(0.5);
+      this.add.circle(p.x, p.y, 26, PALETTE.purple, 1).setStrokeStyle(3, PALETTE.turquoise);
+      this.add.image(p.x, p.y, p.cara).setDisplaySize(46,46);
+      this.add.text(p.x, p.y+36, p.nom, {fontFamily:'Impact', fontSize:'10px', color:'#ffffff'}).setOrigin(0.5);
     });
-    // su propia frase, la que preside todo
-    this.add.text(cx, 318, '"No se brilla sin oscuridad."', {
-      fontFamily:'Georgia, serif', fontSize:'16px', color:'#40ada9', fontStyle:'italic', align:'center'
+    this.add.text(cx, 330, '"No se brilla sin oscuridad."', {
+      fontFamily:'Georgia, serif', fontSize:'15px', color:'#40ada9', fontStyle:'italic'
     }).setOrigin(0.5);
-    this.add.text(cx, 352, `🦄 ${this.puntos} en el último capítulo`, {fontFamily:'Arial', fontSize:'12px', color:'#8a8f94'}).setOrigin(0.5);
-    this.add.text(cx, 404, 'FELIZ CUMPLEAÑOS,\nAIDA 🦄', {
-      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#ffffff', align:'center', lineSpacing:4
+    this.add.text(cx, 356, `🦄 ${this.puntos} en el último capítulo`, {fontFamily:'Arial', fontSize:'11px', color:'#8a8f94'}).setOrigin(0.5);
+    this.add.text(cx, 406, 'FELIZ CUMPLEAÑOS,\nAIDA 🦄', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'29px', color:'#ffffff', align:'center', lineSpacing:4
     }).setOrigin(0.5);
     this.add.text(cx, 456, '33 · 19 de agosto de 2026', {fontFamily:'Georgia, serif', fontSize:'12px', color:'#e4378c'}).setOrigin(0.5);
     this.add.text(cx, 478, 'de tu hermano', {fontFamily:'Georgia, serif', fontSize:'11px', color:'#5a5d61', fontStyle:'italic'}).setOrigin(0.5);
     speakPhrase('No se brilla sin oscuridad. ¡Feliz cumpleaños, Aida!');
-    // confeti de los colores de Instante, sin parar
     this.time.addEvent({delay:110, loop:true, callback:()=>{
       const c = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple, 0xffffff][Phaser.Math.Between(0,4)];
       const p = this.add.rectangle(Phaser.Math.Between(0,W), -12, 7, 11, c);
       this.tweens.add({targets:p, y:H+20, angle:Phaser.Math.Between(-360,360), duration:Phaser.Math.Between(2200,4200), onComplete:()=>p.destroy()});
     }});
-    const btn = this.add.text(cx, H-32, 'volver a los capítulos', {
-      fontFamily:'Arial', fontSize:'12px', color:'#141617', backgroundColor:'#f2c749', padding:{left:12,right:12,top:6,bottom:6}
+    const btn = this.add.text(cx, H-24, 'volver a los capítulos', {
+      fontFamily:'Arial', fontSize:'12px', color:'#141617', backgroundColor:'#f2c749', padding:{left:12,right:12,top:5,bottom:5}
     }).setOrigin(0.5).setInteractive({useHandCursor:true});
     btn.on('pointerdown', ()=> this.scene.start('Menu'));
   }
