@@ -1,6 +1,31 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 23 — build v32)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 25 — build v34)
+
+**🎬 EL VOL. 5 ES AHORA UNA PELÍCULA EN CUATRO ACTOS.** Manuel lo llama «el culmen final» y es la parte del juego que más le importa. Estructura, con su separación medida:
+
+| x | tramo | acto |
+|---|---|---|
+| 260 | 0 | narrativa de entrada (3 cartelas, campo `intro`) |
+| 1460 | 2 | **ACTO I — EL DRAGÓN** (cartela → diálogo → pelea) |
+| 2670 | 4 | **ACTO II — LA MADRE** (ángel total, ver abajo) |
+| 3900 | 6 | **ACTO III — EL CLIENTE FINAL** + la cárcel detrás |
+| 5060 | 8 | META |
+
+Hay **1.160-1.230 px entre acto y acto** a propósito: Manuel pidió dos veces que «se separe mucho más» y que «si es más larga, no pasa nada». **No volver a juntarlos.** El capítulo mide 5.260 px, el más largo del juego.
+
+**Piezas reutilizables que quedaron montadas:**
+- `cartelaActo(num, titulo, sub, alAcabar)` — cartela a pantalla completa con rayas que se abren. Sirve para cualquier capítulo.
+- `escenaDialogo(BEATS, alAcabar)` — motor común de diálogo pausado. Los diálogos son datos: `BEATS_DRAGON`, `BEATS_CLIENTE`.
+- Campo `intro:[...]` en la ficha de un capítulo → narrativa antes de jugar.
+
+**⛪ EL ÁNGEL (`bajaElAngel`) — la clave está en el SILENCIO.** Lo que hace que el cambio de música se note no es la música celestial: es **cortar la anterior del todo** (`paraMusicaPropia()`), dejar el hueco, y que la de `angel` entre **2,6 s después**, cuando ella ya ha bajado. Si alguien «optimiza» eso quitando el silencio, se carga el efecto. Además: rayos de luz, fogonazo blanco, descenso real de 3,4 s desde fuera de pantalla, cámara lenta, y 7 cartelas a 3,8 s con sus palabras exactas («HOLA, MI NIÑA / LO QUE SUCEDE CONVIENE…»).
+
+**👟 Zapatillas** en La Milla (campo `zapatillas:true`): asoman bajo el volante del traje de flamenca y dan el pasito al correr. Comprobadas dibujándolas sobre su foto a tamaño real.
+
+**🟡 PENDIENTE Y SUYO:** el **año de fundación de Instante** (primera cartela del currículum final; no se inventa) y **que juegue el Vol. 5 entero**: los cuatro actos están verificados por geometría, orden y consola, pero nadie los ha visto seguidos.
+
+## Ronda 23 (build v32)
 
 **🎭 LO NUEVO Y GORDO DE ESTA RONDA:**
 - **`Interludio`, escena nueva:** narrativa ENTRE capítulos. Al acabar uno ya no se salta al siguiente; entran cartelas lentas (3,4 s). Las de antes del Vol. 5 preparan lo de la gente encerrada. El texto vive en `INTERLUDIOS`, indexado por el capítulo que se acaba de terminar.
