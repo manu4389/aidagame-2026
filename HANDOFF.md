@@ -1,16 +1,22 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimotercera vuelta — build v18)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimotercera vuelta — build v19)
 
-**LO ÚNICO QUE BLOQUEA AHORA MISMO: las fotos de Brenda y Aida.** Manuel pegó 5 imágenes en el chat el 24 jul (ninguna llegó como archivo) y **hay una contradicción sin resolver sobre cuál de las dos mujeres es Brenda** — ver el bloque de abajo. **NO tocar nada de Brenda sin preguntárselo primero.** Vía buena: que las suba a Google Fotos/Drive y pase el link, o que se las mande por email a sí mismo y las guarde en el Escritorio.
+**✅ RESUELTO EL BLOQUEANTE MÁS VIEJO DEL PROYECTO: Brenda ya tiene su foto real en el juego.** Manuel dejó los archivos directamente en `fotos/` (esa es la vía que funciona: **soltar los ficheros en la carpeta**, NO pegarlos en el chat) y confirmó por fin quién es quién: **Brenda es la del pelo oscuro liso, brazos cruzados y vestido gris**; la otra foto de esa pareja es Aida. Recortada con `rembg` + `u2net_human_seg` → `fotos/brenda_hero_real.png` (323×592), ya sustituye al emoji 💁‍♀️, con sombra en el suelo y etiqueta encima. Sigue peleando como aliada.
 
-**Hecho el 25 jul (build v18), sin que Manuel lo haya visto todavía:**
+**También del 25 jul: el ojo de Instante YA está en el fondo del nivel.** El mosaico de ojos que mandó (`images (1).jpg`) se convirtió a PNG con el blanco transparente (`fotos/instante_ojos_tile.png`) y va de `tileSprite` en parallax (scrollFactor 0.25, alpha 0.13) detrás de todo. Era el pendiente "Instante en el fondo" que arrastraba desde la ronda 12.
+
+**Sigue PENDIENTE de las 5 imágenes del 24 jul:** la **estética de collage** de la imagen 5 (foto en B/N + círculos y barras de color plano encima) como estilo visual central del juego. Manuel dijo "todo eso tiene que tener el estilo del videojuego" y eso todavía no se ha tocado — es un cambio de dirección artística, conviene enseñarle una muestra antes de aplicarlo a todo.
+
+**Hecho el 25 jul (builds v18 y v19), sin que Manuel lo haya visto todavía:**
 1. **Créditos de la Intro separados en dos cartelas** (lo último que pidió): "ESCRITO POR / MANUEL MOLINA PRADOS" y "DIRIGIDO POR / QUENTIN TARANTINO". El nombre va a 24px (`smallSize` nuevo en `INTRO_BEATS`) para que no se parta de línea.
 2. **Nivel alargado 2600 → 3600** con las cinco cosas movidas a la vez, como avisaba el handoff: `segs` (ahora 7 tramos, huecos de 100px), los 6 `spawnEnemy`, Brenda (1150→1250), el tutor (2160→2600), `coinXs` (26 monedas) y la meta (`WORLD_W-170` = 3430). **Verificado con matemáticas**: los 6 huecos son de 100px y el salto llega a ~136px de alto y ~187px de largo; ninguna moneda, enemigo, aliada ni la meta queda flotando sobre un pozo.
 3. **Katana de verdad**: ya no es un rectángulo con guarda. Hoja curva (sori) dibujada con `Graphics` punto a punto, que se afina hacia la punta, con punta en diagonal (kissaki), línea de temple (hamon), tsuba ovalada dorada y empuñadura trenzada. Sigue viviendo en el contenedor de la mano `(28,-28)`, así que el pivote del tajo no cambia.
 4. **La lucha se ve y se oye**: estela de arco blanco+turquesa que barre delante de ella en cada tajo, sacudida de cámara al atacar (60/0.003) y al matar (150/0.011, antes 90/0.005), destello blanco + estrella de corte sobre el enemigo, silbido de espada subido (0.5→0.85, clang 0.35→0.6) y **`playImpact()` nuevo** — golpe grave + chasquido, para que el tajo suene a que ha dado. Los sfx ahora también respetan el botón de silenciar.
 
-**Pendiente que Manuel pidió y sigue sin hacerse:** usar la imagen real del ojo de Instante en el fondo del nivel (ahora el parallax es solo el texto "INSTANTE" repetido), y la estética "collage" de la imagen 5 (foto B/N + círculos y barras de color plano) como estilo visual central.
+5. **Brenda real + ojo de Instante de fondo** (v19, detallado arriba).
+
+**Cómo pasarle archivos a Claude, ya probado y funcionando:** soltarlos en `C:\Users\Manuel\Desktop\JUEGO_AIDA\fotos\`. Pegar imágenes en el chat NO sirve para procesarlas (se ven, pero no quedan en disco y `rembg`/PIL necesitan un fichero).
 
 **Posible causa raíz de VARIOS "sigue sin aparecer/no hay botón" de sesiones anteriores, arreglada esta vez (build v17):** `#game-holder` tenía `aspect-ratio:9/13` calculado solo por ANCHO, sin mirar la altura real de pantalla. En un móvil con poca altura visible (barra del navegador, etc.), esto podía empujar la fila de controles (el botón TAJO, SALTAR) **fuera de la pantalla, invisible, sin poder hacer scroll** (`body` tiene `overflow:hidden`). Arreglado: `#wrap` ahora mide `100dvh` de alto y `#game-holder` es `flex:1` (se queda con lo que sobra) — los controles YA NO PUEDEN quedar cortados, pase lo que pase con la altura de la pantalla. **Si esto era la causa real, debería resolver de una vez lo del "botón de la espada que no existe" de las últimas 3-4 rondas.**
 
@@ -21,6 +27,7 @@
 4. El mismo logo (ojo), más grande, sin texto.
 5. Imagen de estilo: manos sujetando una cámara, foto en blanco y negro con círculos/barras de color (turquesa, rosa, amarillo) superpuestos — pinta de collage de la propia marca. Dijo que "todo eso tiene que tener el estilo del videojuego" — quiere ADOPTAR esta estética (foto B/N + formas de color plano) como estilo visual central del juego, no solo un detalle.
 
+**✅ YA RESUELTO EL 25 JUL — Manuel confirmó: la #1 (pelo oscuro liso, vestido gris) es BRENDA; la #2 es Aida.** Lo que sigue queda como registro de por qué se preguntó en vez de adivinar:
 **⚠️ OJO — NO asumir a ciegas cuál foto es Brenda y cuál es Aida.** Las fotos previas confirmadas de Aida (`aida_flamenca.jpg`, `aida_portada.jpg`, la de Instagram) la muestran SIEMPRE con pelo oscuro — lo cual coincidiría con la foto #1, NO con el orden literal en que Manuel las nombró ("Brenda y Aida" = 1,2). Esto es una contradicción real sin resolver. **Preguntar a Manuel explícitamente cuál es cuál antes de tocar nada de Brenda** — confundir a dos personas reales en un regalo personal es un error que hay que evitar, no adivinar.
 **Vía para conseguir los archivos de verdad:** pedirle que las suba a Google Fotos/Drive y pase el link, o que se las mande por email a sí mismo y las guarde en el Escritorio — pegar en el chat no funciona para esto.
 
