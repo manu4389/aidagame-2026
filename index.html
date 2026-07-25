@@ -120,7 +120,7 @@
     <button id="attack-btn">TAJO</button>
     <button id="jump-btn">SALTAR</button>
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v18 — 25 jul, nivel más largo · katana curva · tajo que se ve y se oye</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v19 — 25 jul, BRENDA REAL · ojo de Instante de fondo · nivel más largo · katana curva</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -245,6 +245,8 @@ class Boot extends Phaser.Scene {
   preload(){
     this.load.image('aidaFace', 'fotos/aida_face_hero.png');   // recorte ya ovalado con borde difuminado de verdad (alpha real, no máscara dura) — de aida_flamenca.jpg, foto nítida y frontal
     this.load.image('aidaHeroReal', 'fotos/aida_hero_real.png'); // ELLA TAL CUAL — recorte real de cuerpo entero (IA de segmentación, rembg/u2net), sin dibujo vectorial de por medio
+    this.load.image('brendaHeroReal', 'fotos/brenda_hero_real.png'); // Brenda, por fin con su foto real (Manuel la dejó en fotos/ el 25 jul) — mismo proceso: rembg + u2net_human_seg + crop
+    this.load.image('ojosInstante', 'fotos/instante_ojos_tile.png'); // mosaico del ojo de la marca, con el blanco pasado a transparente, para el fondo del nivel
     // caras de enemigos "más fuertes" — generadas (Pollinations) + recortadas (rembg), pedido explícito de Manuel
     this.load.image('enemyMachirulo1', 'fotos/enemy_machirulo1.png');
     this.load.image('enemyMachirulo2', 'fotos/enemy_machirulo2.png');
@@ -485,8 +487,11 @@ class Chapter1 extends Phaser.Scene {
 
     // Brenda — su mejor amiga y socia. Se une como aliada QUE TAMBIÉN PELEA, no solo anima
     // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
-    this.brenda = this.add.text(1250, GROUND_Y-46, '💁‍♀️', {fontSize:'58px'}).setOrigin(0.5);
-    this.brendaLabel = this.add.text(1250, GROUND_Y-96, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    // ✅ 25 jul: ya NO es un emoji — es Brenda de verdad (Manuel confirmó que es la del pelo oscuro
+    // liso y el vestido gris; la otra foto de esa pareja es Aida). Recorte con rembg/u2net_human_seg.
+    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 62, 15, 0x000000, 0.35);
+    this.brenda = this.add.image(1250, GROUND_Y-70, 'brendaHeroReal').setDisplaySize(78,143);
+    this.brendaLabel = this.add.text(1250, GROUND_Y-152, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.brenda);
     this.brenda.body.setAllowGravity(false);
     this.brendaAttackCooldown = false;
@@ -503,7 +508,7 @@ class Chapter1 extends Phaser.Scene {
 
     // coleccionables
     this.collectibles = this.physics.add.group({ allowGravity:false });
-    const coinXs = [200,260,320, 780, 900,960,1020, 1250,1310,1370,1500,1560, 1850,1910,1970,
+    const coinXs = [200,260,320, 780, 900,960,1020, 1200,1310,1370,1500,1560, 1850,1910,1970, // el de 1200 va antes de Brenda (1250), para no solaparse con ella
                     2350,2410,2470, 2650,2710, 2950,3010,3070,3200, 3400,3450];
     coinXs.forEach((x,i)=>{
       const icon = (i%6===5) ? '⚡' : '🦄';
@@ -566,6 +571,10 @@ class Chapter1 extends Phaser.Scene {
         this.add.rectangle(x-24+((i)%3)*20, GROUND_Y-th+16+wRow*22, 10, 12, PALETTE.yellow, 0.55).setScrollFactor(0.55);
       }
     }
+    // el OJO DE LA MARCA, de verdad y en mosaico, flotando sobre Granada — Manuel pidió "Instante en el fondo"
+    // y no solo el texto: esta es la imagen real que él mismo mandó, con el blanco pasado a transparente
+    this.add.tileSprite(0, 0, WORLD_W, H, 'ojosInstante')
+      .setOrigin(0,0).setScrollFactor(0.25).setAlpha(0.13);
     // marca "INSTANTE" y "AIDA" de fondo, repetida — es su mundo, ganado a pulso
     for(let i=0;i<6;i++){
       const x = i*480+260;
@@ -831,6 +840,7 @@ class Chapter1 extends Phaser.Scene {
       this.brenda.x += (targetX - this.brenda.x) * 0.06;
       this.brenda.setFlipX(this.player.flipX);
       this.brendaLabel.x = this.brenda.x;
+      this.brendaShadow.x = this.brenda.x;
       if(!this.brendaAttackCooldown){
         const target = this.enemies.getChildren().find(e => Math.abs(e.x-this.brenda.x) < 55);
         if(target){
