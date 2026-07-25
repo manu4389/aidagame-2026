@@ -69,11 +69,12 @@
   #jump-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10;}
   #attack-btn{
     background:linear-gradient(145deg,var(--red),#8f1417);
-    border:2px solid #ffd7d7;border-radius:50%;
-    color:#fff;font-size:13px;font-weight:900;
-    width:64px;height:64px;box-shadow:0 4px 0 #5c0d0f;
+    border:3px solid #ffd7d7;border-radius:50%;
+    color:#fff;font-size:15px;font-weight:900;line-height:1.05;
+    width:78px;height:78px;box-shadow:0 4px 0 #5c0d0f;
     margin-right:8px;
   }
+  #attack-btn small{display:block;font-size:9px;font-weight:700;opacity:.85;letter-spacing:.5px;}
   #attack-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c0d0f;}
   #mute-btn{
     position:absolute;top:8px;right:8px;z-index:10;
@@ -117,10 +118,10 @@
       <button class="ctrl" id="btnLeft">◀</button>
       <button class="ctrl" id="btnRight">▶</button>
     </div>
-    <button id="attack-btn">TAJO</button>
+    <button id="attack-btn">TAJO<small>KATANA</small></button>
     <button id="jump-btn">SALTAR</button>
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v19 — 25 jul, BRENDA REAL · ojo de Instante de fondo · nivel más largo · katana curva</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v20 — 25 jul, katana con alcance y automática · malos más grandes · Instante en grande · sonidos</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -219,6 +220,26 @@ function playImpact(scene){
   src.connect(g2); g2.connect(ctx.destination);
   src.start(t0);
 }
+
+/* ---------- BLIPS DE ARCADE (moneda, salto, daño) — "tienen que sonar también" ---------- */
+function playBlip(scene, f0, f1, dur, type, vol){
+  const ctx = scene.sound.context;
+  if(!ctx || isMuted) return;
+  const t0 = ctx.currentTime;
+  const o = ctx.createOscillator();
+  o.type = type || 'triangle';
+  o.frequency.setValueAtTime(f0, t0);
+  o.frequency.exponentialRampToValueAtTime(f1, t0+dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol || 0.3, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0+dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t0); o.stop(t0+dur+0.02);
+}
+const sfxCoin  = s => playBlip(s, 620, 1250, 0.14, 'triangle', 0.32);
+const sfxBonus = s => playBlip(s, 780, 1700, 0.20, 'square',   0.26);
+const sfxJump  = s => playBlip(s, 300,  660, 0.13, 'triangle', 0.26);
+const sfxHurt  = s => playBlip(s, 400,   90, 0.30, 'sawtooth', 0.34);
 
 /* ---------- MÚSICA ---------- */
 let currentMusic = null;
@@ -489,9 +510,9 @@ class Chapter1 extends Phaser.Scene {
     // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
     // ✅ 25 jul: ya NO es un emoji — es Brenda de verdad (Manuel confirmó que es la del pelo oscuro
     // liso y el vestido gris; la otra foto de esa pareja es Aida). Recorte con rembg/u2net_human_seg.
-    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 62, 15, 0x000000, 0.35);
-    this.brenda = this.add.image(1250, GROUND_Y-70, 'brendaHeroReal').setDisplaySize(78,143);
-    this.brendaLabel = this.add.text(1250, GROUND_Y-152, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 74, 17, 0x000000, 0.35);
+    this.brenda = this.add.image(1250, GROUND_Y-84, 'brendaHeroReal').setDisplaySize(92,169); // más grande: que se le vea la cara
+    this.brendaLabel = this.add.text(1250, GROUND_Y-180, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.brenda);
     this.brenda.body.setAllowGravity(false);
     this.brendaAttackCooldown = false;
@@ -537,6 +558,10 @@ class Chapter1 extends Phaser.Scene {
     this.cameras.main.setDeadzone(80, 200);
 
     // HUD (fijo en pantalla)
+    // franja de los colores de Instante, fija en pantalla — la marca también en primer plano
+    [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow].forEach((c,i)=>{
+      this.add.rectangle(W/2, H-10+i*4, W, 4, c, 0.95).setScrollFactor(0).setDepth(60);
+    });
     this.hud = this.add.text(10,10, '', {fontFamily:'Arial', fontSize:'16px', color:'#141617', backgroundColor:'#ffffffaa', padding:{left:8,right:8,top:4,bottom:4}})
       .setScrollFactor(0);
     this.updateHud();
@@ -574,7 +599,20 @@ class Chapter1 extends Phaser.Scene {
     // el OJO DE LA MARCA, de verdad y en mosaico, flotando sobre Granada — Manuel pidió "Instante en el fondo"
     // y no solo el texto: esta es la imagen real que él mismo mandó, con el blanco pasado a transparente
     this.add.tileSprite(0, 0, WORLD_W, H, 'ojosInstante')
-      .setOrigin(0,0).setScrollFactor(0.25).setAlpha(0.13);
+      .setOrigin(0,0).setScrollFactor(0.25).setAlpha(0.17).setTileScale(1.7); // ojos MÁS GRANDES (Manuel: "el ojo de Instante al fondo, en grande")
+    // EL OJO DE LA MARCA, ENORME, presidiendo el fondo — no un detalle, la imagen que manda en la pantalla
+    for(let i=0;i<5;i++){
+      this.add.image(i*760+240, 150, 'instanteLogo')
+        .setDisplaySize(330,210).setAlpha(0.20).setScrollFactor(0.18);
+    }
+    // COLLAGE DE MARCA: círculos y barras planas en los colores de Instante, como su propio material gráfico
+    const brand = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple];
+    for(let i=0;i<16;i++){
+      const x = i*240 + 110, c = brand[i%4];
+      if(i%3===0)      this.add.circle(x, 80+(i%4)*48, 46+(i%3)*26, c, 0.22).setScrollFactor(0.22);
+      else if(i%3===1) this.add.rectangle(x, 110+(i%5)*42, 210, 18, c, 0.24).setScrollFactor(0.22);
+      else             this.add.rectangle(x, 70+(i%4)*54, 18, 140, c, 0.20).setScrollFactor(0.22);
+    }
     // marca "INSTANTE" y "AIDA" de fondo, repetida — es su mundo, ganado a pulso
     for(let i=0;i<6;i++){
       const x = i*480+260;
@@ -589,14 +627,15 @@ class Chapter1 extends Phaser.Scene {
 
   spawnEnemy(x,y,type,min,max,faceKey){
     // sombra en el suelo, para que se lean como un adversario real plantado ahí, no un emoji flotando
-    const shadow = this.add.ellipse(x,y+30,54,14,0x000000,0.35);
+    const shadow = this.add.ellipse(x,y+38,70,17,0x000000,0.35);
     const ENEMY_LABEL = { burocracia:'BUROCRACIA', machirulo:'MACHIRULO', chirulo_viejo:'VIEJO CHIRULO' };
     const ENEMY_TAGCOLOR = { burocracia:'#141617', machirulo:'#68416c', chirulo_viejo:'#d83335' };
-    const label = this.add.text(x,y-58, ENEMY_LABEL[type], {
-      fontFamily:'Impact', fontSize:'11px', color:'#ffffff', backgroundColor: ENEMY_TAGCOLOR[type], padding:{left:5,right:5,top:2,bottom:2}
+    const label = this.add.text(x,y-70, ENEMY_LABEL[type], {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor: ENEMY_TAGCOLOR[type], padding:{left:6,right:6,top:2,bottom:2}
     }).setOrigin(0.5);
     // caras ilustradas de verdad para machirulo/viejo (generadas + recortadas); burocracia se queda en emoji, es papeleo, no una persona
-    const t = faceKey ? this.add.image(x,y,faceKey).setDisplaySize(56,56) : this.add.text(x,y, ENEMY_ICON[type], {fontSize:'52px'}).setOrigin(0.5);
+    // más grandes, "para que se vean" (Manuel, 25 jul): 56 → 76 px
+    const t = faceKey ? this.add.image(x,y,faceKey).setDisplaySize(76,76) : this.add.text(x,y, ENEMY_ICON[type], {fontSize:'70px'}).setOrigin(0.5);
     this.physics.add.existing(t);
     t.body.setAllowGravity(false);
     t.dir = -1; t.min = min; t.max = max; t.type = type;
@@ -617,6 +656,7 @@ class Chapter1 extends Phaser.Scene {
   collect(t){
     if(!t.active) return;
     t.destroy();
+    (t.icon==='⚡' ? sfxBonus : sfxCoin)(this); // cada cosa que coge, suena
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
     // en orden, no al azar — así en un recorrido completo las DICE TODAS, no depende de la suerte
@@ -660,6 +700,13 @@ class Chapter1 extends Phaser.Scene {
     this.tweens.add({
       targets:this.katana, rotation:Phaser.Math.DegToRad(-150), duration:140, yoyo:true, ease:'Cubic.easeOut',
       onComplete: ()=> this.katana.setRotation(Phaser.Math.DegToRad(18))
+    });
+    // LA KATANA TIENE ALCANCE: alcanza a quien tenga delante, no hace falta chocarse con él.
+    // (Antes solo mataba si el cuerpo tocaba al enemigo justo en los 160 ms del tajo — por eso
+    //  atacar "no hacía nada" si no la pegabas pegadísima.)
+    this.enemies.getChildren().slice().forEach(e=>{
+      const dx = (e.x - this.player.x) * dir;
+      if(dx > -24 && dx < 96 && Math.abs(e.y - this.player.y) < 90) this.defeatEnemy(e);
     });
     this.time.delayedCall(160, ()=> this.attacking=false);
     this.time.delayedCall(360, ()=> this.attackCooldown=false);
@@ -707,6 +754,8 @@ class Chapter1 extends Phaser.Scene {
   hitEnemy(en){
     if(this.invuln) return;
     this.lives--; this.invuln = true;
+    sfxHurt(this);
+    this.cameras.main.shake(120, 0.008);
     this.player.setVelocity(this.player.flipX? 160:-160, -260);
     this.time.delayedCall(1200, ()=> this.invuln=false);
     this.updateHud();
@@ -805,12 +854,23 @@ class Chapter1 extends Phaser.Scene {
     if(jumpRequested){
       if(this.player.body.blocked.down || this.player.body.touching.down){
         this.player.setVelocityY(-640); // antes -480: con gravedad 1500 solo llegaba a 76px y la repisa está a 110px — NUNCA se podía alcanzar. Ahora llega a ~136px.
+        sfxJump(this);
       }
       jumpRequested = false;
     }
     if(attackRequested){
       this.performAttack();
       attackRequested = false;
+    }
+    // 🗡️ Y ADEMÁS SE ACCIONA SOLA: si un malo se pone a tiro, ella se gira y tira el tajo sin
+    // que Manuel toque nada. Pidió "un botón específico o que se accione sola" — están LAS DOS.
+    if(!this.attackCooldown){
+      const cerca = this.enemies.getChildren().find(e =>
+        Math.abs(e.x - this.player.x) < 92 && Math.abs(e.y - this.player.y) < 90);
+      if(cerca){
+        this.player.flipX = cerca.x < this.player.x; // se gira hacia el que viene
+        this.performAttack();
+      }
     }
     if(this.player.body.blocked.down || this.player.body.touching.down){
       const seg = this.segs.find(s=> this.player.x >= s.x+30 && this.player.x <= s.x+s.w-30);
@@ -905,11 +965,9 @@ document.addEventListener('keyup', e=>{
   if(e.key==='ArrowRight') keys.right=false;
 });
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(console.warn);
-  });
-}
+// (Quitado el registro del service worker: `sw.js` NO existe en este proyecto todavía, así que
+//  fallaba siempre y llenaba la consola de avisos que tapaban los errores de verdad.
+//  Cuando se haga la Fase 6 (PWA) se vuelve a poner, junto con el sw.js y el manifest.json.)
 </script>
 </body>
 </html>
