@@ -1,6 +1,20 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, decimoctava vuelta — build v24)
+## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, ronda 19 — build v25: EL JUEGO YA ESTÁ ENTERO)
+
+**🏗️ LA REFORMA QUE HAY QUE CONOCER ANTES DE TOCAR NADA.** `class Chapter1` ya no existe. La mecánica —la que Manuel dio por buena tras 18 rondas— vive **una sola vez** en `class Capitulo`, y **cada capítulo es una ficha de datos** en el array `CAPITULOS`. Consecuencia práctica: **un retoque de jugabilidad se hace una vez y vale para los cinco**; un retoque de contenido se hace en la ficha del capítulo. **No volver a duplicar la clase.**
+- El suelo se construye con `construyeSuelo(anchos, hueco)` y de ahí sale el ancho del mundo, así que **es imposible dejar la meta o un enemigo flotando sobre un pozo** (el error clásico al alargar un nivel, que ya pasó una vez).
+- Todo se coloca por **índice de tramo** (`{t:3, off:150}`), nunca por coordenada absoluta.
+
+**Estado: los 5 capítulos del STORYBOARD están hechos.** Vol. 1 El Contrato (igual que estaba) · Vol. 2 Corpus (farolillos, balcones con mantones; gorrón y pisa-volantes) · Vol. 3 La Barra (neón; **Conchita** de aliada, regala **salto doble**) · Vol. 4 La Milla (**contrarreloj de 80 s**, corre a 240) · Vol. 5 Instante HQ (oficina + **jefe final "El Cliente Imposible"**, 6 tajos, suelta un brief contradictorio en cada golpe; la meta no se abre hasta tumbarlo). Más: **selector de capítulos** con progreso en `localStorage` y **pantalla final** con Aida, Brenda, mamá, los primos y Manuel, su frase y el felicitación de cumpleaños.
+
+**🔴 LO QUE FALTA PARA CERRAR (fases 6-8 del plan):**
+1. **Que Manuel lo pruebe entero.** Nadie ha jugado los capítulos 2-5 todavía: están verificados por geometría y por consola, **no por manos**. Es lo primero.
+2. **Fotos que mejorarían mucho el resultado, si las consigue:** **Conchita** (ahora es una silueta dibujada de neón) · **mamá, los primos y Manuel** para la pantalla final (ahora son emoji) · **Brenda de cuerpo entero** (quitaría la muleta del mostrador). Mismo proceso siempre: dejar el fichero en `fotos/` → `rembg` con `u2net_human_seg` → recorte a bbox.
+3. **PWA (Fase 6):** `manifest.json`, `sw.js` e iconos. El registro del service worker se quitó porque el fichero no existía; al hacerlo, volver a ponerlo.
+4. **Autorrevisión (Fase 7):** repasar que no haya nada del ex-novio ni nada inapropiado (ver `BRIEF.md`) antes del 19 de agosto.
+
+## Ronda 18 (build v24)
 
 **🔧 LA TÉCNICA QUE HAY QUE USAR SIEMPRE: MAQUETAR LA PANTALLA EN UN PNG Y MIRARLA.** Phaser no renderiza aquí, pero **PIL sí puede recomponer la pantalla entera** —capas de parallax con sus scrollFactor y sus alphas, el suelo, los personajes a tamaño real— y luego se abre con `Read`. Hecho en esta ronda: al mirarlo se vio de golpe que el mosaico de ojos era papel pintado y que Brenda seguía descompensada. **Dos rondas de "no, sigue mal" se habrían ahorrado maquetando antes.** El script está en el historial de esta sesión; rehacerlo es media hora bien gastada cuando haya que juzgar cualquier cosa visual.
 
