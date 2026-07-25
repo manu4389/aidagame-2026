@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v28 — 25 jul, niveles más largos · la cárcel y EL DEL BIGOTE · final con el currículum de Instante</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v29 — 25 jul, la risa malvada del Bigote (MUAJAJAJA) antes de la amenaza de Instante</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -892,6 +892,7 @@ class Capitulo extends Phaser.Scene {
     this.dialogando = true;
     this.physics.pause();
     const BEATS = [
+      {quien:'EL DEL BIGOTE', txt:'MUAJAJAJAJAJAJA...',                   color:'#d83335', risa:true},
       {quien:'EL DEL BIGOTE', txt:'VOY A DESTROZAR TU EMPRESA...',        color:'#d83335'},
       {quien:'EL DEL BIGOTE', txt:'...Y A TU FAMILIA.',                   color:'#d83335'},
       {quien:'AIDA',          txt:'¡ME CAGO EN TU PUTA MADRE, CABRÓN!',   color:'#f2c749'},
@@ -930,9 +931,15 @@ class Capitulo extends Phaser.Scene {
       linea.setText(b.txt).setColor(b.color);
       linea.setAlpha(0); quien.setAlpha(0);
       this.tweens.add({targets:[quien,linea], alpha:1, duration:320});
+      if(b.risa){
+        // que la risa se NOTE: tiembla la pantalla y el bigotudo se hincha de gusto
+        linea.setFontSize('34px');
+        this.cameras.main.shake(900, 0.006);
+        if(this.bigote) this.tweens.add({targets:this.bigote, scaleX:1.14, scaleY:0.9, duration:220, yoyo:true, repeat:3});
+      }
       speakPhrase(b.txt);
       if(temporizador) temporizador.remove();
-      temporizador = this.time.delayedCall(3200, siguiente); // LENTO a propósito
+      temporizador = this.time.delayedCall(b.risa ? 4000 : 3200, siguiente); // LENTO a propósito
     };
     this.input.on('pointerdown', siguiente);
     siguiente();

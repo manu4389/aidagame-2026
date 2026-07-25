@@ -4,7 +4,7 @@
    se pide SIEMPRE a la red y solo se tira de la copia guardada si no hay conexión. Las
    fotos y el audio sí van de caché primero, que no cambian y así el juego abre al vuelo
    y funciona sin datos. NO cambiar el HTML a cache-first: volvería el problema de siempre. */
-const CACHE = 'aida-vol1-5-v28';
+const CACHE = 'aida-vol1-5-v29';
 const ASSETS = [
   './manifest.json',
   './icon-192.png',
