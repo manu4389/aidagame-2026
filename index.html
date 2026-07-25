@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v32 — 25 jul, narrativa entre pantallas · mamá ángel y ESPADA DE FUEGO · el dragón final de Instante</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v33 — 25 jul, dos actos en el último capítulo · zapatillas de correr · mamá baja del cielo</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -678,7 +678,7 @@ const ENEMIGOS = {
   flato:         {icono:'😣', etiqueta:'EL FLATO',        color:'#141617', vel:0.6, taunt:'¡NI FLATO NI NADA, QUE ME QUEDA UNA MILLA!'},
   cochelisto:    {icono:'🚗', etiqueta:'EN EL CARRIL BICI',color:'#d83335', vel:1.1, taunt:'¡EL CARRIL ES MÍO, CAMPEÓN!'},
   urgente:       {icono:'📞', etiqueta:'"PARA AYER"',     color:'#68416c', vel:1.0, taunt:'¡PARA AYER LO TIENES, MAJO!'},
-  bigote:        {icono:'🥸', etiqueta:'EL DEL BIGOTE',   color:'#d83335', vel:0.0, taunt:'LUEGO TE PASO LA FACTURA. POR MÍ Y POR TODOS LOS MÍOS.'},
+  bigote:        {icono:'🥸', etiqueta:'EL CLIENTE FINAL', color:'#d83335', vel:0.0, taunt:'LUEGO TE PASO LA FACTURA. POR MÍ Y POR TODOS LOS MÍOS.'},
 };
 
 /* ---------- FICHAS DE LOS 5 CAPÍTULOS ---------- */
@@ -735,26 +735,32 @@ const CAPITULOS = [
     rotulosSuyos:['UNA MILLA MÁS','LO QUE SUCEDE CONVIENE','KILÓMETROS DE VENTAJA'],
     apertura:'¡Lo que sucede conviene, los cojones!',
     frases:['¡Una milla más!','¡Toma kit digital!','¡Que me como la cuesta!','¡Hoy se cena en vaso!'],
-    tiempo:95,
+    tiempo:95, zapatillas:true,   // es el capítulo en el que corre: se le ven las zapatillas
     repisas:[{t:2, off:90},{t:5, off:-60}],
     enemigos:[{t:1,tipo:'flato'},{t:2,tipo:'cochelisto'},{t:3,tipo:'pisotones'},
               {t:5,tipo:'flato',off:130},{t:6,tipo:'cochelisto'}],
     meta:{tipo:'meta', titulo:'¡MILLA COMPLETADA!', grito:'¡Lo que sucede conviene, los cojones!'},
   },
   {
-    n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'tu gente está encerrada y el Cliente Imposible te espera',
+    n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'un dragón, el cliente final, y tu gente encerrada detrás',
     anchos:[520,480,500,480,520,480,380], hueco:100,
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
     rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
     rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
     apertura:'¡Muerte a los caraduras!',
     frases:['¡Soltad a mi gente!','¡Toma kit digital!','¡Aquí mando yo!','¡Ni un euro por Instante!'],
+    // narrativa AL PRINCIPIO de la pantalla, antes de jugar (lo pidió Manuel)
+    intro:[
+      {gr:'INSTANTE HQ.',              pe:'Su agencia.\nLa que levantaron ellas.'},
+      {gr:'DENTRO ESTÁ SU GENTE.',     pe:'Encerrada.', rojo:true},
+      {gr:'Y DOS COSAS EN MEDIO.',     pe:'Un dragón.\nY el cliente final.', rojo:true},
+    ],
     repisas:[{t:1, off:-60},{t:4, off:80}],
     enemigos:[{t:1,tipo:'urgente'},{t:2,tipo:'burocracia'},{t:2,tipo:'machirulo',off:170},
               {t:4,tipo:'urgente'},{t:4,tipo:'machirulo2',off:170}],
     aliada:{t:2, off:-180, quien:'brenda'},
-    carcel:{t:3, vidas:7},
-    jefe:{t:5, vidas:6},
+    jefe:{t:3, vidas:6},      // ACTO 1 — el dragón
+    carcel:{t:5, vidas:7},    // ACTO 2 — el cliente final, el del bigote, con su gente detrás
     meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
     ultimo:true,
   },
@@ -834,7 +840,14 @@ class Capitulo extends Phaser.Scene {
     // cada capítulo arranca con SU frase y tiene SUS frases: antes los cinco empezaban igual
     // y decían lo mismo (Manuel: "todas las pantallas dicen lo mismo y empiezan haciendo lo mismo")
     this.frases = (C.frases || []).concat(CATCHPHRASES);
-    this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(C.apertura || CATCHPHRASES[0]); });
+    if(C.intro && C.intro.length){
+      // NARRATIVA AL PRINCIPIO de la pantalla: se para todo y se cuenta dónde está
+      this.time.delayedCall(60, ()=> this.escenaDialogo(
+        C.intro.map(c=>({quien:c.gr, txt:c.pe, color: c.rojo ? '#d83335' : '#f2c749'})),
+        ()=> this.sayPhrase(C.apertura || CATCHPHRASES[0])));
+    } else {
+      this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(C.apertura || CATCHPHRASES[0]); });
+    }
 
     this.construyePlataformas();
     this.construyeJugadora();
@@ -850,8 +863,8 @@ class Capitulo extends Phaser.Scene {
 
     if(C.aliada) this.construyeAliada();
     if(C.tutor)  this.construyeTutor();
-    if(C.carcel) this.construyeCarcel();
-    if(C.jefe){ this.construyeJefe(); this.construyeZonaAngel(); }
+    if(C.carcel){ this.construyeCarcel(); this.construyeZonaAngel(); }
+    if(C.jefe)   this.construyeJefe();
     this.construyeMonedas();
     this.construyeMeta();
 
@@ -953,8 +966,22 @@ class Capitulo extends Phaser.Scene {
     this.cigBody = this.add.rectangle(-28,-36,18,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
     this.cigEmber = this.add.circle(-20,-39,2.6,PALETTE.red,1);
     this.cigSmoke = this.add.ellipse(-19,-50,8,12,0xcccccc,0.35);
-    this.playerVisual = this.add.container(this.player.x, this.player.y,
-      [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
+    const piezas = [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber];
+    // ZAPATILLAS DE CORRER, y que se noten: asoman por debajo del volante en La Milla.
+    // (Manuel: "en la pantalla donde ella corre, ponle unas zapatillas que se note".)
+    if(this.C.zapatillas){
+      this.zapas = [];
+      [-17, 17].forEach((zx,i)=>{
+        const z = this.add.container(zx, 30);
+        const suela = this.add.ellipse(0, 6, 34, 11, 0xffffff).setStrokeStyle(2, 0x141617);
+        const empeine = this.add.ellipse(-3, 0, 28, 14, PALETTE.pink).setStrokeStyle(2, 0x141617);
+        const raya = this.add.rectangle(-1, 1, 18, 3.5, 0xffffff).setAngle(-16);
+        const talon = this.add.ellipse(11, -1, 11, 13, PALETTE.turquoise).setStrokeStyle(2, 0x141617);
+        z.add([suela, empeine, raya, talon]);
+        this.zapas.push(z); piezas.push(z);
+      });
+    }
+    this.playerVisual = this.add.container(this.player.x, this.player.y, piezas);
   }
 
   construyeAliada(){
@@ -1021,7 +1048,7 @@ class Capitulo extends Phaser.Scene {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  //  EL JEFE FINAL — EL CLIENTE FINAL, un dragón enorme con bigotazo
+  //  ACTO 1 — EL DRAGÓN, enorme, con su bigotazo de barbas doradas
   //  Manuel: "el monstruo final es el cliente final, el que tiene a la gente
   //  encarcelada; tiene que ser un monstruo muy grande con un gran bigote,
   //  tipo dragón chino". Se dibuja como criatura mitológica —cuerpo de
@@ -1101,7 +1128,7 @@ class Capitulo extends Phaser.Scene {
     this.tweens.add({targets:this.jefeCuerpo, y:GROUND_Y-104, duration:1700, yoyo:true, repeat:-1, ease:'Sine.easeInOut'});
 
     this.add.ellipse(this.jefeX, GROUND_Y-2, 210, 26, 0x000000, 0.45);
-    this.jefeLabel = this.add.text(this.jefeX, GROUND_Y-250, 'EL CLIENTE FINAL', {
+    this.jefeLabel = this.add.text(this.jefeX, GROUND_Y-250, 'EL DRAGÓN', {
       fontFamily:'Impact', fontSize:'18px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:9,right:9,top:3,bottom:3}
     }).setOrigin(0.5);
     this.add.rectangle(this.jefeX-80, GROUND_Y-226, 160, 12, 0x000000, 0.55).setOrigin(0,0.5);
@@ -1111,8 +1138,19 @@ class Capitulo extends Phaser.Scene {
     this.jefeCuerpo.body.setSize(240, 220).setOffset(-180, -110); // ajustada al bicho dibujado, no al centro
     this.jefeCuerpo.body.setAllowGravity(false);
     this.jefeDir = -1;
+    this.dialogoDragonHecho = false;
     this.physics.add.overlap(this.player, this.jefeCuerpo, ()=>{
+      if(!this.dialogoDragonHecho) return;          // primero se habla, luego se pega
       if(this.attacking) this.golpearJefe(); else this.hitEnemy({x:this.jefeCuerpo.x});
+    }, null, this);
+    // zona que dispara el diálogo con el dragón, antes de su alcance
+    this.zonaDragon = this.add.zone(s.x + 40, GROUND_Y-110, 90, 280);
+    this.physics.add.existing(this.zonaDragon);
+    this.zonaDragon.body.setAllowGravity(false);
+    this.physics.add.overlap(this.player, this.zonaDragon, ()=>{
+      if(this.dialogoDragonHecho || this.dialogando) return;
+      this.dialogoDragonHecho = true;
+      this.escenaDialogo(BEATS_DRAGON, ()=> this.cartelPelea());
     }, null, this);
   }
 
@@ -1156,7 +1194,7 @@ class Capitulo extends Phaser.Scene {
       fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:2,bottom:2}
     }).setOrigin(0.5);
 
-    // EL DEL BIGOTE — grandote, plantado delante de la celda, no patrulla
+    // EL CLIENTE FINAL — el del bigote, grandote, plantado delante de la celda
     const bx = cx + 120;
     this.bigoteX = bx;
     this.add.ellipse(bx, GROUND_Y-2, 104, 20, 0x000000, 0.45);
@@ -1175,7 +1213,7 @@ class Capitulo extends Phaser.Scene {
     this.physics.add.existing(this.bigote);
     this.bigote.body.setSize(112,196).setOffset(-56,-116);
     this.bigote.body.setAllowGravity(false);
-    this.bigoteLabel = this.add.text(bx, GROUND_Y-234, 'EL DEL BIGOTE', {
+    this.bigoteLabel = this.add.text(bx, GROUND_Y-234, 'EL CLIENTE FINAL', {
       fontFamily:'Impact', fontSize:'16px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:8,right:8,top:3,bottom:3}
     }).setOrigin(0.5);
     this.add.rectangle(bx-62, GROUND_Y-212, 124, 10, 0x000000, 0.55).setOrigin(0,0.5);
@@ -1192,20 +1230,14 @@ class Capitulo extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.zonaDialogo, ()=>this.dialogoCarcel(), null, this);
   }
 
-  // el intercambio LENTO, cartel a cartel, con el juego parado
-  dialogoCarcel(){
-    if(this.dialogoHecho || this.dialogando) return;
+  // ══════════════════════════════════════════════════════════════════════════
+  //  MOTOR DE DIÁLOGO — lo usan los DOS actos del último capítulo.
+  //  Cartela a cartela, con el juego parado y muy lento a propósito: es lo que
+  //  frena el ritmo de la narrativa, que es justo lo que pidió Manuel.
+  // ══════════════════════════════════════════════════════════════════════════
+  escenaDialogo(BEATS, alAcabar){
     this.dialogando = true;
     this.physics.pause();
-    const BEATS = [
-      {quien:'EL DEL BIGOTE', txt:'MUAJAJAJAJAJAJA...',                   color:'#d83335', risa:true},
-      {quien:'EL DEL BIGOTE', txt:'VOY A DESTROZAR TU EMPRESA...',        color:'#d83335'},
-      {quien:'EL DEL BIGOTE', txt:'...Y A TU FAMILIA.',                   color:'#d83335'},
-      {quien:'AIDA',          txt:'¡ME CAGO EN TU PUTA MADRE, CABRÓN!',   color:'#f2c749'},
-      {quien:'AIDA',          txt:'¡SUÉLTAME EL BRAZO!',                  color:'#f2c749'},
-      {quien:'AIDA',          txt:'TE VOY A REBANAR EL BICHOTE.',          color:'#f2c749'},
-      {quien:'AIDA',          txt:'NOT TODAY.',                           color:'#ffffff'},
-    ];
     const velo = this.add.rectangle(W/2, H/2, W, H, 0x000000, 0.72).setScrollFactor(0).setDepth(90);
     const quien = this.add.text(W/2, H*0.34, '', {fontFamily:'Impact', fontSize:'15px', color:'#8a8f94'}).setOrigin(0.5).setScrollFactor(0).setDepth(91);
     const linea = this.add.text(W/2, H*0.45, '', {
@@ -1214,42 +1246,50 @@ class Capitulo extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
     const pista = this.add.text(W/2, H-40, 'toca para seguir', {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'})
       .setOrigin(0.5).setScrollFactor(0).setDepth(91).setAlpha(0.75);
-
-    let i = -1, temporizador = null;
+    let i = -1, reloj = null;
     const cerrar = ()=>{
-      if(temporizador) temporizador.remove();
-      this.input.off('pointerdown', siguiente);
+      if(reloj) reloj.remove();
+      this.input.off('pointerdown', pasa);
       [velo,quien,linea,pista].forEach(o=>o.destroy());
-      this.dialogando = false; this.dialogoHecho = true;
+      this.dialogando = false;
       this.physics.resume();
-      // cartela de pelea, y a repartir
-      const ya = this.add.text(W/2, H*0.42, 'PELEA', {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#d83335'
-      }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
-      this.tweens.add({targets:ya, scale:1.6, alpha:0, duration:900, onComplete:()=>ya.destroy()});
-      playSwoosh(this);
-      arrancaMusicaPropia(this, 'jefe');   // cambia la música al empezar la pelea
+      if(alAcabar) alAcabar();
     };
-    const siguiente = ()=>{
+    const pasa = ()=>{
       i++;
       if(i >= BEATS.length){ cerrar(); return; }
       const b = BEATS[i];
-      quien.setText(b.quien);
-      linea.setText(b.txt).setColor(b.color);
+      quien.setText(b.quien || '');
+      linea.setText(b.txt).setColor(b.color || '#ffffff').setFontSize(b.risa ? '34px' : '27px');
       linea.setAlpha(0); quien.setAlpha(0);
       this.tweens.add({targets:[quien,linea], alpha:1, duration:320});
       if(b.risa){
-        // que la risa se NOTE: tiembla la pantalla y el bigotudo se hincha de gusto
-        linea.setFontSize('34px');
         this.cameras.main.shake(900, 0.006);
-        if(this.bigote) this.tweens.add({targets:this.bigote, scaleX:1.14, scaleY:0.9, duration:220, yoyo:true, repeat:3});
+        const bicho = b.sacude && this[b.sacude];
+        if(bicho) this.tweens.add({targets:bicho, scaleX:1.14, scaleY:0.9, duration:220, yoyo:true, repeat:3});
       }
       speakPhrase(b.txt);
-      if(temporizador) temporizador.remove();
-      temporizador = this.time.delayedCall(b.risa ? 4000 : 3200, siguiente); // LENTO a propósito
+      if(reloj) reloj.remove();
+      reloj = this.time.delayedCall(b.risa ? 4000 : 3400, pasa);   // MUY lento, es lo que pidió
     };
-    this.input.on('pointerdown', siguiente);
-    siguiente();
+    this.input.on('pointerdown', pasa);
+    pasa();
+  }
+
+  cartelPelea(){
+    const ya = this.add.text(W/2, H*0.42, 'PELEA', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'46px', color:'#d83335'
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(91);
+    this.tweens.add({targets:ya, scale:1.6, alpha:0, duration:900, onComplete:()=>ya.destroy()});
+    playSwoosh(this);
+    arrancaMusicaPropia(this, 'jefe');   // la música cambia al empezar la pelea
+  }
+
+  // ── ACTO 2: EL CLIENTE FINAL, el del bigote, el que tiene a su gente ──
+  dialogoCarcel(){
+    if(this.dialogoHecho || this.dialogando) return;
+    this.dialogoHecho = true;
+    this.escenaDialogo(BEATS_CLIENTE, ()=> this.cartelPelea());
   }
 
   golpearBigote(){
@@ -1311,7 +1351,7 @@ class Capitulo extends Phaser.Scene {
   //  del juego: todo va despacio a propósito.
   // ══════════════════════════════════════════════════════════════════════════
   construyeZonaAngel(){
-    const s = this.segs[this.C.jefe.t];
+    const s = this.segs[this.C.carcel.t];   // baja justo antes del acto 2, el del cliente final
     this.zonaAngel = this.add.zone(s.x + 36, GROUND_Y-110, 90, 260); // antes del alcance del dragón, para que la escena no acabe pegada a él
     this.physics.add.existing(this.zonaAngel);
     this.zonaAngel.body.setAllowGravity(false);
@@ -1358,7 +1398,9 @@ class Capitulo extends Phaser.Scene {
     const cara  = this.add.image(0, 0, 'mamaFace').setDisplaySize(86, 86);
     const corona= this.add.ellipse(0, -62, 66, 16, 0x000000, 0).setStrokeStyle(4, 0xf2c749);
     angel.add([alas, aro, cara, corona]);
-    this.tweens.add({targets:angel, alpha:1, y:H*0.29, duration:1400, ease:'Sine.easeOut'});
+    // BAJA DEL CIELO: entra por arriba de la pantalla y desciende despacio
+    angel.y = -120;
+    this.tweens.add({targets:angel, alpha:1, y:H*0.29, duration:2600, ease:'Sine.easeOut'});
     this.tweens.add({targets:angel, y:'+=10', duration:2600, yoyo:true, repeat:-1, ease:'Sine.easeInOut'});
 
     const quien = this.add.text(W/2, H*0.53, 'MAMÁ', {fontFamily:'Impact', fontSize:'15px', color:'#f2c749'})
@@ -1371,7 +1413,7 @@ class Capitulo extends Phaser.Scene {
       .setOrigin(0.5).setScrollFactor(0).setDepth(93).setAlpha(0.7);
 
     const BEATS = [
-      {t:'AY, HIJA...'},
+      {t:'HOLA, MI NIÑA.'},                       // sus palabras exactas
       {t:'LO QUE SUCEDE CONVIENE.'},
       {t:'CONFÍA.'},
       {t:'TOMA ESTO.', espada:true},
@@ -1952,7 +1994,7 @@ class Capitulo extends Phaser.Scene {
       // pulsar TAJO. Ahora también se acciona sola contra ellos (el botón sigue estando).
       if(!cerca && this.bigote && this.dialogoHecho && !this.carcelAbierta &&
          Math.abs(this.bigote.x - this.player.x) < 104) cerca = this.bigote;
-      if(!cerca && this.jefeCuerpo && this.jefeVidas > 0 &&
+      if(!cerca && this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
          Math.abs(this.jefeCuerpo.x - this.player.x) < 104) cerca = this.jefeCuerpo;
       if(cerca){ this.player.flipX = cerca.x < this.player.x; this.performAttack(); }
     }
@@ -1968,6 +2010,14 @@ class Capitulo extends Phaser.Scene {
     this.logoBadge.x = this.player.flipX ? -7 : 7;
     this.katana.x = this.player.flipX ? -31 : 31;
     this.katana.setScale(this.player.flipX ? -1 : 1, 1);
+    if(this.zapas){
+      const corriendo = Math.abs(this.player.body.velocity.x) > 20;
+      this.zapas.forEach((z,i)=>{
+        z.x = (this.player.flipX ? -1 : 1) * (i ? 17 : -17);
+        z.setScale(this.player.flipX ? -1 : 1, 1);
+        z.y = 30 + (corriendo ? Math.sin(this.time.now/70 + i*Math.PI) * 5 : 0);
+      });
+    }
 
     this.enemies.getChildren().forEach(e=>{
       e.x += e.dir * (ENEMIGOS[e.type] ? ENEMIGOS[e.type].vel : 0.7);
@@ -2006,6 +2056,26 @@ class Capitulo extends Phaser.Scene {
 }
 
 /* ---------- LO QUE SUELTA EL CLIENTE IMPOSIBLE ---------- */
+// ══ LOS DOS ACTOS DEL ÚLTIMO CAPÍTULO ══
+// Manuel: "esa pantalla está hecha un lío; haz dos subpantallas, una enfrentándose al dragón
+// y otra con el cliente final, que es el hombre del bigote, y que haya diálogo en las dos".
+const BEATS_DRAGON = [
+  {quien:'EL DRAGÓN', txt:'MUAJAJAJAJAJAJA...',                    color:'#d83335', risa:true, sacude:'jefeCuerpo'},
+  {quien:'EL DRAGÓN', txt:'SOY LO QUE HAY\nDETRÁS DE LA OFERTA.',  color:'#d83335'},
+  {quien:'EL DRAGÓN', txt:'NADIE HA LLEGADO\nNUNCA HASTA AQUÍ.',   color:'#d83335'},
+  {quien:'AIDA',      txt:'PUES YA HE LLEGADO.',                   color:'#f2c749'},
+  {quien:'AIDA',      txt:'APARTA ESAS BARBAS\nDE MI PUERTA.',     color:'#f2c749'},
+];
+const BEATS_CLIENTE = [
+  {quien:'EL CLIENTE FINAL', txt:'MUAJAJAJAJAJAJA...',                 color:'#d83335', risa:true, sacude:'bigote'},
+  {quien:'EL CLIENTE FINAL', txt:'VOY A DESTROZAR TU EMPRESA...',      color:'#d83335'},
+  {quien:'EL CLIENTE FINAL', txt:'...Y A TU FAMILIA.',                 color:'#d83335'},
+  {quien:'AIDA',             txt:'¡ME CAGO EN TU PUTA MADRE, CABRÓN!', color:'#f2c749'},
+  {quien:'AIDA',             txt:'¡SUÉLTAME EL BRAZO!',                color:'#f2c749'},
+  {quien:'AIDA',             txt:'TE VOY A REBANAR EL BICHOTE.',       color:'#f2c749'},
+  {quien:'AIDA',             txt:'NOT TODAY.',                         color:'#ffffff'},
+];
+
 const BRIEFS_IMPOSIBLES = [
   'Hazlo igual, pero completamente distinto.',
   'Que sea minimalista, pero que llene toda la página.',
