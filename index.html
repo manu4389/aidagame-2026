@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v39 — 25 jul, ARREGLADA la caché de 10 min de GitHub: ya se ve lo nuevo al refrescar</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v40 — 25 jul, la pelea del dragón ya se puede ganar: arena del doble y sitio para moverse</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -771,7 +771,7 @@ const CAPITULOS = [
   },
   {
     n:5, musica:'oficina', key:'Cap5', nombre:'Instante HQ', sub:'un dragón, el cliente final, y tu gente encerrada detrás',
-    anchos:[520,480,520,480,540,480,560,480,400], hueco:100,   // 9 tramos: cada acto tiene su sitio
+    anchos:[520,480,1020,480,540,480,900,480,400], hueco:100,  // los tramos 2 y 6 son ANCHOS: son las arenas de las peleas
     cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
     rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','TENEMOS A TU GENTE'],
     rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
@@ -787,7 +787,7 @@ const CAPITULOS = [
     enemigos:[{t:1,tipo:'urgente'},{t:1,tipo:'burocracia',off:180},{t:3,tipo:'machirulo'},
               {t:5,tipo:'urgente'},{t:5,tipo:'machirulo2',off:180},{t:7,tipo:'burocracia'}],
     aliada:{t:2, off:-180, quien:'brenda'},
-    jefe:{t:2, vidas:6},        // ACTO I   — el dragón
+    jefe:{t:2, vidas:4},        // ACTO I   — el dragón (4 tajos: aún no tiene la espada de fuego)
     angel:{t:4},                // ACTO II  — la madre baja del cielo, en su propio tramo
     cliente:{t:6, vidas:14},    // ACTO III — el cliente final: 14 tajos, el más largo del juego
     carcel:{t:7},               // ACTO IV  — la celda, un tramo MÁS ALLÁ: se camina antes de soltarlos
@@ -1171,7 +1171,8 @@ class Capitulo extends Phaser.Scene {
     this.jefeBarra = this.add.rectangle(this.jefeX-80, GROUND_Y-226, 160, 12, PALETTE.red).setOrigin(0,0.5);
 
     this.physics.add.existing(this.jefeCuerpo);
-    this.jefeCuerpo.body.setSize(240, 220).setOffset(-180, -110); // ajustada al bicho dibujado, no al centro
+    // más justa: antes se comía 180 px hacia la izquierda y te pillaba sin verla venir
+    this.jefeCuerpo.body.setSize(180, 210).setOffset(-132, -105);
     this.jefeCuerpo.body.setAllowGravity(false);
     this.jefeDir = -1;
     this.dialogoDragonHecho = false;
@@ -1187,7 +1188,11 @@ class Capitulo extends Phaser.Scene {
       if(this.dialogoDragonHecho || this.dialogando) return;
       this.dialogoDragonHecho = true;
       this.cartelaActo('ACTO I', 'EL DRAGÓN', 'Lo que hay detrás de la oferta.',
-        ()=> this.escenaDialogo(BEATS_DRAGON, ()=> this.cartelPelea()));
+        ()=> this.escenaDialogo(BEATS_DRAGON, ()=>{
+          const t = this.segs[this.C.jefe.t];
+          this.jefeCuerpo.x = t.x + t.w - 160;   // se retira: la pelea empieza con sitio de sobra
+          this.cartelPelea();
+        }));
     }, null, this);
   }
 
@@ -1416,7 +1421,11 @@ class Capitulo extends Phaser.Scene {
     if(this.dialogoHecho || this.dialogando) return;
     this.dialogoHecho = true;
     this.cartelaActo('ACTO III', 'EL CLIENTE FINAL', 'El que tiene a los suyos.',
-      ()=> this.escenaDialogo(BEATS_CLIENTE, ()=> this.cartelPelea()));
+      ()=> this.escenaDialogo(BEATS_CLIENTE, ()=>{
+        const t = this.segs[this.C.cliente.t];
+        this.bigote.x = t.x + t.w - 150;         // igual que el dragón: se retira y hay sitio
+        this.cartelPelea();
+      }));
   }
 
   golpearBigote(){
@@ -2186,8 +2195,8 @@ class Capitulo extends Phaser.Scene {
     if(this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho){
       const t = this.segs[this.C.jefe.t];
       const dx = this.player.x - this.jefeCuerpo.x;
-      this.jefeCuerpo.x = Phaser.Math.Clamp(this.jefeCuerpo.x + Phaser.Math.Clamp(dx, -1.6, 1.6),
-                                            t.x + 120, t.x + t.w - 120);
+      this.jefeCuerpo.x = Phaser.Math.Clamp(this.jefeCuerpo.x + Phaser.Math.Clamp(dx, -1.1, 1.1),
+                                            t.x + 210, t.x + t.w - 120);   // nunca alcanza el borde del pozo
     }
     if(this.jefeCuerpo){
       this.jefeLabel.x = this.jefeCuerpo.x;
@@ -2197,8 +2206,8 @@ class Capitulo extends Phaser.Scene {
     if(this.bigote && this.carcelVidas > 0 && this.dialogoHecho){
       const t = this.segs[this.C.cliente.t];
       const dx = this.player.x - this.bigote.x;
-      this.bigote.x = Phaser.Math.Clamp(this.bigote.x + Phaser.Math.Clamp(dx, -2.4, 2.4),
-                                        t.x + 110, t.x + t.w - 110);
+      this.bigote.x = Phaser.Math.Clamp(this.bigote.x + Phaser.Math.Clamp(dx, -1.9, 1.9),
+                                        t.x + 200, t.x + t.w - 110);
       this.bigoteLabel.x = this.bigote.x;
       if(this.bigoteBarra) this.bigoteBarra.x = this.bigote.x - 80;
     }
