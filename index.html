@@ -125,7 +125,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v24 — 25 jul, Brenda tras su mostrador (misma escala que Aida) · fondo mucho más limpio</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v25 — 25 jul, LOS 5 CAPÍTULOS + selector + jefe final + cierre de cumpleaños</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -343,24 +343,23 @@ class Intro extends Phaser.Scene {
     }});
   }
   goTitle(){
-    this.scene.start('Title', {chapter:1, name:'El Contrato', sub:'que no se te escape entre papeleo y machirulos'});
+    this.scene.start('Menu'); // la intro desemboca en el selector de capítulos
   }
 }
 
 /* ---------- CARTELA DE CAPÍTULO (estilo Tarantino) ---------- */
 class Title extends Phaser.Scene {
   constructor(){ super('Title'); }
-  init(data){ this.data.set(data); }
+  init(data){ this.capKey = (data && data.key) || 'Cap1'; }
   create(){
+    const C = capPorKey(this.capKey);
     this.cameras.main.setBackgroundColor('#0c0d0e');
     const cx = W/2;
 
-    // imagen POTENTE y grande de Aida — protagonista absoluta de la pantalla, nada de círculo diminuto
     this.add.circle(cx, H*0.26, 140, Phaser.Display.Color.HexStringToColor('#d83335').color, 0.30);
     this.add.circle(cx, H*0.26, 120, 0xf2c749, 1).setStrokeStyle(0);
-    const photo = this.add.image(cx, H*0.26, 'aidaFace').setDisplaySize(232,232);
+    this.add.image(cx, H*0.26, 'aidaFace').setDisplaySize(232,232);
     this.add.circle(cx, H*0.26, 112, 0, 0).setStrokeStyle(6, 0xf2c749);
-    // el logo real de Instante, con ella — es SU agencia — y su propio lema, sacado literal de agenciainstante.com
     this.add.image(cx, H*0.385, 'instanteLogo').setDisplaySize(56,36).setAlpha(0.95);
     this.add.text(cx, H*0.435, '"La primera impresión siempre cuenta."', {
       fontFamily:'Georgia, serif', fontSize:'10px', color:'#e4378c', fontStyle:'italic'
@@ -369,35 +368,35 @@ class Title extends Phaser.Scene {
     this.add.text(cx, H*0.475, 'AIDA', {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'52px', color:'#ffffff', fontStyle:'bold'
     }).setOrigin(0.5);
-    this.add.text(cx, H*0.545, `VOL. ${this.data.get('chapter')} — ${this.data.get('name').toUpperCase()}`, {
+    this.add.text(cx, H*0.545, `VOL. ${C.n} — ${C.nombre.toUpperCase()}`, {
       fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#f2c749'
     }).setOrigin(0.5);
-    this.add.text(cx, H*0.59, this.data.get('sub'), {
-      fontFamily:'Georgia, serif', fontSize:'13px', color:'#40ada9', fontStyle:'italic'
+    this.add.text(cx, H*0.60, C.sub, {
+      fontFamily:'Georgia, serif', fontSize:'13px', color:'#40ada9', fontStyle:'italic',
+      align:'center', wordWrap:{width:W-50}
     }).setOrigin(0.5);
 
-    const btn = this.add.text(cx, H*0.82, '▶ EMPEZAR', {
+    const btn = this.add.text(cx, H*0.80, '▶ EMPEZAR', {
       fontFamily:'Arial', fontSize:'20px', color:'#141617', backgroundColor:'#f2c749',
       padding:{left:20,right:20,top:10,bottom:10}
     }).setOrigin(0.5).setInteractive({useHandCursor:true});
     btn.on('pointerdown', ()=> {
-      playMusic(this, 'marchIntro', {loop:false, volume:0.8}); // fanfarria de Verdi al arrancar
-      this.scene.start('Chapter1');
+      playMusic(this, 'marchIntro', {loop:false, volume:0.8});
+      this.scene.start(C.key);
     });
+    const atras = this.add.text(cx, H*0.90, 'elegir otro capítulo', {fontFamily:'Arial', fontSize:'12px', color:'#40ada9'})
+      .setOrigin(0.5).setInteractive({useHandCursor:true});
+    atras.on('pointerdown', ()=> this.scene.start('Menu'));
   }
 }
 
-/* ---------- VOL. 1 — EL CONTRATO ---------- */
-// Nivel ALARGADO (2600 → 3600) para que los encuentros respiren — Manuel: "demasiado saturado de enemigos".
-// ⚠️ Si se vuelve a tocar WORLD_W hay que mover A LA VEZ: segs, los 6 spawnEnemy, brenda, tutor, coinXs y goalZone.
-const WORLD_W = 3600, GROUND_Y = 460;
-const ENEMY_ICON = { burocracia:'📋', machirulo:'🕴️', chirulo_viejo:'🧔' };
-// frases suyas de verdad (BRIEF.md) + las nuevas que pidió Manuel — saltan al azar al coger un ⚡
-// servicios REALES de Instante (agenciainstante.com) — para que la burocracia derrotada los nombre, no un genérico "papeleo"
+/* ---------- DATOS COMPARTIDOS POR TODOS LOS CAPÍTULOS ---------- */
+// servicios REALES de Instante (agenciainstante.com) — la burocracia derrotada los nombra
 const INSTANTE_SERVICES = [
   'REDES SOCIALES', 'DISEÑO WEB', 'INFLUENCER MARKETING', 'DISEÑO GRÁFICO',
   'CAMPAÑAS SEM', 'KIT DIGITAL', 'ESTUDIOS DE MERCADO',
 ];
+// frases suyas de verdad (BRIEF.md) + las que dio Manuel — las dice en orden al coger cosas
 const CATCHPHRASES = [
   '¡Hoy se cena en vaso!',
   '¡Y olé, olé, los caracoles!',
@@ -407,88 +406,259 @@ const CATCHPHRASES = [
   '¡Poco para los que no lo merecemos!',
 ];
 
-class Chapter1 extends Phaser.Scene {
-  constructor(){ super('Chapter1'); }
+/* ══════════════════════════════════════════════════════════════════════════
+   LOS 5 CAPÍTULOS — un solo motor + una ficha por capítulo
+   Antes esto era una clase `Chapter1` con todo escrito a pelo. Para hacer 5
+   niveles habría que haberla copiado 5 veces, y cada retoque de Manuel habría
+   que aplicarlo 5 veces. Ahora la mecánica (ya validada por él) vive una sola
+   vez en `class Capitulo` y cada capítulo es una FICHA de datos.
+   ══════════════════════════════════════════════════════════════════════════ */
+const GROUND_Y = 460;
+
+// El suelo se construye a partir de los ANCHOS de cada tramo, con huecos iguales,
+// y de ahí sale el ancho del mundo. Así es IMPOSIBLE que la meta, un enemigo o una
+// moneda queden flotando sobre un pozo, que es el error clásico al alargar un nivel.
+function construyeSuelo(anchos, hueco){
+  const segs = []; let x = 0;
+  anchos.forEach(w=>{ segs.push({x, w}); x += w + hueco; });
+  return { segs, world: x - hueco };
+}
+const centro = s => s.x + s.w/2;
+
+/* ---------- CATÁLOGO DE ENEMIGOS ---------- */
+// vel = píxeles por fotograma; taunt = lo que ella suelta al cargárselo (voz + bocadillo)
+const ENEMIGOS = {
+  burocracia:    {icono:'📋', etiqueta:'BUROCRACIA',      color:'#141617', vel:0.7, servicios:true},
+  machirulo:     {cara:'enemyMachirulo1', etiqueta:'MACHIRULO', color:'#68416c', vel:1.0, taunt:'¡SUÉLTAME EL BRAZO, HIJO DE PUTA!'},
+  machirulo2:    {cara:'enemyMachirulo2', etiqueta:'MACHIRULO', color:'#68416c', vel:1.0, taunt:'¡SUÉLTAME EL BRAZO, HIJO DE PUTA!'},
+  chirulo_viejo: {cara:'enemyViejo', etiqueta:'VIEJO CHIRULO', color:'#d83335', vel:0.5, taunt:'¡A CASA, ABUELO!'},
+  gorron:        {icono:'🍺', etiqueta:'EL GORRÓN',       color:'#68416c', vel:0.8, taunt:'¡PAGA TU RONDA!'},
+  pisotones:     {icono:'👞', etiqueta:'PISA VOLANTES',   color:'#141617', vel:0.9, taunt:'¡QUE ME PISAS EL VOLANTE!'},
+  juzgon:        {icono:'🙄', etiqueta:'EL QUE JUZGA',    color:'#d83335', vel:0.8, taunt:'¡MIRA PARA OTRO LADO, ANDA!'},
+  flato:         {icono:'😣', etiqueta:'EL FLATO',        color:'#141617', vel:0.6, taunt:'¡NI FLATO NI NADA, QUE ME QUEDA UNA MILLA!'},
+  cochelisto:    {icono:'🚗', etiqueta:'EN EL CARRIL BICI',color:'#d83335', vel:1.1, taunt:'¡EL CARRIL ES MÍO, CAMPEÓN!'},
+  urgente:       {icono:'📞', etiqueta:'"PARA AYER"',     color:'#68416c', vel:1.0, taunt:'¡PARA AYER LO TIENES, MAJO!'},
+};
+
+/* ---------- FICHAS DE LOS 5 CAPÍTULOS ---------- */
+// t = índice del TRAMO de suelo donde va la cosa; off = desplazamiento desde su centro.
+const CAPITULOS = [
+  {
+    n:1, key:'Cap1', nombre:'El Contrato', sub:'que no se te escape entre papeleo y machirulos',
+    anchos:[520,460,480,460,480,340,260], hueco:100,
+    cielo:[0x3a1113, 0x140a0a], camara:'#2a0f10', estilo:'granada_noche',
+    rotulosRojos:['LA COMPETENCIA VIGILA','QUIEREN QUEDARSE\nCON INSTANTE','OFERTA PARA COMPRAROS'],
+    rotulosSuyos:['INSTANTE NO SE VENDE','LO HAN LEVANTADO ELLAS','AUTÓNOMAS\nY A MUCHA HONRA','HECHO CON CARIÑO'],
+    repisa:{t:1, off:-70},
+    enemigos:[{t:1,tipo:'burocracia'},{t:2,tipo:'chirulo_viejo'},{t:3,tipo:'machirulo'},
+              {t:4,tipo:'burocracia',off:-110},{t:4,tipo:'machirulo2',off:140},{t:5,tipo:'chirulo_viejo'}],
+    aliada:{t:2, off:-170, quien:'brenda'},
+    tutor:{t:4, off:40},
+    meta:{tipo:'contrato', titulo:'¡CONTRATO FIRMADO!', grito:'¡Olé Instante! ¡Viva la agencia Instante!'},
+  },
+  {
+    n:2, key:'Cap2', nombre:'Corpus', sub:'lunares, volantes y ni un paso en falso',
+    anchos:[480,440,460,440,460,300], hueco:100,
+    cielo:[0x2b1450, 0x120626], camara:'#1a0b2e', estilo:'corpus',
+    rotulosRojos:['SE CIERRA LA CASETA','NO HAY SITIO EN LA BARRA'],
+    rotulosSuyos:['CORPUS DE GRANADA','TRAJE DE LUNARES','Y OLÉ, OLÉ,\nLOS CARACOLES'],
+    repisa:{t:2, off:-60},
+    enemigos:[{t:1,tipo:'gorron'},{t:2,tipo:'pisotones'},{t:3,tipo:'machirulo'},
+              {t:4,tipo:'gorron',off:120},{t:4,tipo:'pisotones',off:-130}],
+    meta:{tipo:'farolillo', titulo:'¡EL CORPUS ES TUYO!', grito:'¡Y olé, olé, los caracoles!'},
+  },
+  {
+    n:3, key:'Cap3', nombre:'La Barra', sub:'con Conchita, y que mire quien quiera',
+    anchos:[460,420,440,420,440,300], hueco:105,
+    cielo:[0x0d2b2a, 0x05100f], camara:'#07100f', estilo:'neon',
+    rotulosRojos:['¿ESO NO ES DE...?','LA GENTE HABLA'],
+    rotulosSuyos:['FUERZA Y AIRE','CADA MORATÓN\nES UN PASO MÁS','CON CONCHITA'],
+    repisa:{t:1, off:0},
+    enemigos:[{t:1,tipo:'juzgon'},{t:2,tipo:'machirulo'},{t:3,tipo:'juzgon',off:110},
+              {t:4,tipo:'chirulo_viejo'},{t:4,tipo:'machirulo2',off:130}],
+    aliada:{t:2, off:-150, quien:'conchita'},
+    meta:{tipo:'barra', titulo:'¡ARRIBA DEL TODO!', grito:'¡Qué arte, mi coño moreno!'},
+  },
+  {
+    n:4, key:'Cap4', nombre:'La Milla', sub:'contrarreloj: Granada entera en 80 segundos',
+    anchos:[500,460,480,460,480,460,300], hueco:110,
+    cielo:[0x2f6fa8, 0x8fc3e0], camara:'#3b7db4', estilo:'calle_dia',
+    rotulosRojos:['SE TE VA EL TIEMPO','QUEDA CUESTA'],
+    rotulosSuyos:['UNA MILLA MÁS','LO QUE SUCEDE CONVIENE','KILÓMETROS DE VENTAJA'],
+    tiempo:80,
+    repisa:{t:2, off:80},
+    enemigos:[{t:1,tipo:'flato'},{t:2,tipo:'cochelisto'},{t:3,tipo:'pisotones'},
+              {t:4,tipo:'flato',off:120},{t:5,tipo:'cochelisto'}],
+    meta:{tipo:'meta', titulo:'¡MILLA COMPLETADA!', grito:'¡Lo que sucede conviene, los cojones!'},
+  },
+  {
+    n:5, key:'Cap5', nombre:'Instante HQ', sub:'el Cliente Imposible te está esperando',
+    anchos:[500,460,480,460,520,360], hueco:100,
+    cielo:[0x123b3a, 0x061615], camara:'#0a1f1e', estilo:'oficina',
+    rotulosRojos:['OFERTA FINAL','O VENDÉIS O CERRÁIS','EL CLIENTE IMPOSIBLE'],
+    rotulosSuyos:['AQUÍ MANDAN ELLAS','NO SE BRILLA\nSIN OSCURIDAD','INSTANTE'],
+    repisa:{t:1, off:-50},
+    enemigos:[{t:1,tipo:'urgente'},{t:2,tipo:'burocracia'},{t:2,tipo:'machirulo',off:150},
+              {t:3,tipo:'urgente'},{t:3,tipo:'machirulo2',off:150}],
+    aliada:{t:3, off:-160, quien:'brenda'},
+    tutor:{t:2, off:-60},
+    jefe:{t:4, vidas:6}, // penúltimo tramo: la pelea tiene su sitio y la meta queda detrás
+    meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
+    ultimo:true,
+  },
+];
+CAPITULOS.forEach(c=>{
+  const s = construyeSuelo(c.anchos, c.hueco);
+  c.segs = s.segs; c.world = s.world;
+});
+const capPorKey = k => CAPITULOS.find(c=>c.key===k);
+
+/* ---------- PROGRESO (se guarda en el propio navegador) ---------- */
+function progresoLeer(){
+  try { return parseInt(localStorage.getItem('aida_progreso')||'0',10) || 0; } catch(e){ return 0; }
+}
+function progresoGuardar(n){
+  try { if(n > progresoLeer()) localStorage.setItem('aida_progreso', String(n)); } catch(e){}
+}
+
+/* ---------- SELECTOR DE CAPÍTULOS ---------- */
+class Menu extends Phaser.Scene {
+  constructor(){ super('Menu'); }
+  create(){
+    this.cameras.main.setBackgroundColor('#0c0d0e');
+    const cx = W/2;
+    this.add.image(cx, 46, 'instanteLogo').setDisplaySize(64,41).setAlpha(0.95);
+    this.add.text(cx, 84, 'AIDA', {fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'40px', color:'#ffffff'}).setOrigin(0.5);
+    this.add.text(cx, 112, 'elige capítulo', {fontFamily:'Georgia, serif', fontSize:'12px', color:'#40ada9', fontStyle:'italic'}).setOrigin(0.5);
+    const hechos = progresoLeer();
+    CAPITULOS.forEach((c,i)=>{
+      const y = 152 + i*66;
+      const abierto = i <= hechos;           // se abre el siguiente al terminar el anterior
+      const completo = i < hechos;
+      const col = abierto ? PALETTE.purple : 0x24262a;
+      const caja = this.add.rectangle(cx, y, W-44, 56, col, abierto?1:0.55)
+        .setStrokeStyle(3, abierto ? PALETTE.turquoise : 0x3a3d3f);
+      this.add.text(cx-W/2+34, y-11, `VOL. ${c.n}`, {fontFamily:'Impact', fontSize:'14px', color: abierto?'#f2c749':'#5a5d61'}).setOrigin(0,0.5);
+      this.add.text(cx-W/2+34, y+9, c.nombre.toUpperCase(), {fontFamily:'Impact', fontSize:'19px', color: abierto?'#ffffff':'#5a5d61'}).setOrigin(0,0.5);
+      this.add.text(cx+W/2-36, y, completo ? '✅' : abierto ? '▶' : '🔒', {fontSize:'20px'}).setOrigin(0.5);
+      if(abierto){
+        caja.setInteractive({useHandCursor:true});
+        caja.on('pointerdown', ()=> this.scene.start('Title', {key:c.key}));
+      }
+    });
+    this.add.text(cx, H-26, hechos>=CAPITULOS.length ? '¡los cinco, completados! 🦄' : 'se abre el siguiente al terminar el anterior',
+      {fontFamily:'Arial', fontSize:'11px', color:'#5a5d61'}).setOrigin(0.5);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EL MOTOR DE NIVEL — la mecánica que Manuel ya dio por buena, una sola vez
+   ══════════════════════════════════════════════════════════════════════════ */
+class Capitulo extends Phaser.Scene {
+  constructor(key){ super(key); }
 
   create(){
-    this.physics.world.setBounds(0,0,WORLD_W,H);
-    this.cameras.main.setBounds(0,0,WORLD_W,H);
-    this.cameras.main.setBackgroundColor('#2a0f10');
+    const C = this.C = capPorKey(this.scene.key);
+    this.WORLD = C.world;
+    this.segs = C.segs;
+    this.physics.world.setBounds(0,0,this.WORLD,H);
+    this.cameras.main.setBounds(0,0,this.WORLD,H);
+    this.cameras.main.setBackgroundColor(C.camara);
 
     this.score = 0; this.lives = 3; this.attacking = false; this.articulos = 0; this.phraseIndex = 0;
+    this.win = false; this.respawnX = 80; this.saltoExtra = false; this.saltosDados = 0;
     this.drawBackground();
 
-    // tras la fanfarria de Verdi, entra el silbido de spaghetti western (la raíz musical de Kill Bill)
     this.time.delayedCall(8500, ()=>{ if(this.sys.isActive()) playMusic(this, 'tension', {loop:true, volume:0.7}); });
-    // frase de apertura — que se la oiga hablar desde el minuto uno, no solo al coger cosas
     this.time.delayedCall(1800, ()=>{ if(this.sys.isActive()) this.sayPhrase(CATCHPHRASES[0]); this.phraseIndex = 1; });
 
+    this.construyePlataformas();
+    this.construyeJugadora();
+    this.physics.add.collider(this.player, this.platforms);
+
+    this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
+    C.enemigos.forEach(e=>{
+      const s = this.segs[e.t];
+      const x = centro(s) + (e.off||0);
+      this.spawnEnemy(x, GROUND_Y-40, e.tipo, Math.max(s.x+50, x-150), Math.min(s.x+s.w-50, x+150));
+    });
+    this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
+
+    if(C.aliada) this.construyeAliada();
+    if(C.tutor)  this.construyeTutor();
+    if(C.jefe)   this.construyeJefe();
+    this.construyeMonedas();
+    this.construyeMeta();
+
+    this.cameras.main.setZoom(1.0);
+    this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
+    this.cameras.main.setDeadzone(80, 200);
+
+    [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow].forEach((c,i)=>{
+      this.add.rectangle(W/2, H-8+i*3, W, 3, c, 0.8).setScrollFactor(0).setDepth(60);
+    });
+    this.hud = this.add.text(10,10, '', {fontFamily:'Arial', fontSize:'16px', color:'#141617', backgroundColor:'#ffffffaa', padding:{left:8,right:8,top:4,bottom:4}})
+      .setScrollFactor(0).setDepth(60);
+    // contrarreloj (solo La Milla): si llega a cero, se acabó
+    if(C.tiempo){
+      this.restante = C.tiempo;
+      this.time.addEvent({delay:1000, loop:true, callback:()=>{
+        if(this.win || this.lives<=0) return;
+        this.restante--; this.updateHud();
+        if(this.restante<=0){ this.lives=0; this.gameOver('¡SE TE FUE EL TIEMPO!'); }
+      }});
+    }
+    this.updateHud();
+  }
+
+  /* ---------- construcción ---------- */
+  construyePlataformas(){
+    const C = this.C;
     this.platforms = this.physics.add.staticGroup();
-    // 7 tramos hasta 3600, con huecos de 100px (el salto llega a ~136px de alto y ~187px de largo: se pasan de sobra)
-    const segs = [
-      {x:0,w:520}, {x:620,w:460}, {x:1180,w:480}, {x:1760,w:460}, {x:2320,w:480}, {x:2900,w:340}, {x:3340,w:260},
-    ];
-    this.segs = segs;
-    // EL SUELO TAMBIÉN ES DE INSTANTE: se acabó el marrón de tierra. Cuerpo morado de marca,
-    // borde en un color distinto por tramo, franjas planas de collage en la cara frontal y el
-    // ojo de la marca marcado en el propio suelo. Manuel: "los colores de Instante por toda la
-    // plataforma, por todo el escenario".
     const BRAND = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple];
-    segs.forEach((s,si)=>{
-      const p = this.add.rectangle(s.x + s.w/2, GROUND_Y+30, s.w, 60, 0x2e1b33);
+    this.segs.forEach((s,si)=>{
+      const p = this.add.rectangle(centro(s), GROUND_Y+30, s.w, 60, 0x2e1b33);
       this.physics.add.existing(p, true);
       this.platforms.add(p);
-      // MENOS ES MÁS (Manuel, 25 jul: "está demasiado recargado, ya no se aprecian ni las plataformas").
-      // Se queda SOLO el filo de color, que es lo que hace legible dónde se pisa; fuera las franjas
-      // de collage de la cara frontal y el ojo grabado cada 170px, que era lo que la emborronaba.
-      this.add.rectangle(s.x + s.w/2, GROUND_Y, s.w, 9, BRAND[si%4]);           // filo de color: la marca SIN estorbar
-      this.add.rectangle(s.x + s.w/2, GROUND_Y+7, s.w, 3, 0xffffff, 0.35);      // brillo bajo el filo
-      // un solo ojo por tramo, tenue y centrado: se nota que es de Instante sin comerse el suelo
-      this.add.image(s.x + s.w/2, GROUND_Y+40, 'instanteLogo').setDisplaySize(52,33).setAlpha(0.08);
+      // solo el filo de color: es lo que hace legible dónde se pisa (Manuel: "no se aprecian las plataformas")
+      this.add.rectangle(centro(s), GROUND_Y, s.w, 9, BRAND[si%4]);
+      this.add.rectangle(centro(s), GROUND_Y+7, s.w, 3, 0xffffff, 0.35);
+      this.add.image(centro(s), GROUND_Y+40, 'instanteLogo').setDisplaySize(52,33).setAlpha(0.08);
     });
-    // pequeña plataforma elevada con bonus — mismo criterio: filo de color y nada más
-    const ledge = this.add.rectangle(780, GROUND_Y-110, 140, 24, 0x2e1b33);
-    this.add.rectangle(780, GROUND_Y-121, 140, 6, PALETTE.pink);
-    this.physics.add.existing(ledge, true);
-    this.platforms.add(ledge);
+    if(C.repisa){
+      const s = this.segs[C.repisa.t];
+      this.repisaX = centro(s) + (C.repisa.off||0);
+      const l = this.add.rectangle(this.repisaX, GROUND_Y-110, 140, 24, 0x2e1b33);
+      this.add.rectangle(this.repisaX, GROUND_Y-121, 140, 6, PALETTE.pink);
+      this.physics.add.existing(l, true);
+      this.platforms.add(l);
+    }
+  }
 
-    // jugador
+  construyeJugadora(){
     this.player = this.physics.add.sprite(80, GROUND_Y-110, null);
-    this.player.body.setSize(55,140).setOffset(-27,-98); // reducida OTRA VEZ (sigue "demasiado grande" según Manuel) + zoom de cámara bajado
+    this.player.body.setSize(55,140).setOffset(-27,-98);
     this.player.setCollideWorldBounds(true);
     this.player.setMaxVelocity(220, 900);
     this.player.setDragX(1200);
-
-    // ELLA TAL CUAL — foto real de cuerpo entero, recortada con IA de segmentación (rembg/u2net), sin dibujo vectorial
-    // TAMAÑO: 168px, fijado tras dos intentos fallidos y COMPROBADO A OJO montando un PNG a tamaño
-    // real (medir con números engañó dos veces: el peinado y la flor de la foto de flamenca hinchan
-    // cualquier medida automática de su cabeza). Para el tamaño de Brenda, ver su bloque más abajo.
-    this.heroImage = this.add.image(0,-42,'aidaHeroReal').setDisplaySize(93,168); // 150 → 160 → 168
-    // el logo REAL de Instante — más grande, en el pecho, para que se lea de verdad
+    // ELLA TAL CUAL — foto real recortada con rembg. 168px, tamaño fijado mirando un montaje a
+    // tamaño real (medir con números engañó dos veces: el peinado de flamenca hincha la medida).
+    this.heroImage = this.add.image(0,-42,'aidaHeroReal').setDisplaySize(93,168);
     this.logoBadge = this.add.image(8,-36,'instanteLogo').setDisplaySize(34,21);
-    // Medido a ojo sobre `fotos/aida_hero_real.png` directamente (no por proporción de otra foto):
-    // sus manos quedan a la altura de las bocamangas del mantón, ~y=-28 en este contenedor,
-    // mano derecha (de ella) hacia x=+28, mano izquierda hacia x=-25.
-    // KATANA en la mano derecha — puño + guarda (tsuba) + hoja colgando, para que SE LEA como espada de verdad
-    // el contenedor va EN la mano (28,-28) y las piezas cuelgan de ahí en local — así al rotar
-    // gira alrededor de la muñeca de verdad, no alrededor del centro del cuerpo (por eso "no era orgánico")
-    // KATANA DE VERDAD, no un palo: hoja CURVA (sori) que se afina, punta en diagonal (kissaki),
-    // línea de temple (hamon), guarda redonda (tsuba) y empuñadura trenzada (tsuka).
-    // Manuel: "no parece una katana" — un rectángulo con guarda no lo parecía, esto sí.
-    const BL = 80, BN = 14, SORI = 13; // largo, nº de tramos de la curva, cuánto se curva
-    const bladeEdge = [], bladeBack = [];
+    // KATANA de verdad: hoja curva (sori) que se afina, punta en diagonal (kissaki), línea de
+    // temple (hamon), tsuba ovalada y tsuka trenzada. El contenedor vive EN la mano, así el tajo
+    // pivota en la muñeca y no en el centro del cuerpo.
+    const BL = 80, BN = 14, SORI = 13;
+    const filo = [], lomo = [];
     for(let i=0;i<=BN;i++){
-      const t = i/BN, y = 6 + BL*t;
-      const off = SORI*t*t;                 // la curva: nada al salir de la guarda, mucha en la punta
-      const hw = 4.2*(1 - 0.35*t*t);        // se va afinando
-      bladeEdge.push({x: off+hw, y});
-      bladeBack.push({x: off-hw, y});
+      const t = i/BN, y = 6 + BL*t, off = SORI*t*t, hw = 4.2*(1 - 0.35*t*t);
+      filo.push({x: off+hw, y}); lomo.push({x: off-hw, y});
     }
-    const bladePoly = bladeEdge.concat([{x: SORI+2.5, y: 6+BL+9}], bladeBack.slice().reverse());
+    const poly = filo.concat([{x: SORI+2.5, y: 6+BL+9}], lomo.slice().reverse());
     this.katanaBlade = this.add.graphics();
-    this.katanaBlade.fillStyle(0xe8eef2,1); this.katanaBlade.fillPoints(bladePoly, true);
-    this.katanaBlade.lineStyle(1.4,0x8f9ba1,1); this.katanaBlade.strokePoints(bladePoly, true);
-    this.katanaBlade.lineStyle(1.2,0xffffff,0.8); // hamon
+    this.katanaBlade.fillStyle(0xe8eef2,1); this.katanaBlade.fillPoints(poly, true);
+    this.katanaBlade.lineStyle(1.4,0x8f9ba1,1); this.katanaBlade.strokePoints(poly, true);
+    this.katanaBlade.lineStyle(1.2,0xffffff,0.8);
     this.katanaBlade.beginPath();
     for(let i=0;i<=BN;i++){
       const t = i/BN, y = 6 + BL*t;
@@ -498,215 +668,312 @@ class Chapter1 extends Phaser.Scene {
     this.katanaBlade.strokePath();
     this.katanaHilt = this.add.graphics();
     this.katanaHilt.fillStyle(0x141617,1); this.katanaHilt.fillRoundedRect(-4.5,-19,9,22,3);
-    this.katanaHilt.lineStyle(1,0xb99a44,0.9); // trenzado del puño
+    this.katanaHilt.lineStyle(1,0xb99a44,0.9);
     for(let i=0;i<4;i++){ this.katanaHilt.beginPath(); this.katanaHilt.moveTo(-4.5,-16+i*5); this.katanaHilt.lineTo(4.5,-13+i*5); this.katanaHilt.strokePath(); }
-    this.katanaHilt.fillStyle(0xb99a44,1); this.katanaHilt.fillRect(-5.5,-20.5,11,3); // kashira (pomo)
-    this.katanaHilt.fillStyle(PALETTE.yellow,1); this.katanaHilt.fillEllipse(0,4,20,7); // tsuba
+    this.katanaHilt.fillStyle(0xb99a44,1); this.katanaHilt.fillRect(-5.5,-20.5,11,3);
+    this.katanaHilt.fillStyle(PALETTE.yellow,1); this.katanaHilt.fillEllipse(0,4,20,7);
     this.katanaHilt.lineStyle(1.2,0x141617,1); this.katanaHilt.strokeEllipse(0,4,20,7);
-    // manos recolocadas al subir la foto a 168px (mismo punto de la foto, reescalado ×1,12 sobre el original de 150)
     this.katana = this.add.container(31,-36,[this.katanaBlade,this.katanaHilt]);
     this.katana.setRotation(Phaser.Math.DegToRad(8));
-    // CIGARRILLO en la mano izquierda — NO en la cara (tapaba la cara)
     this.cigBody = this.add.rectangle(-28,-36,18,4,0xf3ecd8,1).setStrokeStyle(1,0xcfc7ab).setAngle(-12);
     this.cigEmber = this.add.circle(-20,-39,2.6,PALETTE.red,1);
     this.cigSmoke = this.add.ellipse(-19,-50,8,12,0xcccccc,0.35);
     this.playerVisual = this.add.container(this.player.x, this.player.y,
       [this.heroImage, this.logoBadge, this.katana, this.cigSmoke, this.cigBody, this.cigEmber]);
+  }
 
-    this.physics.add.collider(this.player, this.platforms);
+  construyeAliada(){
+    const C = this.C, a = C.aliada, s = this.segs[a.t];
+    const ax = centro(s) + (a.off||0);
+    this.aliadaTipo = a.quien;
+    this.aliadaShadow = this.add.ellipse(ax, GROUND_Y-2, 118, 14, 0x000000, 0.35);
+    if(a.quien === 'brenda'){
+      // OPCIÓN C (elegida por Manuel viendo las tres montadas a tamaño real): Brenda a la escala
+      // buena del mundo —su cabeza igual que la de Aida— y un mostrador delante que tapa las
+      // piernas que su foto, cortada a medio muslo, no tiene. Al unirse, el mostrador la acompaña.
+      this.aliada = this.add.image(ax, GROUND_Y-120, 'brendaHeroReal').setDisplaySize(53,97);
+      this.aliadaMueble = this.add.container(ax, 0, [
+        this.add.rectangle(0, GROUND_Y-36, 116, 72, PALETTE.purple).setStrokeStyle(2, 0x2e1b33),
+        this.add.rectangle(0, GROUND_Y-70, 122, 8, PALETTE.pink),
+        this.add.text(0, GROUND_Y-40, 'INSTANTE', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff'}).setOrigin(0.5),
+      ]);
+      this.aliadaNombre = 'BRENDA';
+      this.aliadaCara = 'brendaFace';
+    } else {
+      // CONCHITA — de ella NO hay foto (⚠️ si Manuel consigue una, mismo proceso que con Brenda:
+      // rembg + u2net_human_seg y se sustituye este dibujo). De momento, silueta de neón bailando.
+      this.aliada = this.add.container(ax, GROUND_Y-84);
+      const cuerpo = this.add.graphics();
+      cuerpo.fillStyle(PALETTE.pink, 1);
+      cuerpo.fillCircle(0,-52,15);                       // cabeza
+      cuerpo.fillRoundedRect(-11,-36,22,46,9);           // torso
+      cuerpo.fillRoundedRect(-20,-30,10,34,5);           // brazo agarrado a la barra
+      cuerpo.fillRoundedRect(-9,8,9,44,4); cuerpo.fillRoundedRect(2,8,9,38,4); // piernas
+      cuerpo.lineStyle(3, PALETTE.turquoise, 0.9); cuerpo.strokeCircle(0,-52,19);
+      const barra = this.add.rectangle(-26, -18, 6, 168, 0xdfe6ea).setAlpha(0.85);
+      this.aliada.add([barra, cuerpo]);
+      this.physics.add.existing(this.aliada);
+      this.aliada.body.setSize(70, 168).setOffset(-35,-84);
+      this.aliadaNombre = 'CONCHITA';
+      this.aliadaCara = null;
+    }
+    this.aliadaLabel = this.add.text(ax, GROUND_Y-186, this.aliadaNombre, {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}
+    }).setOrigin(0.5);
+    if(!this.aliada.body) this.physics.add.existing(this.aliada);
+    this.aliada.body.setAllowGravity(false);
+    this.aliadaUsada = false; this.aliadaCooldown = false;
+    this.physics.add.overlap(this.player, this.aliada, ()=>this.conocerAliada(), null, this);
+  }
 
-    // enemigos: burocracia (papeleo) y machirulos (jefazos con aires) — se cargan con la katana, no se esquivan
-    this.enemies = this.physics.add.group({ allowGravity:false, immovable:true });
-    // los mismos 6, pero repartidos por un mundo 1000px más largo: uno por tramo, sin amontonarse
-    this.spawnEnemy(900, GROUND_Y-40, 'burocracia', 760, 1040);
-    this.spawnEnemy(1470, GROUND_Y-40, 'chirulo_viejo', 1340, 1600, 'enemyViejo');
-    this.spawnEnemy(2000, GROUND_Y-40, 'machirulo', 1820, 2160, 'enemyMachirulo1');
-    this.spawnEnemy(2450, GROUND_Y-40, 'burocracia', 2380, 2560);
-    this.spawnEnemy(2700, GROUND_Y-40, 'machirulo', 2600, 2760, 'enemyMachirulo2');
-    this.spawnEnemy(3060, GROUND_Y-40, 'chirulo_viejo', 2960, 3180, 'enemyViejo');
-
-    this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
-
-    // Brenda — su mejor amiga y socia. Se une como aliada QUE TAMBIÉN PELEA, no solo anima
-    // (pendiente: Manuel va a pasar una foto real suya para sustituir este emoji, igual que se hizo con Aida)
-    // ✅ 25 jul: ya NO es un emoji — es Brenda de verdad (Manuel confirmó que es la del pelo oscuro
-    // liso y el vestido gris; la otra foto de esa pareja es Aida). Recorte con rembg/u2net_human_seg.
-    // ══ OPCIÓN C, elegida por Manuel viendo las tres montadas a tamaño real ══
-    // El problema no tenía solución limpia: la foto de Aida es de cuerpo entero y la de Brenda está
-    // cortada a medio muslo, así que igualar la ALTURA dejaba su cara enorme, e igualar la CARA la
-    // dejaba enana. Solución: Brenda a la escala buena del mundo (97px, su cabeza a la misma altura
-    // y del mismo tamaño que la de Aida) y un MOSTRADOR de Instante delante que tapa las piernas que
-    // su foto no tiene. Cuando se une, el mostrador la acompaña.
-    this.brendaShadow = this.add.ellipse(1250, GROUND_Y-2, 118, 14, 0x000000, 0.35);
-    this.brenda = this.add.image(1250, GROUND_Y-120, 'brendaHeroReal').setDisplaySize(53,97);
-    // el mostrador se crea DESPUÉS que ella, así que la tapa de cintura para abajo
-    this.brendaDesk = this.add.container(1250, 0, [
-      this.add.rectangle(0, GROUND_Y-36, 116, 72, PALETTE.purple).setStrokeStyle(2, 0x2e1b33),
-      this.add.rectangle(0, GROUND_Y-70, 122, 8, PALETTE.pink),
-      this.add.text(0, GROUND_Y-40, 'INSTANTE', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff'}).setOrigin(0.5),
-    ]);
-    this.brendaLabel = this.add.text(1250, GROUND_Y-186, 'BRENDA', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
-    this.physics.add.existing(this.brenda);
-    this.brenda.body.setAllowGravity(false);
-    this.brendaAttackCooldown = false;
-    this.brendaUsed = false;
-    this.physics.add.overlap(this.player, this.brenda, ()=>this.meetBrenda(), null, this);
-
-    // el tutor de la tesis — la aventura no es solo Instante, también tiene que sacar la tesis adelante
-    this.tutor = this.add.text(2600, GROUND_Y-46, '📚', {fontSize:'46px'}).setOrigin(0.5);
-    this.add.text(2600, GROUND_Y-84, 'TUTOR', {fontFamily:'Impact', fontSize:'12px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
+  construyeTutor(){
+    const s = this.segs[this.C.tutor.t];
+    const tx = centro(s) + (this.C.tutor.off||0);
+    this.tutor = this.add.text(tx, GROUND_Y-46, '📚', {fontSize:'46px'}).setOrigin(0.5);
+    this.add.text(tx, GROUND_Y-84, 'TUTOR', {fontFamily:'Impact', fontSize:'12px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:5,right:5,top:2,bottom:2}}).setOrigin(0.5);
     this.physics.add.existing(this.tutor);
     this.tutor.body.setAllowGravity(false);
     this.tutorUsed = false;
     this.physics.add.overlap(this.player, this.tutor, ()=>this.meetTutor(), null, this);
-
-    // coleccionables
-    this.collectibles = this.physics.add.group({ allowGravity:false });
-    const coinXs = [200,260,320, 780, 900,960,1020, 1200,1310,1370,1500,1560, 1850,1910,1970, // el de 1200 va antes de Brenda (1250), para no solaparse con ella
-                    2350,2410,2470, 2650,2710, 2950,3010,3070,3200, 3400,3450];
-    coinXs.forEach((x,i)=>{
-      const icon = (i%6===5) ? '⚡' : '🦄';
-      const y = (x===780)? GROUND_Y-150 : GROUND_Y-60; // el de la repisa alta
-      this.spawnCollectible(x,y,icon);
-    });
-
-    // meta: EL CONTRATO — un documento gigante sellado "FIRMADO", y ella entera, de cuerpo entero, potente, al lado
-    const gx = WORLD_W-170, gy = GROUND_Y-120;
-    this.goalZone = this.add.zone(gx, gy, 140, 220);
-    this.physics.add.existing(this.goalZone);
-    this.goalZone.body.setAllowGravity(false);
-    // el papel del contrato
-    this.add.rectangle(gx-58, gy+10, 96, 130, 0xf3ecd8).setStrokeStyle(3,0x141617).setAngle(-4);
-    for(let i=0;i<5;i++) this.add.rectangle(gx-58, gy-32+i*16, 70, 4, 0xbdb190).setAngle(-4);
-    this.add.circle(gx-40, gy+48, 13, PALETTE.red,1).setStrokeStyle(2,0x8a0f12).setAngle(-4);
-    this.add.text(gx-58, gy-8, 'FIRMADO', {fontFamily:'Impact', fontSize:'15px', color:'#d83335'}).setOrigin(0.5).setAngle(-16);
-    // ella, entera, sin recortes ni distorsión — proporción real de la foto
-    this.add.rectangle(gx+42, gy-10, 118, 158, PALETTE.yellow, 1).setStrokeStyle(4, PALETTE.ink);
-    this.add.image(gx+42, gy-10, 'aidaGoal').setDisplaySize(108,144);
-    this.add.text(gx+42, gy-108, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
-    this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
-
-    this.cameras.main.setZoom(1.0); // bajado de 1.2 — Manuel: "el muñeco es demasiado grande para la jugabilidad"
-    this.cameras.main.startFollow(this.playerVisual, true, 0.1, 0.1);
-    this.cameras.main.setDeadzone(80, 200);
-
-    // HUD (fijo en pantalla)
-    // franja de los colores de Instante, fija en pantalla — la marca también en primer plano
-    [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow].forEach((c,i)=>{
-      this.add.rectangle(W/2, H-8+i*3, W, 3, c, 0.8).setScrollFactor(0).setDepth(60);
-    });
-    this.hud = this.add.text(10,10, '', {fontFamily:'Arial', fontSize:'16px', color:'#141617', backgroundColor:'#ffffffaa', padding:{left:8,right:8,top:4,bottom:4}})
-      .setScrollFactor(0);
-    this.updateHud();
-
-    this.win = false;
-    this.respawnX = 80;
   }
 
-  drawBackground(){
-    // ⚠️ REGLA DEL PARALLAX (esto estaba mal y por eso medio fondo NO SE VEÍA NUNCA):
-    // un objeto con scrollFactor s puesto en la x del mundo aparece en pantalla en `x - s*scroll`.
-    // Como el scroll máximo es WORLD_W-W, un objeto solo llega a verse si su x cae dentro de
-    // [0, s*(WORLD_W-W) + W]. Poner el fondo a lo largo de los 3600px del mundo con s=0.2 hacía
-    // que TODO lo que estuviera más allá de x≈1000 no apareciese jamás. Este helper reparte n
-    // elementos dentro del rango que de verdad se ve para ese scrollFactor.
-    const reparte = (n, sf) => {
-      const alcance = sf*(WORLD_W - W) + W;
-      return Array.from({length:n}, (_,i)=> 40 + (alcance-80) * (n===1 ? 0.5 : i/(n-1)));
-    };
-
-    // atardecer de Granada, rojo/negro — la paleta de la escena de la Casa de las Hojas Azules
+  // JEFE FINAL — el Cliente Imposible. No patrulla: te persigue, y hay que darle varios tajos.
+  construyeJefe(){
+    const s = this.segs[this.C.jefe.t];
+    this.jefeX = centro(s);
+    this.jefeVidas = this.C.jefe.vidas;
+    this.jefeCuerpo = this.add.container(this.jefeX, GROUND_Y-96);
     const g = this.add.graphics();
-    g.fillGradientStyle(0x3a1113,0x3a1113,0x140a0a,0x140a0a,1);
-    g.fillRect(0,0,WORLD_W,H).setScrollFactor(0.1);
-    // sol/luna grande y bajo, muy Tarantino (antes había 3 pero 2 caían fuera de rango: solo se veía uno)
-    reparte(3, 0.15).forEach(x=>{
-      this.add.circle(x, 150, 80, PALETTE.yellow, 0.5).setScrollFactor(0.15);
-    });
-    // silueta de la Alhambra: torres almenadas, a lo lejos
-    reparte(11, 0.35).forEach((x,i)=>{
-      const th = 90 + (i%3)*30;
-      this.add.rectangle(x, GROUND_Y - th/2 + 30, 46, th, 0x1c0d0d).setScrollFactor(0.35);
-      for(let m=0;m<4;m++) this.add.rectangle(x-17+m*11, GROUND_Y-th+22, 8, 12, 0x1c0d0d).setScrollFactor(0.35);
-    });
-    // skyline de Granada más cerca, más denso
-    reparte(18, 0.55).forEach((x,i)=>{
-      const th = 60 + ((i*37)%70);
-      this.add.rectangle(x, GROUND_Y - th/2 + 10, 90, th, 0x24100f).setScrollFactor(0.55);
-      for(let wRow=0;wRow<Math.floor(th/22);wRow++){
-        this.add.rectangle(x-24+((i)%3)*20, GROUND_Y-th+16+wRow*22, 10, 12, PALETTE.yellow, 0.55).setScrollFactor(0.55);
+    g.fillStyle(0x1d1f24,1); g.fillRoundedRect(-46,-58,92,116,12);      // traje
+    g.fillStyle(PALETTE.red,1); g.fillTriangle(0,-38, -11,-8, 11,-8);   // corbata
+    g.fillStyle(0xe8d3b0,1); g.fillCircle(0,-72,26);                    // cabeza
+    g.fillStyle(0x1d1f24,1); g.fillRect(-27,-92,54,12);                 // pelo
+    g.fillStyle(0xffffff,1); g.fillCircle(-10,-76,7); g.fillCircle(10,-76,7);
+    g.fillStyle(0x141617,1); g.fillCircle(-10,-76,3.4); g.fillCircle(10,-76,3.4);
+    // el brief gigante que lleva bajo el brazo
+    const brief = this.add.rectangle(52,-8,44,60,0xf3ecd8).setStrokeStyle(2,0x141617).setAngle(8);
+    this.jefeCuerpo.add([g, brief]);
+    this.add.ellipse(this.jefeX, GROUND_Y-2, 96, 18, 0x000000, 0.4);
+    this.jefeLabel = this.add.text(this.jefeX, GROUND_Y-190, 'EL CLIENTE IMPOSIBLE', {
+      fontFamily:'Impact', fontSize:'15px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:7,right:7,top:3,bottom:3}
+    }).setOrigin(0.5);
+    this.add.rectangle(this.jefeX-60, GROUND_Y-172, 120, 9, 0x000000, 0.55).setOrigin(0,0.5); // fondo de la barra
+    this.jefeBarra = this.add.rectangle(this.jefeX-60, GROUND_Y-172, 120, 9, PALETTE.red).setOrigin(0,0.5);
+    this.physics.add.existing(this.jefeCuerpo);
+    this.jefeCuerpo.body.setSize(100,180).setOffset(-50,-90);
+    this.jefeCuerpo.body.setAllowGravity(false);
+    this.jefeDir = -1;
+    this.physics.add.overlap(this.player, this.jefeCuerpo, ()=>{
+      if(this.attacking) this.golpearJefe(); else this.hitEnemy({x:this.jefeCuerpo.x});
+    }, null, this);
+  }
+
+  construyeMonedas(){
+    this.collectibles = this.physics.add.group({ allowGravity:false });
+    let n = 0;
+    this.segs.forEach((s,si)=>{
+      const cuantas = 4;
+      for(let k=0;k<cuantas;k++){
+        const x = s.x + 60 + (s.w-120) * (k/(cuantas-1));
+        this.spawnCollectible(x, GROUND_Y-60, (n%6===5) ? '⚡' : '🦄');
+        n++;
       }
     });
+    if(this.repisaX) this.spawnCollectible(this.repisaX, GROUND_Y-150, '⚡'); // premio de la repisa alta
+  }
 
-    // el OJO DE LA MARCA, en mosaico, cubriendo TODA la pantalla de punta a punta
-    // (El mosaico de ojos de pared a pared se QUITÓ: por muy tenue que se pusiera seguía leyéndose
-    //  como papel pintado y era lo que más recargaba. La marca se nota igual con los ojos grandes
-    //  contados y con el filo de color del suelo. Si algún día se recupera, que sea al 4% como mucho.)
-    // EL OJO DE LA MARCA, ENORME, presidiendo el fondo — el de ellas, en turquesa
+  construyeMeta(){
+    const s = this.segs[this.segs.length-1];
+    const gx = centro(s), gy = GROUND_Y-120;
+    this.metaX = gx;
+    this.goalZone = this.add.zone(gx, gy, 150, 230);
+    this.physics.add.existing(this.goalZone);
+    this.goalZone.body.setAllowGravity(false);
+    const tipo = this.C.meta.tipo;
+    if(tipo === 'contrato'){
+      this.add.rectangle(gx-52, gy+10, 96, 130, 0xf3ecd8).setStrokeStyle(3,0x141617).setAngle(-4);
+      for(let i=0;i<5;i++) this.add.rectangle(gx-52, gy-32+i*16, 70, 4, 0xbdb190).setAngle(-4);
+      this.add.circle(gx-34, gy+48, 13, PALETTE.red,1).setStrokeStyle(2,0x8a0f12);
+      this.add.text(gx-52, gy-8, 'FIRMADO', {fontFamily:'Impact', fontSize:'15px', color:'#d83335'}).setOrigin(0.5).setAngle(-16);
+    } else if(tipo === 'farolillo'){
+      for(let i=0;i<3;i++){
+        const fx = gx-70+i*34, c = [PALETTE.pink,PALETTE.yellow,PALETTE.turquoise][i];
+        this.add.line(0,0, fx, gy-118, fx, gy-70, 0xf3ecd8).setLineWidth(1.5).setOrigin(0);
+        this.add.ellipse(fx, gy-46, 30, 46, c, 0.95).setStrokeStyle(2, 0xf3ecd8);
+      }
+      this.add.text(gx-36, gy+42, '¡OLÉ!', {fontFamily:'Impact', fontSize:'20px', color:'#f2c749'}).setOrigin(0.5);
+    } else if(tipo === 'barra'){
+      this.add.rectangle(gx-46, gy+6, 8, 230, 0xdfe6ea);
+      this.add.circle(gx-46, gy-104, 16, PALETTE.turquoise, 0.6);
+      this.add.text(gx-46, gy+70, '★', {fontSize:'30px', color:'#e4378c'}).setOrigin(0.5);
+    } else if(tipo === 'meta'){
+      for(let i=0;i<8;i++) for(let j=0;j<3;j++)
+        this.add.rectangle(gx-84+i*16, gy-40+j*16, 16, 16, ((i+j)%2)? 0xffffff : 0x141617);
+      this.add.text(gx-20, gy+58, 'META', {fontFamily:'Impact', fontSize:'22px', color:'#ffffff'}).setOrigin(0.5);
+    } else { // final
+      this.add.image(gx-46, gy, 'instanteLogo').setDisplaySize(120,77);
+      this.add.text(gx-46, gy+62, 'INSTANTE', {fontFamily:'Impact', fontSize:'20px', color:'#40ada9'}).setOrigin(0.5);
+    }
+    // ella, entera, esperándose al final de cada capítulo
+    this.add.rectangle(gx+46, gy-10, 118, 158, PALETTE.yellow, 1).setStrokeStyle(4, PALETTE.ink);
+    this.add.image(gx+46, gy-10, 'aidaGoal').setDisplaySize(108,144);
+    this.add.text(gx+46, gy-108, 'AIDA', {fontFamily:'Impact', fontSize:'22px', color:'#f2c749'}).setOrigin(0.5);
+    this.physics.add.overlap(this.player, this.goalZone, ()=>this.reachGoal(), null, this);
+  }
+
+  /* ---------- fondo ---------- */
+  drawBackground(){
+    const C = this.C, WORLD = this.WORLD;
+    // ⚠️ REGLA DEL PARALLAX: un objeto con scrollFactor s solo llega a verse si su x cae dentro de
+    // [0, s*(WORLD-W) + W]. Repartir el decorado a lo largo de todo el mundo hacía que la mayor
+    // parte NO SE VIERA NUNCA. Este helper coloca n elementos dentro del alcance real.
+    const reparte = (n, sf) => {
+      const alcance = sf*(WORLD - W) + W;
+      return Array.from({length:n}, (_,i)=> 40 + (alcance-80) * (n===1 ? 0.5 : i/(n-1)));
+    };
+    const g = this.add.graphics();
+    g.fillGradientStyle(C.cielo[0],C.cielo[0],C.cielo[1],C.cielo[1],1);
+    g.fillRect(0,0,WORLD,H).setScrollFactor(0.1);
+    this[{granada_noche:'fondoGranadaNoche', corpus:'fondoCorpus', neon:'fondoNeon',
+          calle_dia:'fondoCalleDia', oficina:'fondoOficina'}[C.estilo]](reparte);
+    this.fondoMarca(reparte);
+  }
+
+  // común a los 5: la marca presente pero SIN recargar (Manuel: "menos, que no se ven las plataformas")
+  fondoMarca(reparte){
+    const C = this.C;
+    const brand = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple];
     reparte(2, 0.18).forEach(x=>{
       this.add.image(x, 150, 'instanteLogo').setDisplaySize(330,210).setAlpha(0.07).setScrollFactor(0.18);
     });
-    // COLLAGE DE MARCA: círculos y barras planas en los 4 colores, por todo el escenario
-    const brand = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple];
     reparte(6, 0.22).forEach((x,i)=>{
       const c = brand[i%4];
       if(i%3===0)      this.add.circle(x, 80+(i%4)*48, 46+(i%3)*26, c, 0.07).setScrollFactor(0.22);
       else if(i%3===1) this.add.rectangle(x, 110+(i%5)*42, 210, 18, c, 0.08).setScrollFactor(0.22);
       else             this.add.rectangle(x, 70+(i%4)*54, 18, 140, c, 0.07).setScrollFactor(0.22);
     });
-    // ...y otra capa de collage más cerca, para que el color llegue hasta delante y no solo al fondo
-    reparte(4, 0.6).forEach((x,i)=>{
-      const c = brand[(i+2)%4];
-      if(i%2===0) this.add.circle(x, 300+(i%3)*40, 30+(i%4)*14, c, 0.05).setScrollFactor(0.6);
-      else        this.add.rectangle(x, 320+(i%4)*36, 130, 12, c, 0.05).setScrollFactor(0.6);
-    });
-
-    // ══ LA NARRATIVA, EN EL PROPIO FONDO ══
-    // Manuel: "en el fondo tenemos que trasladar que alguien se quiere apoderar de Instante,
-    // de la agencia que ellas han construido con cariño, siendo autónomas y pequeñas empresarias".
-    // Se cuenta con dos voces enfrentadas: el OJO ROJO de la competencia, que vigila, contra
-    // el turquesa de ellas y los carteles de lo que han levantado.
-    reparte(2, 0.2).forEach(x=>{
-      this.add.image(x, 118, 'instanteLogo')
-        .setDisplaySize(360,230).setAlpha(0.13).setScrollFactor(0.2).setTint(0xd83335); // el ojo del que las vigila
-    });
-    const AMENAZA = ['LA COMPETENCIA VIGILA', 'QUIEREN QUEDARSE\nCON INSTANTE', 'OFERTA PARA COMPRAROS'];
-    reparte(3, 0.45).forEach((x,i)=>{
-      this.add.text(x, 96, AMENAZA[i], {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#d83335', align:'center'
-      }).setOrigin(0.5).setAlpha(0.42).setScrollFactor(0.45);
-    });
-    const SUYO = ['INSTANTE NO SE VENDE', 'LO HAN LEVANTADO ELLAS', 'AUTÓNOMAS\nY A MUCHA HONRA', 'HECHO CON CARIÑO'];
-    reparte(4, 0.55).forEach((x,i)=>{
-      this.add.text(x, 240, SUYO[i], {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#40ada9', align:'center'
-      }).setOrigin(0.5).setAlpha(0.45).setScrollFactor(0.55);
-    });
-    // marca "INSTANTE" de fondo — pequeña y contada. El "AIDA" gigante se quitó: era una mancha
-    // amarilla enorme detrás de ella y encima sobraba, porque Aida ya está ahí, en pantalla.
+    // la historia, contada en el propio fondo: la amenaza en rojo contra lo que ellas han levantado
+    if(C.rotulosRojos && C.rotulosRojos.length){
+      reparte(C.rotulosRojos.length, 0.2).forEach(x=>{
+        this.add.image(x, 118, 'instanteLogo').setDisplaySize(360,230).setAlpha(0.13).setScrollFactor(0.2).setTint(0xd83335);
+      });
+      reparte(C.rotulosRojos.length, 0.45).forEach((x,i)=>{
+        this.add.text(x, 96, C.rotulosRojos[i], {fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'19px', color:'#d83335', align:'center'})
+          .setOrigin(0.5).setAlpha(0.42).setScrollFactor(0.45);
+      });
+    }
+    if(C.rotulosSuyos && C.rotulosSuyos.length){
+      reparte(C.rotulosSuyos.length, 0.55).forEach((x,i)=>{
+        this.add.text(x, 240, C.rotulosSuyos[i], {fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#40ada9', align:'center'})
+          .setOrigin(0.5).setAlpha(0.45).setScrollFactor(0.55);
+      });
+    }
     reparte(3, 0.3).forEach(x=>{
-      this.add.text(x, 200, 'INSTANTE', {
-        fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#e4378c'
-      }).setOrigin(0.5).setAlpha(0.09).setScrollFactor(0.3);
+      this.add.text(x, 200, 'INSTANTE', {fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#e4378c'})
+        .setOrigin(0.5).setAlpha(0.09).setScrollFactor(0.3);
     });
   }
 
-  spawnEnemy(x,y,type,min,max,faceKey){
-    // sombra en el suelo, para que se lean como un adversario real plantado ahí, no un emoji flotando
+  fondoGranadaNoche(reparte){
+    reparte(3, 0.15).forEach(x=> this.add.circle(x, 150, 80, PALETTE.yellow, 0.5).setScrollFactor(0.15));
+    reparte(11, 0.35).forEach((x,i)=>{
+      const th = 90 + (i%3)*30;
+      this.add.rectangle(x, GROUND_Y - th/2 + 30, 46, th, 0x1c0d0d).setScrollFactor(0.35);
+      for(let m=0;m<4;m++) this.add.rectangle(x-17+m*11, GROUND_Y-th+22, 8, 12, 0x1c0d0d).setScrollFactor(0.35);
+    });
+    reparte(18, 0.55).forEach((x,i)=>{
+      const th = 60 + ((i*37)%70);
+      this.add.rectangle(x, GROUND_Y - th/2 + 10, 90, th, 0x24100f).setScrollFactor(0.55);
+      for(let r=0;r<Math.floor(th/22);r++)
+        this.add.rectangle(x-24+(i%3)*20, GROUND_Y-th+16+r*22, 10, 12, PALETTE.yellow, 0.55).setScrollFactor(0.55);
+    });
+  }
+
+  // CORPUS: calles engalanadas — guirnaldas de farolillos y balcones con mantones
+  fondoCorpus(reparte){
+    reparte(9, 0.35).forEach((x,i)=>{
+      const th = 120 + (i%3)*40;
+      this.add.rectangle(x, GROUND_Y - th/2 + 20, 108, th, 0x241041).setScrollFactor(0.35);
+      // balcones con mantón colgando
+      for(let b=0;b<2;b++){
+        const by = GROUND_Y - th + 40 + b*54;
+        this.add.rectangle(x, by, 62, 5, 0x59407a).setScrollFactor(0.35);
+        const c = [PALETTE.pink, PALETTE.turquoise, PALETTE.yellow][(i+b)%3];
+        this.add.rectangle(x, by+18, 54, 30, c, 0.85).setScrollFactor(0.35);
+        for(let f=0;f<6;f++) this.add.rectangle(x-24+f*10, by+38, 3, 12, c, 0.85).setScrollFactor(0.35); // flecos
+      }
+    });
+    // guirnaldas de farolillos cruzando la calle
+    reparte(14, 0.5).forEach((x,i)=>{
+      const c = [PALETTE.pink, PALETTE.yellow, PALETTE.turquoise, 0xffffff][i%4];
+      const y = 70 + (i%2)*26;
+      this.add.rectangle(x, y-16, 90, 2, 0xf3ecd8, 0.5).setScrollFactor(0.5);
+      this.add.ellipse(x, y, 20, 28, c, 0.9).setStrokeStyle(1.5, 0xf3ecd8).setScrollFactor(0.5);
+    });
+  }
+
+  // LA BARRA: neón. Tubos de luz turquesa y rosa, y barras verticales de fondo
+  fondoNeon(reparte){
+    reparte(10, 0.3).forEach((x,i)=>{
+      const c = (i%2) ? PALETTE.pink : PALETTE.turquoise;
+      const alto = 150 + (i%3)*60;
+      this.add.rectangle(x, 210, 7, alto, c, 0.55).setScrollFactor(0.3);
+      this.add.rectangle(x, 210, 19, alto, c, 0.14).setScrollFactor(0.3); // halo del neón
+    });
+    reparte(7, 0.5).forEach((x,i)=>{
+      this.add.circle(x, 120+(i%3)*50, 40+(i%2)*22, (i%2)?PALETTE.turquoise:PALETTE.pink, 0.10).setScrollFactor(0.5);
+    });
+    // barras de pole dance al fondo, en penumbra
+    reparte(6, 0.6).forEach(x=>{
+      this.add.rectangle(x, GROUND_Y-110, 6, 220, 0xdfe6ea, 0.30).setScrollFactor(0.6);
+    });
+  }
+
+  // LA MILLA: Granada de día, calle abierta, árboles y mojones de kilómetro
+  fondoCalleDia(reparte){
+    reparte(6, 0.12).forEach((x,i)=> this.add.ellipse(x, 70+(i%3)*24, 150, 52, 0xffffff, 0.30).setScrollFactor(0.12)); // nubes
+    reparte(10, 0.35).forEach((x,i)=>{
+      const th = 110 + (i%4)*36;
+      this.add.rectangle(x, GROUND_Y - th/2 + 20, 96, th, 0xcbb79b).setScrollFactor(0.35);
+      for(let r=0;r<Math.floor(th/30);r++)
+        this.add.rectangle(x-26+(i%3)*22, GROUND_Y-th+28+r*30, 14, 18, 0x6d5f4d, 0.65).setScrollFactor(0.35);
+    });
+    reparte(14, 0.6).forEach((x,i)=>{ // arbolitos
+      this.add.rectangle(x, GROUND_Y-26, 8, 52, 0x6b4a2a).setScrollFactor(0.6);
+      this.add.circle(x, GROUND_Y-66, 26+(i%3)*5, 0x3f7d3a, 0.92).setScrollFactor(0.6);
+    });
+  }
+
+  // INSTANTE HQ: dentro de la oficina — pared con el logo, mesas, monitores y plantas
+  fondoOficina(reparte){
+    reparte(4, 0.25).forEach(x=>{ // paneles de pared
+      this.add.rectangle(x, 200, 260, 300, 0x10302e, 0.75).setScrollFactor(0.25);
+    });
+    reparte(8, 0.45).forEach((x,i)=>{ // monitores encendidos
+      this.add.rectangle(x, 190+(i%2)*54, 74, 48, 0x0b1c1b).setStrokeStyle(3, 0x2a5a57).setScrollFactor(0.45);
+      this.add.rectangle(x, 190+(i%2)*54, 62, 36, [PALETTE.turquoise,PALETTE.pink,PALETTE.yellow][i%3], 0.35).setScrollFactor(0.45);
+    });
+    reparte(10, 0.6).forEach((x,i)=>{ // mesas y plantas
+      this.add.rectangle(x, GROUND_Y-34, 112, 10, 0x8a6a4a).setScrollFactor(0.6);
+      this.add.rectangle(x-42, GROUND_Y-16, 8, 34, 0x6b4a2a).setScrollFactor(0.6);
+      this.add.rectangle(x+42, GROUND_Y-16, 8, 34, 0x6b4a2a).setScrollFactor(0.6);
+      if(i%3===0) this.add.circle(x+70, GROUND_Y-52, 22, 0x2f6b3a, 0.9).setScrollFactor(0.6);
+    });
+  }
+
+  /* ---------- entidades ---------- */
+  spawnEnemy(x,y,tipo,min,max){
+    const E = ENEMIGOS[tipo];
     const shadow = this.add.ellipse(x,y+38,70,17,0x000000,0.35);
-    const ENEMY_LABEL = { burocracia:'BUROCRACIA', machirulo:'MACHIRULO', chirulo_viejo:'VIEJO CHIRULO' };
-    const ENEMY_TAGCOLOR = { burocracia:'#141617', machirulo:'#68416c', chirulo_viejo:'#d83335' };
-    const label = this.add.text(x,y-70, ENEMY_LABEL[type], {
-      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor: ENEMY_TAGCOLOR[type], padding:{left:6,right:6,top:2,bottom:2}
+    const label = this.add.text(x,y-70, E.etiqueta, {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor: E.color, padding:{left:6,right:6,top:2,bottom:2}
     }).setOrigin(0.5);
-    // caras ilustradas de verdad para machirulo/viejo (generadas + recortadas); burocracia se queda en emoji, es papeleo, no una persona
-    // más grandes, "para que se vean" (Manuel, 25 jul): 56 → 76 px
-    const t = faceKey ? this.add.image(x,y,faceKey).setDisplaySize(76,76) : this.add.text(x,y, ENEMY_ICON[type], {fontSize:'70px'}).setOrigin(0.5);
+    const t = E.cara ? this.add.image(x,y,E.cara).setDisplaySize(76,76)
+                     : this.add.text(x,y, E.icono, {fontSize:'70px'}).setOrigin(0.5);
     this.physics.add.existing(t);
     t.body.setAllowGravity(false);
-    t.dir = -1; t.min = min; t.max = max; t.type = type;
+    t.dir = -1; t.min = min; t.max = max; t.type = tipo;
     t.shadow = shadow; t.label = label;
-    t.body.setVelocityX(-60);
     this.enemies.add(t);
   }
 
@@ -722,35 +989,30 @@ class Chapter1 extends Phaser.Scene {
   collect(t){
     if(!t.active) return;
     t.destroy();
-    (t.icon==='⚡' ? sfxBonus : sfxCoin)(this); // cada cosa que coge, suena
+    (t.icon==='⚡' ? sfxBonus : sfxCoin)(this);
     this.score += (t.icon==='⚡') ? 2 : 1;
     this.updateHud();
-    // en orden, no al azar — así en un recorrido completo las DICE TODAS, no depende de la suerte
     this.sayPhrase(CATCHPHRASES[this.phraseIndex % CATCHPHRASES.length]);
     this.phraseIndex++;
   }
 
   sayPhrase(text){
     speakPhrase(text);
-    const px = this.playerVisual.x, py = this.playerVisual.y - 190;
-    const bubble = this.add.text(px, py, text, {
+    const bubble = this.add.text(this.playerVisual.x, this.playerVisual.y - 190, text, {
       fontFamily:'Impact', fontSize:'14px', color:'#141617', backgroundColor:'#f2c749',
       padding:{left:8,right:8,top:4,bottom:4}, align:'center', wordWrap:{width:180}
     }).setOrigin(0.5);
     this.tweens.add({targets:bubble, y:bubble.y-18, alpha:0, duration:1500, delay:500, onComplete:()=>bubble.destroy()});
   }
 
-  onEnemyTouch(en){
-    if(this.attacking) this.defeatEnemy(en);
-    else this.hitEnemy(en);
-  }
+  /* ---------- combate ---------- */
+  onEnemyTouch(en){ if(this.attacking) this.defeatEnemy(en); else this.hitEnemy(en); }
 
   performAttack(){
     if(this.win || this.lives<=0 || this.attackCooldown) return;
     this.attackCooldown = true;
     this.attacking = true;
     playSwoosh(this);
-    // ESTELA DEL TAJO — un arco blanco que barre delante de ella: el golpe se VE, no solo se intuye
     const dir = this.player.flipX ? -1 : 1;
     const fx = this.add.graphics();
     fx.lineStyle(8, 0xffffff, 0.95);
@@ -760,61 +1022,79 @@ class Chapter1 extends Phaser.Scene {
     fx.setPosition(this.player.x + dir*16, this.player.y - 30);
     fx.setScale(dir*0.55, 0.55);
     this.tweens.add({targets:fx, scaleX:dir*1.2, scaleY:1.2, alpha:0, duration:250, ease:'Cubic.easeOut', onComplete:()=>fx.destroy()});
-    this.cameras.main.shake(60, 0.003); // el tajo se nota en la cámara
-    // el flip de lado ya lo hace el scaleX del contenedor en update(); el ángulo del tajo es siempre el mismo
+    this.cameras.main.shake(60, 0.003);
     this.katana.setRotation(Phaser.Math.DegToRad(18));
     this.tweens.add({
       targets:this.katana, rotation:Phaser.Math.DegToRad(-150), duration:140, yoyo:true, ease:'Cubic.easeOut',
       onComplete: ()=> this.katana.setRotation(Phaser.Math.DegToRad(18))
     });
-    // LA KATANA TIENE ALCANCE: alcanza a quien tenga delante, no hace falta chocarse con él.
-    // (Antes solo mataba si el cuerpo tocaba al enemigo justo en los 160 ms del tajo — por eso
-    //  atacar "no hacía nada" si no la pegabas pegadísima.)
+    // el tajo ALCANZA a quien tenga delante: no hace falta chocarse con él
     this.enemies.getChildren().slice().forEach(e=>{
       const dx = (e.x - this.player.x) * dir;
       if(dx > -24 && dx < 96 && Math.abs(e.y - this.player.y) < 90) this.defeatEnemy(e);
     });
+    if(this.jefeCuerpo && this.jefeVidas > 0){
+      const dx = (this.jefeCuerpo.x - this.player.x) * dir;
+      if(dx > -40 && dx < 116) this.golpearJefe();
+    }
     this.time.delayedCall(160, ()=> this.attacking=false);
     this.time.delayedCall(360, ()=> this.attackCooldown=false);
   }
 
   defeatEnemy(en){
     if(!en.active) return;
-    const x=en.x, y=en.y;
-    const label = en.type==='machirulo' ? '¡SUÉLTAME EL BRAZO, HIJO DE PUTA!'
-      : en.type==='chirulo_viejo' ? '¡A CASA, ABUELO!'
-      : `¡${Phaser.Utils.Array.GetRandom(INSTANTE_SERVICES)} ENTREGADO A TIEMPO!`;
+    const x=en.x, y=en.y, E = ENEMIGOS[en.type] || {};
+    const label = E.servicios
+      ? `¡${Phaser.Utils.Array.GetRandom(INSTANTE_SERVICES)} ENTREGADO A TIEMPO!`
+      : (E.taunt || '¡FUERA DE AQUÍ!');
     speakPhrase(label);
-    playImpact(this); // el golpe que aterriza suena grave y seco, no solo el silbido del aire
-    en.shadow.destroy(); en.label.destroy();
-    en.destroy();
+    playImpact(this);
+    en.shadow.destroy(); en.label.destroy(); en.destroy();
     this.score += 2;
     this.updateHud();
-    // ráfaga de confeti/papel, sin sangre ni violencia real — solo la actitud
     for(let i=0;i<8;i++){
       const p = this.add.rectangle(x,y, 6,6, [PALETTE.yellow,PALETTE.pink,PALETTE.turquoise,0xffffff][i%4]);
-      this.tweens.add({
-        targets:p, x:x+Phaser.Math.Between(-50,50), y:y+Phaser.Math.Between(-60,10),
-        alpha:0, rotation:Phaser.Math.Between(-4,4), duration:500, onComplete:()=>p.destroy()
-      });
+      this.tweens.add({targets:p, x:x+Phaser.Math.Between(-50,50), y:y+Phaser.Math.Between(-60,10),
+        alpha:0, rotation:Phaser.Math.Between(-4,4), duration:500, onComplete:()=>p.destroy()});
     }
     const t = this.add.text(x, y-30, label, {fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:3,bottom:3}}).setOrigin(0.5);
     this.tweens.add({targets:t, y:t.y-24, alpha:0, duration:600, onComplete:()=>t.destroy()});
-    // destello blanco de impacto + estrella de corte, para que el golpe se lea de lejos
     const flash = this.add.circle(x, y, 34, 0xffffff, 0.9);
     this.tweens.add({targets:flash, scale:2.1, alpha:0, duration:220, onComplete:()=>flash.destroy()});
     const star = this.add.graphics();
     star.lineStyle(4, PALETTE.yellow, 1);
     for(let a=0;a<4;a++){
       const ang = Phaser.Math.DegToRad(a*45+15);
-      star.beginPath();
-      star.moveTo(Math.cos(ang)*-26, Math.sin(ang)*-26);
-      star.lineTo(Math.cos(ang)*26, Math.sin(ang)*26);
-      star.strokePath();
+      star.beginPath(); star.moveTo(Math.cos(ang)*-26, Math.sin(ang)*-26); star.lineTo(Math.cos(ang)*26, Math.sin(ang)*26); star.strokePath();
     }
     star.setPosition(x,y);
     this.tweens.add({targets:star, scale:1.9, alpha:0, duration:300, onComplete:()=>star.destroy()});
-    this.cameras.main.shake(150, 0.011); // el impacto sacude de verdad (antes 90/0.005, apenas se notaba)
+    this.cameras.main.shake(150, 0.011);
+  }
+
+  golpearJefe(){
+    if(this.jefeVidas<=0 || this.jefeInvuln) return;
+    this.jefeInvuln = true;
+    this.time.delayedCall(420, ()=> this.jefeInvuln=false);
+    this.jefeVidas--;
+    playImpact(this);
+    this.cameras.main.shake(180, 0.013);
+    this.jefeBarra.setScale(this.jefeVidas/this.C.jefe.vidas, 1);
+    this.tweens.add({targets:this.jefeCuerpo, alpha:0.3, duration:90, yoyo:true, repeat:1});
+    const brief = Phaser.Utils.Array.GetRandom(BRIEFS_IMPOSIBLES);
+    const t = this.add.text(this.jefeCuerpo.x, GROUND_Y-215, `"${brief}"`, {
+      fontFamily:'Georgia, serif', fontSize:'12px', color:'#ffffff', backgroundColor:'#d83335',
+      padding:{left:7,right:7,top:4,bottom:4}, align:'center', wordWrap:{width:210}, fontStyle:'italic'
+    }).setOrigin(0.5);
+    this.tweens.add({targets:t, y:t.y-20, alpha:0, duration:1600, delay:600, onComplete:()=>t.destroy()});
+    if(this.jefeVidas<=0){
+      this.jefeCuerpo.body.enable = false;
+      this.jefeLabel.setText('DERROTADO').setBackgroundColor('#40ada9');
+      this.jefeBarra.destroy();
+      this.tweens.add({targets:this.jefeCuerpo, alpha:0, y:this.jefeCuerpo.y+40, angle:70, duration:700});
+      this.sayPhrase('¡El brief me lo paso por el arco del triunfo!');
+      this.score += 15; this.updateHud();
+    }
   }
 
   hitEnemy(en){
@@ -838,31 +1118,37 @@ class Chapter1 extends Phaser.Scene {
     if(this.lives<=0) this.gameOver();
   }
 
-  meetBrenda(){
-    if(this.brendaUsed) return;
-    this.brendaUsed = true;
-    this.lives = Math.min(4, this.lives+1);
+  /* ---------- aliada y tutor ---------- */
+  conocerAliada(){
+    if(this.aliadaUsada) return;
+    this.aliadaUsada = true;
     this.score += 3;
+    const esConchita = this.aliadaTipo === 'conchita';
+    let sub;
+    if(esConchita){ this.saltoExtra = true; sub = '¡Salto doble!  ⬆⬆'; }
+    else { this.lives = Math.min(4, this.lives+1); sub = '¡Voy contigo!  +1 ❤️'; }
     this.updateHud();
-    speakPhrase('¡Voy contigo!');
-    // FICHA DE PERSONAJE: SU CARA EN GRANDE, en mitad de la pantalla, con su nombre.
-    // Manuel insistió dos veces en "que Brenda tenga su propia cara" — aquí ya no hay forma de no verla.
+    speakPhrase(esConchita ? '¡Arriba, que tú puedes!' : '¡Voy contigo!');
+    // ficha de personaje a media pantalla, con su nombre — que se vea quién es
     const card = this.add.container(W/2, H*0.42).setScrollFactor(0).setDepth(70);
     const ring = this.add.circle(0, 0, 64, PALETTE.purple, 1).setStrokeStyle(4, PALETTE.turquoise);
-    const face = this.add.image(0, 0, 'brendaFace').setDisplaySize(120,120);
-    const nombre = this.add.text(0, 82, 'BRENDA', {
+    const cara = this.aliadaCara
+      ? this.add.image(0, 0, this.aliadaCara).setDisplaySize(120,120)
+      : this.add.text(0, 0, '💃', {fontSize:'78px'}).setOrigin(0.5);
+    const nombre = this.add.text(0, 82, this.aliadaNombre, {
       fontFamily:'Impact', fontSize:'26px', color:'#ffffff', backgroundColor:'#68416c', padding:{left:10,right:10,top:3,bottom:3}
     }).setOrigin(0.5);
-    const sub = this.add.text(0, 112, '¡Voy contigo!  +1 ❤️', {
-      fontFamily:'Arial', fontSize:'14px', color:'#f2c749'
-    }).setOrigin(0.5);
-    card.add([ring, face, nombre, sub]);
+    const txt = this.add.text(0, 112, sub, {fontFamily:'Arial', fontSize:'14px', color:'#f2c749'}).setOrigin(0.5);
+    card.add([ring, cara, nombre, txt]);
     card.setScale(0.4); card.setAlpha(0);
     this.tweens.add({targets:card, scale:1, alpha:1, duration:280, ease:'Back.easeOut'});
     this.tweens.add({targets:card, alpha:0, duration:400, delay:2000, onComplete:()=>card.destroy()});
-    // y su cara se queda fija en el HUD mientras te acompaña, para que se sepa que va contigo
-    // (abajo a la izquierda, no arriba a la derecha: ahí está el botón de silenciar)
-    this.brendaBadge = this.add.image(30, 62, 'brendaFace').setDisplaySize(42,42).setScrollFactor(0).setDepth(60);
+    // y se queda su chapa en el HUD mientras te acompaña
+    if(this.aliadaCara){
+      this.add.image(30, 62, this.aliadaCara).setDisplaySize(42,42).setScrollFactor(0).setDepth(60);
+    } else {
+      this.add.text(30, 62, '💃', {fontSize:'30px'}).setOrigin(0.5).setScrollFactor(0).setDepth(60);
+    }
     this.add.circle(30, 62, 23, 0x000000, 0).setStrokeStyle(2, PALETTE.turquoise).setScrollFactor(0).setDepth(60);
     this.add.text(56, 62, 'contigo', {fontFamily:'Impact', fontSize:'11px', color:'#40ada9'}).setOrigin(0,0.5).setScrollFactor(0).setDepth(60);
   }
@@ -872,20 +1158,18 @@ class Chapter1 extends Phaser.Scene {
     this.tutorUsed = true;
     this.physics.pause();
     activeChapter1 = this;
-    const overlay = document.getElementById('thesis-overlay');
     document.getElementById('thesis-title').textContent = '📚 EL TUTOR';
     document.getElementById('thesis-msg').textContent = 'Para acabar la tesis hace falta un artículo más. Título:';
     const input = document.getElementById('thesis-input');
     input.value = '';
-    overlay.classList.add('show');
+    document.getElementById('thesis-overlay').classList.add('show');
     this.time.delayedCall(50, ()=> input.focus());
   }
 
   onArticleSubmitted(title){
     this.physics.resume();
     const t = title && title.trim() ? title.trim() : 'Sin título (ya lo pondrás)';
-    this.score += 5;
-    this.articulos += 1;
+    this.score += 5; this.articulos += 1;
     this.updateHud();
     speakPhrase('¡El revisor lo ha pasado!');
     const msg = this.add.text(this.player.x, this.player.y-190, `📖 "${t}"\n¡El revisor lo ha pasado! ✅`, {
@@ -895,109 +1179,190 @@ class Chapter1 extends Phaser.Scene {
     this.tweens.add({targets:msg, y:msg.y-24, alpha:0, duration:2200, delay:900, onComplete:()=>msg.destroy()});
   }
 
+  /* ---------- final de capítulo ---------- */
   reachGoal(){
     if(this.win) return;
+    // en el capítulo del jefe, la meta no se abre hasta tumbar al Cliente Imposible
+    if(this.C.jefe && this.jefeVidas > 0){
+      if(!this.avisoJefe){
+        this.avisoJefe = true;
+        this.sayPhrase('¡Primero el Cliente Imposible!');
+        this.time.delayedCall(2500, ()=> this.avisoJefe=false);
+      }
+      return;
+    }
     this.win = true;
     this.physics.pause();
-    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
-    // el logo de Instante, GRANDE, en la pantalla final — pedido explícito: "tiene que verse el logotipo al final"
-    this.add.image(W/2, H*0.28, 'instanteLogo').setDisplaySize(90,58).setScrollFactor(0);
-    this.add.text(W/2, H*0.4, '¡CONTRATO FIRMADO!', {fontFamily:'Impact', fontSize:'26px', color:'#f2c749'}).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.48, '¡OLÉ INSTANTE! ¡VIVA LA AGENCIA INSTANTE!', {fontFamily:'Impact', fontSize:'14px', color:'#e4378c', align:'center', wordWrap:{width:W-60}}).setOrigin(0.5).setScrollFactor(0);
-    speakPhrase('¡Contrato firmado! ¡Olé Instante! ¡Viva la agencia Instante!');
-    this.add.text(W/2, H*0.55, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'18px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0);
-    // las dos socias, con su cara, presidiendo el testimonio que las nombra a las dos
-    this.add.circle(W/2-46, H*0.635, 25, 0x000000, 0).setStrokeStyle(3, PALETTE.yellow).setScrollFactor(0);
-    this.add.image(W/2-46, H*0.635, 'aidaFace').setDisplaySize(46,46).setScrollFactor(0);
-    this.add.circle(W/2+46, H*0.635, 25, 0x000000, 0).setStrokeStyle(3, PALETTE.turquoise).setScrollFactor(0);
-    this.add.image(W/2+46, H*0.635, 'brendaFace').setDisplaySize(46,46).setScrollFactor(0);
-    // testimonio REAL de un cliente de Instante, sacado literal de agenciainstante.com — no inventado
-    this.add.text(W/2, H*0.73, '"Recomiendo 100% trabajar con Aida y Brenda.\nSon muy profesionales, muy creativas..."', {
-      fontFamily:'Georgia, serif', fontSize:'11px', color:'#40ada9', fontStyle:'italic', align:'center', wordWrap:{width:W-70}
-    }).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.80, '— Gabriel Rodríguez, CEO SinComisiones', {
-      fontFamily:'Arial', fontSize:'10px', color:'#888', align:'center'
-    }).setOrigin(0.5).setScrollFactor(0);
-    this.add.text(W/2, H*0.88, 'El resto de capítulos llega pronto...', {fontFamily:'Arial', fontSize:'13px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0);
+    progresoGuardar(this.C.n);
+    if(this.C.ultimo){ this.scene.start('Final', {score:this.score}); return; }
+    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0).setDepth(80);
+    const d = 81;
+    this.add.image(W/2, H*0.20, 'instanteLogo').setDisplaySize(90,58).setScrollFactor(0).setDepth(d);
+    this.add.text(W/2, H*0.31, this.C.meta.titulo, {fontFamily:'Impact', fontSize:'25px', color:'#f2c749', align:'center', wordWrap:{width:W-40}}).setOrigin(0.5).setScrollFactor(0).setDepth(d);
+    this.add.text(W/2, H*0.39, this.C.meta.grito.toUpperCase(), {fontFamily:'Impact', fontSize:'14px', color:'#e4378c', align:'center', wordWrap:{width:W-60}}).setOrigin(0.5).setScrollFactor(0).setDepth(d);
+    speakPhrase(this.C.meta.grito);
+    this.add.text(W/2, H*0.47, `🦄 recogidos: ${this.score}`, {fontFamily:'Arial', fontSize:'17px', color:'#ffffff'}).setOrigin(0.5).setScrollFactor(0).setDepth(d);
+    this.add.circle(W/2, H*0.585, 45, 0x000000, 0).setStrokeStyle(4, PALETTE.yellow).setScrollFactor(0).setDepth(d);
+    this.add.image(W/2, H*0.585, 'aidaFace').setDisplaySize(84,84).setScrollFactor(0).setDepth(d);
+    const sig = CAPITULOS[this.C.n]; // el siguiente (n es 1-based, el array 0-based)
+    const btn = this.add.text(W/2, H*0.77, sig ? `▶ VOL. ${sig.n} — ${sig.nombre.toUpperCase()}` : '▶ SEGUIR', {
+      fontFamily:'Impact', fontSize:'17px', color:'#141617', backgroundColor:'#f2c749', padding:{left:16,right:16,top:9,bottom:9}, align:'center', wordWrap:{width:W-60}
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(d).setInteractive({useHandCursor:true});
+    btn.on('pointerdown', ()=> sig ? this.scene.start('Title', {key: sig.key}) : this.scene.start('Menu'));
+    const men = this.add.text(W/2, H*0.87, 'elegir capítulo', {fontFamily:'Arial', fontSize:'12px', color:'#40ada9'})
+      .setOrigin(0.5).setScrollFactor(0).setDepth(d).setInteractive({useHandCursor:true});
+    men.on('pointerdown', ()=> this.scene.start('Menu'));
   }
 
-  gameOver(){
+  gameOver(motivo){
     this.physics.pause();
-    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0);
-    const t = this.add.text(W/2, H*0.45, '¡CASI!', {fontFamily:'Impact', fontSize:'28px', color:'#d83335'}).setOrigin(0.5).setScrollFactor(0);
-    const btn = this.add.text(W/2, H*0.58, '🔄 REINTENTAR', {fontFamily:'Arial', fontSize:'18px', color:'#141617', backgroundColor:'#f2c749', padding:{left:16,right:16,top:8,bottom:8}}).setOrigin(0.5).setScrollFactor(0).setInteractive({useHandCursor:true});
+    this.add.rectangle(W/2, H/2, W, H, 0x0c0d0e, 0.9).setScrollFactor(0).setDepth(80);
+    this.add.text(W/2, H*0.42, motivo || '¡CASI!', {fontFamily:'Impact', fontSize:'27px', color:'#d83335', align:'center', wordWrap:{width:W-40}}).setOrigin(0.5).setScrollFactor(0).setDepth(81);
+    const btn = this.add.text(W/2, H*0.56, '🔄 REINTENTAR', {fontFamily:'Arial', fontSize:'18px', color:'#141617', backgroundColor:'#f2c749', padding:{left:16,right:16,top:8,bottom:8}}).setOrigin(0.5).setScrollFactor(0).setDepth(81).setInteractive({useHandCursor:true});
     btn.on('pointerdown', ()=> this.scene.restart());
+    const men = this.add.text(W/2, H*0.68, 'elegir capítulo', {fontFamily:'Arial', fontSize:'12px', color:'#40ada9'}).setOrigin(0.5).setScrollFactor(0).setDepth(81).setInteractive({useHandCursor:true});
+    men.on('pointerdown', ()=> this.scene.start('Menu'));
   }
 
   updateHud(){
-    this.hud.setText(`♥ ${'❤'.repeat(Math.max(0,this.lives))}   🦄 ${this.score}   📖 ${this.articulos}`);
+    const t = this.C.tiempo ? `   ⏱ ${Math.max(0,this.restante)}s` : '';
+    const a = this.articulos ? `   📖 ${this.articulos}` : '';
+    this.hud.setText(`♥ ${'❤'.repeat(Math.max(0,this.lives))}   🦄 ${this.score}${a}${t}`);
   }
 
+  /* ---------- bucle ---------- */
   update(){
     if(this.win || this.lives<=0) return;
-    const speed = 200;
+    const speed = this.C.tiempo ? 240 : 200; // en la contrarreloj corre más
     if(keys.left){ this.player.setVelocityX(-speed); this.player.flipX = true; }
     else if(keys.right){ this.player.setVelocityX(speed); this.player.flipX = false; }
+    const enSuelo = this.player.body.blocked.down || this.player.body.touching.down;
+    if(enSuelo) this.saltosDados = 0;
     if(jumpRequested){
-      if(this.player.body.blocked.down || this.player.body.touching.down){
-        this.player.setVelocityY(-640); // antes -480: con gravedad 1500 solo llegaba a 76px y la repisa está a 110px — NUNCA se podía alcanzar. Ahora llega a ~136px.
+      const maxSaltos = this.saltoExtra ? 2 : 1; // el salto doble lo regala Conchita
+      if(enSuelo || this.saltosDados < maxSaltos){
+        this.player.setVelocityY(-640);
         sfxJump(this);
+        this.saltosDados = enSuelo ? 1 : this.saltosDados+1;
       }
       jumpRequested = false;
     }
-    if(attackRequested){
-      this.performAttack();
-      attackRequested = false;
-    }
-    // 🗡️ Y ADEMÁS SE ACCIONA SOLA: si un malo se pone a tiro, ella se gira y tira el tajo sin
-    // que Manuel toque nada. Pidió "un botón específico o que se accione sola" — están LAS DOS.
+    if(attackRequested){ this.performAttack(); attackRequested = false; }
+    // la katana también se acciona SOLA si un malo se pone a tiro
     if(!this.attackCooldown){
       const cerca = this.enemies.getChildren().find(e =>
         Math.abs(e.x - this.player.x) < 92 && Math.abs(e.y - this.player.y) < 90);
-      if(cerca){
-        this.player.flipX = cerca.x < this.player.x; // se gira hacia el que viene
-        this.performAttack();
-      }
+      if(cerca){ this.player.flipX = cerca.x < this.player.x; this.performAttack(); }
     }
-    if(this.player.body.blocked.down || this.player.body.touching.down){
+    if(enSuelo){
       const seg = this.segs.find(s=> this.player.x >= s.x+30 && this.player.x <= s.x+s.w-30);
       if(seg) this.respawnX = Phaser.Math.Clamp(this.player.x, seg.x+40, seg.x+seg.w-40);
     }
-    if(this.player.y > GROUND_Y + 50){
-      this.fallInPit();
-    }
+    if(this.player.y > GROUND_Y + 50) this.fallInPit();
+
     this.playerVisual.x = this.player.x;
     this.playerVisual.y = this.player.y;
     this.heroImage.setFlipX(this.player.flipX);
     this.logoBadge.x = this.player.flipX ? -7 : 7;
-    this.katana.x = this.player.flipX ? -31 : 31; // la mano cambia de lado al girarse
+    this.katana.x = this.player.flipX ? -31 : 31;
     this.katana.setScale(this.player.flipX ? -1 : 1, 1);
 
     this.enemies.getChildren().forEach(e=>{
-      e.x += e.dir * (e.type==='machirulo'? 1.0 : e.type==='chirulo_viejo'? 0.5 : 0.7);
+      e.x += e.dir * (ENEMIGOS[e.type] ? ENEMIGOS[e.type].vel : 0.7);
       if(e.x<e.min){ e.x=e.min; e.dir=1; }
       if(e.x>e.max){ e.x=e.max; e.dir=-1; }
       e.setFlipX(e.dir>0);
       e.shadow.x = e.x; e.label.x = e.x;
     });
 
-    // Brenda, ya de aliada: sigue a Aida y se pone A PELEAR — no solo a animar
-    if(this.brendaUsed){
+    // el jefe te persigue de lado a lado de su tramo
+    if(this.jefeCuerpo && this.jefeVidas > 0){
+      const dx = this.player.x - this.jefeCuerpo.x;
+      this.jefeCuerpo.x += Phaser.Math.Clamp(dx, -1.5, 1.5);
+      this.jefeLabel.x = this.jefeCuerpo.x;
+      this.jefeBarra.x = this.jefeCuerpo.x - 60;
+    }
+
+    // la aliada, ya unida: te sigue y se pone a pelear
+    if(this.aliadaUsada && this.aliada){
       const targetX = this.player.x + (this.player.flipX ? 70 : -70);
-      this.brenda.x += (targetX - this.brenda.x) * 0.06;
-      this.brenda.setFlipX(this.player.flipX);
-      this.brendaLabel.x = this.brenda.x;
-      this.brendaShadow.x = this.brenda.x;
-      this.brendaDesk.x = this.brenda.x; // el mostrador va con ella: sin él se le verían las piernas que la foto no tiene
-      if(!this.brendaAttackCooldown){
-        const target = this.enemies.getChildren().find(e => Math.abs(e.x-this.brenda.x) < 55);
+      this.aliada.x += (targetX - this.aliada.x) * 0.06;
+      if(this.aliada.setFlipX) this.aliada.setFlipX(this.player.flipX);
+      this.aliadaLabel.x = this.aliada.x;
+      this.aliadaShadow.x = this.aliada.x;
+      if(this.aliadaMueble) this.aliadaMueble.x = this.aliada.x;
+      if(!this.aliadaCooldown){
+        const target = this.enemies.getChildren().find(e => Math.abs(e.x-this.aliada.x) < 55);
         if(target){
           this.defeatEnemy(target);
-          this.brendaAttackCooldown = true;
-          this.time.delayedCall(450, ()=> this.brendaAttackCooldown=false);
+          this.aliadaCooldown = true;
+          this.time.delayedCall(450, ()=> this.aliadaCooldown=false);
         }
       }
     }
+  }
+}
+
+/* ---------- LO QUE SUELTA EL CLIENTE IMPOSIBLE ---------- */
+const BRIEFS_IMPOSIBLES = [
+  'Hazlo igual, pero completamente distinto.',
+  'Que sea minimalista, pero que llene toda la página.',
+  'El logo más grande, pero que no se note.',
+  '¿Me lo puedes pasar en Word?',
+  'Sin presupuesto, pero que parezca caro.',
+  'Lo quiero para ayer.',
+  'Enséñame otra opción, aunque me gusta esta.',
+  'Ponle un poco más de... ya sabes, más.',
+];
+
+/* ---------- FINAL DEL JUEGO ---------- */
+class Final extends Phaser.Scene {
+  constructor(){ super('Final'); }
+  init(data){ this.puntos = (data && data.score) || 0; }
+  create(){
+    this.cameras.main.setBackgroundColor('#0c0d0e');
+    const cx = W/2;
+    playMusic(this, 'marchIntro', {loop:false, volume:0.85});
+    this.add.image(cx, 46, 'instanteLogo').setDisplaySize(80,51);
+    this.add.text(cx, 92, '¡INSTANTE SIGUE SIENDO SUYA!', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'21px', color:'#f2c749', align:'center', wordWrap:{width:W-40}
+    }).setOrigin(0.5);
+    // ella, en grande, y su gente alrededor celebrando
+    this.add.circle(cx, 176, 56, 0x000000, 0).setStrokeStyle(5, PALETTE.yellow);
+    this.add.image(cx, 176, 'aidaFace').setDisplaySize(104,104);
+    const gente = [
+      {x:cx-116, y:150, cara:'brendaFace', nom:'BRENDA'},
+      {x:cx+116, y:150, emoji:'👩',        nom:'MAMÁ'},
+      {x:cx-116, y:246, emoji:'🧑‍🤝‍🧑',   nom:'PRIMOS'},
+      {x:cx+116, y:246, emoji:'🎸',        nom:'MANUEL'},
+    ];
+    gente.forEach(p=>{
+      this.add.circle(p.x, p.y, 27, PALETTE.purple, 1).setStrokeStyle(3, PALETTE.turquoise);
+      if(p.cara) this.add.image(p.x, p.y, p.cara).setDisplaySize(48,48);
+      else this.add.text(p.x, p.y, p.emoji, {fontSize:'28px'}).setOrigin(0.5);
+      this.add.text(p.x, p.y+38, p.nom, {fontFamily:'Impact', fontSize:'11px', color:'#ffffff'}).setOrigin(0.5);
+    });
+    // su propia frase, la que preside todo
+    this.add.text(cx, 318, '"No se brilla sin oscuridad."', {
+      fontFamily:'Georgia, serif', fontSize:'16px', color:'#40ada9', fontStyle:'italic', align:'center'
+    }).setOrigin(0.5);
+    this.add.text(cx, 352, `🦄 ${this.puntos} en el último capítulo`, {fontFamily:'Arial', fontSize:'12px', color:'#8a8f94'}).setOrigin(0.5);
+    this.add.text(cx, 404, 'FELIZ CUMPLEAÑOS,\nAIDA 🦄', {
+      fontFamily:'Impact, Arial Narrow, sans-serif', fontSize:'30px', color:'#ffffff', align:'center', lineSpacing:4
+    }).setOrigin(0.5);
+    this.add.text(cx, 456, '33 · 19 de agosto de 2026', {fontFamily:'Georgia, serif', fontSize:'12px', color:'#e4378c'}).setOrigin(0.5);
+    this.add.text(cx, 478, 'de tu hermano', {fontFamily:'Georgia, serif', fontSize:'11px', color:'#5a5d61', fontStyle:'italic'}).setOrigin(0.5);
+    speakPhrase('No se brilla sin oscuridad. ¡Feliz cumpleaños, Aida!');
+    // confeti de los colores de Instante, sin parar
+    this.time.addEvent({delay:110, loop:true, callback:()=>{
+      const c = [PALETTE.turquoise, PALETTE.pink, PALETTE.yellow, PALETTE.purple, 0xffffff][Phaser.Math.Between(0,4)];
+      const p = this.add.rectangle(Phaser.Math.Between(0,W), -12, 7, 11, c);
+      this.tweens.add({targets:p, y:H+20, angle:Phaser.Math.Between(-360,360), duration:Phaser.Math.Between(2200,4200), onComplete:()=>p.destroy()});
+    }});
+    const btn = this.add.text(cx, H-32, 'volver a los capítulos', {
+      fontFamily:'Arial', fontSize:'12px', color:'#141617', backgroundColor:'#f2c749', padding:{left:12,right:12,top:6,bottom:6}
+    }).setOrigin(0.5).setInteractive({useHandCursor:true});
+    btn.on('pointerdown', ()=> this.scene.start('Menu'));
   }
 }
 
@@ -1009,7 +1374,7 @@ const config = {
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   render: { preserveDrawingBuffer: true },
   physics: { default:'arcade', arcade:{ gravity:{y:1500}, debug:false } },
-  scene: [Boot, Intro, Title, Chapter1],
+  scene: [Boot, Intro, Menu, Title, Final].concat(CAPITULOS.map(c=> new Capitulo(c.key))),
 };
 const game = new Phaser.Game(config);
 
