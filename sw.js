@@ -4,7 +4,7 @@
    se pide SIEMPRE a la red y solo se tira de la copia guardada si no hay conexión. Las
    fotos y el audio sí van de caché primero, que no cambian y así el juego abre al vuelo
    y funciona sin datos. NO cambiar el HTML a cache-first: volvería el problema de siempre. */
-const CACHE = 'aida-vol1-5-v38';
+const CACHE = 'aida-vol1-5-v39';
 const ASSETS = [
   './manifest.json',
   './icon-192.png',
@@ -41,8 +41,17 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const esHTML = e.request.mode === 'navigate' || e.request.url.endsWith('.html');
-  if (esHTML) {                                  // la página, SIEMPRE de la red
-    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  if (esHTML) {
+    // La página, SIEMPRE de la red Y SIN PASAR POR LA CACHÉ DEL NAVEGADOR.
+    // ⚠️ Esto es lo que faltaba: GitHub Pages manda la página con
+    // `Cache-Control: max-age=600`, así que el navegador se la queda 10 MINUTOS
+    // y ni pregunta al servidor. Por eso Manuel veía builds viejos una y otra
+    // vez aunque el despliegue estuviera hecho. Con `cache:'no-store'` el
+    // service worker se salta esa caché y pide la página de verdad.
+    e.respondWith(
+      fetch(e.request, {cache: 'no-store'})
+        .catch(() => fetch(e.request).catch(() => caches.match(e.request)))
+    );
     return;
   }
   e.respondWith(caches.match(e.request).then(c => c || fetch(e.request)));
