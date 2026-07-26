@@ -1,5 +1,19 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
+## 🖨️ EL REGALO FÍSICO — ya cerrado (26 jul)
+
+**Ficheros en la carpeta del juego:**
+- **`HOJA_PARA_LA_IMPRENTA.pdf`** — una página A4 para IMPRIMIR Y LLEVAR al mostrador: qué quiere, qué ficheros trae, los tres avisos que rompen un QR, el checklist de «antes de pagar» y la dirección escrita con un QR de muestra a 30 mm.
+- **`COMO_IMPRIMIR_EL_REGALO.html`** — la guía larga (dónde encargarlo, cuatro caminos, riesgos del grabado en metal).
+- **`para_imprenta/`** (fuera del repo por `.gitignore`) — `qr_aida_vectorial.svg` (el bueno para imprenta), `qr_aida_25/30/40mm.pdf`, `tarjeta_85x54_con_sangre.pdf`.
+- **`regalo_para_imprimir.png`** — A4 para imprimir en casa: 6 llaveros de 30 mm + 2 tarjetas.
+
+**⚠️ REGLA DE ORO DE ESTE PROYECTO: un QR no se da por bueno hasta DECODIFICARLO.** Se hizo siempre, y salvó dos cosas: un logo al 14 % que lo rompía (se quedó al 10 %) y la comprobación a tamaño real de impresión (25, 30 y 36 mm: los tres se leen). El SVG se verificó además **módulo a módulo** dibujándolo en un canvas y comparándolo con la matriz: 33×33, 446 módulos oscuros, cero discrepancias.
+
+**⚠️ Y AL GENERAR PDFs/PNG CON PIL: repasar tildes y ñ.** Se colaron dos veces («cumpleanos», «mi nina», «los movil es»). Es un regalo impreso: hay un repaso automático al final de `hoja_encargo.py` que busca palabras sin tilde.
+
+**Aida tiene iPhone**, y eso condiciona la entrega: escanea → juega, **sin instalar nada**. Si quiere el icono, tiene que hacerlo **desde dentro del juego** (iOS guarda la página abierta, no el `start_url`), y si ha entrado por WhatsApp, antes «Abrir en Safari».
+
 ## 🎁 CÓMO SE ENTREGA EL REGALO (26 jul, build v51)
 
 - **La QR apunta a `/regalo/`**, una página aparte (no al juego directo): tiene el botón JUGAR, las instrucciones para instalarlo como app en iPhone/Android, el propio QR para reenviarlo y cómo se juega. Para alguien que no juega a videojuegos, esa página vale más que caer directamente en el juego.
