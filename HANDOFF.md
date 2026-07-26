@@ -1,5 +1,13 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
+## 🎁 CÓMO SE ENTREGA EL REGALO (26 jul, build v51)
+
+- **La QR apunta a `/regalo/`**, una página aparte (no al juego directo): tiene el botón JUGAR, las instrucciones para instalarlo como app en iPhone/Android, el propio QR para reenviarlo y cómo se juega. Para alguien que no juega a videojuegos, esa página vale más que caer directamente en el juego.
+- **`regalo_qr.png`** — QR con el ojo de Instante dentro. ⚠️ El logo va al **10 %**: se probaron cinco tamaños LEYENDO el QR con el detector de OpenCV y **a partir del 14 % deja de leerse**. No agrandarlo sin volver a comprobarlo. `regalo_qr_simple.png` es el mismo sin logo.
+- **`regalo_para_imprimir.png`** — A4 a 300 ppp con medidas reales: seis QR de 30 mm con círculo de corte (llaveros) y dos tarjetas de 85×54 mm. Los QR se verificaron leyéndolos **al tamaño real de impresión**.
+- Los scripts que generan todo esto están en el scratchpad de la sesión (`haz_qr.py`, `hoja_imprimir.py`); si hay que regenerarlos, el patrón es: generar → **decodificar para comprobar** → guardar.
+- ⚠️ **Aviso práctico que se le dio:** el juego pesa un par de megas (fotos + audio). En una fiesta con wifi malo conviene que lo abra **una vez antes** o que lo instale; luego funciona sin datos.
+
 ## ⚠️ PRIMERO, al abrir la próxima conversación (26 jul — build v50)
 
 **📍 CARPETA:** `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA` · **URL:** https://manu4389.github.io/aidagame-2026/
