@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v44 — 26 jul, la cara de Alberto, centrada</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v45 — 26 jul, al liberarlos la cárcel se derrumba y deja el camino libre</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -1367,8 +1367,13 @@ class Capitulo extends Phaser.Scene {
     const cx = centro(s) + (this.C.carcel.off||0);
     this.carcelX = cx;
 
-    this.add.rectangle(cx, GROUND_Y-84, 250, 168, 0x0a1412).setStrokeStyle(5, 0x53585c);
-    this.add.rectangle(cx, GROUND_Y-172, 266, 14, 0x53585c);
+    // ⚠️ Se guardan las piezas de la celda porque al liberar a la gente hay que HACERLA
+    // DESAPARECER: es un bloque oscuro grande y, con la gente ya fuera, parecía el final
+    // de la pantalla — Manuel se pensaba que el nivel se acababa ahí (y aún queda camino).
+    this.celdaPiezas = [
+      this.add.rectangle(cx, GROUND_Y-84, 250, 168, 0x0a1412).setStrokeStyle(5, 0x53585c),
+      this.add.rectangle(cx, GROUND_Y-172, 266, 14, 0x53585c),
+    ];
     this.presos = [];
     const gente = [
       {dx:-84, cara:'mamaFace',   nom:'MAMÁ'},
@@ -1386,9 +1391,9 @@ class Capitulo extends Phaser.Scene {
     for(let i=0;i<11;i++){
       this.barrotes.push(this.add.rectangle(cx-120+i*24, GROUND_Y-84, 7, 166, 0x9aa2a8).setStrokeStyle(1, 0x53585c));
     }
-    this.add.text(cx, GROUND_Y-192, 'TU GENTE', {
+    this.celdaPiezas.push(this.add.text(cx, GROUND_Y-192, 'TU GENTE', {
       fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#d83335', padding:{left:6,right:6,top:2,bottom:2}
-    }).setOrigin(0.5);
+    }).setOrigin(0.5));
 
     // se abre al llegar, pero solo si el cliente final ya está tumbado
     this.zonaCarcel = this.add.zone(cx, GROUND_Y-100, 260, 240);
@@ -1542,7 +1547,10 @@ class Capitulo extends Phaser.Scene {
   }
 
   abrirCelda(){
-    this.barrotes.forEach((b,i)=> this.tweens.add({targets:b, y:b.y-200, alpha:0, duration:700, delay:i*45}));
+    this.barrotes.forEach((b,i)=> this.tweens.add({
+      targets:b, y:b.y-200, alpha:0, duration:700, delay:i*45, onComplete:()=>b.destroy()
+    }));
+    if(this.zonaCarcel) this.zonaCarcel.destroy();
     const decir = (txt, color, retraso)=>{
       this.time.delayedCall(retraso, ()=>{
         if(!this.sys.isActive()) return;
@@ -1555,9 +1563,9 @@ class Capitulo extends Phaser.Scene {
       });
     };
     decir('¡SOIS LIBRES!',                        '#f2c749', 400);
-    decir('¡GRACIAS, AIDA, ERES LA MEJOR!',       '#e4378c', 3800);   // los cuatro, al unísono
-    decir('¡Y VIVA YO, Y MI COÑO MORENO!',        '#40ada9', 7200);
-    decir('¡VENGA, CHULOS, A DAROS UNA VUELTA!',  '#40ada9', 10600);
+    decir('¡GRACIAS, AIDA, ERES LA MEJOR!',       '#e4378c', 3400);   // los cuatro, al unísono
+    decir('¡Y VIVA YO, Y MI COÑO MORENO!',        '#40ada9', 6400);
+    decir('¡VENGA, CHULOS, A DAROS UNA VUELTA!',  '#40ada9', 9400);   // y AHÍ se van, no antes
     // salen de la celda
     this.time.delayedCall(3600, ()=>{
       this.presos.forEach((p,i)=>{
@@ -1571,6 +1579,35 @@ class Capitulo extends Phaser.Scene {
         this.tweens.add({targets:p, y:GROUND_Y-10, angle:Phaser.Math.Between(-320,320), alpha:0,
           duration:Phaser.Math.Between(900,2000), onComplete:()=>p.destroy()});
       }
+    });
+    // ══ Y LA CELDA SE VA ══
+    // Con la gente ya fuera, ese bloque oscuro tapaba el camino y parecía que el nivel se
+    // acababa ahí. Se desmonta: primero se cae el muro, y los liberados se van andando y se
+    // desvanecen, dejando el paso limpio hacia la meta.
+    this.time.delayedCall(5000, ()=>{      // pronto: es lo que despeja el camino a la vista
+      if(!this.sys.isActive()) return;
+      (this.celdaPiezas||[]).forEach((o,i)=> this.tweens.add({
+        targets:o, alpha:0, y:o.y+70, angle:i? 6 : -4, duration:1100, delay:i*120,
+        ease:'Cubic.easeIn', onComplete:()=>o.destroy()
+      }));
+      // polvo de escombro
+      for(let i=0;i<22;i++){
+        const p = this.add.rectangle(this.carcelX+Phaser.Math.Between(-130,130), GROUND_Y-Phaser.Math.Between(10,150),
+                                     Phaser.Math.Between(5,11), Phaser.Math.Between(4,9), 0x53585c, 0.8);
+        this.tweens.add({targets:p, y:GROUND_Y-4, x:p.x+Phaser.Math.Between(-40,40), alpha:0,
+          angle:Phaser.Math.Between(-200,200), duration:Phaser.Math.Between(700,1500), onComplete:()=>p.destroy()});
+      }
+      this.cameras.main.shake(400, 0.006);
+    });
+    // los suyos se marchan de verdad: se van andando y desaparecen, no se quedan de adorno
+    this.time.delayedCall(9900, ()=>{      // justo después de mandarlos a dar una vuelta
+      if(!this.sys.isActive()) return;
+      this.presos.forEach((p,i)=>{
+        [p.c,p.f,p.n].forEach(o=> this.tweens.add({
+          targets:o, x:o.x - 260 - i*40, alpha:0, duration:2200, delay:i*140,
+          ease:'Sine.easeIn', onComplete:()=>o.destroy()
+        }));
+      });
     });
   }
 
