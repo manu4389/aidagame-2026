@@ -1,26 +1,24 @@
-# HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
+# HANDOFF — Juego de cumpleaños de Aida
 
-## 🖨️ EL REGALO FÍSICO — ya cerrado (26 jul)
+## ✅ PROYECTO CERRADO el 26 de julio de 2026 (build v53)
 
-**Ficheros en la carpeta del juego:**
-- **`HOJA_PARA_LA_IMPRENTA.pdf`** — una página A4 para IMPRIMIR Y LLEVAR al mostrador: qué quiere, qué ficheros trae, los tres avisos que rompen un QR, el checklist de «antes de pagar» y la dirección escrita con un QR de muestra a 30 mm.
-- **`COMO_IMPRIMIR_EL_REGALO.html`** — la guía larga (dónde encargarlo, cuatro caminos, riesgos del grabado en metal).
-- **`para_imprenta/`** (fuera del repo por `.gitignore`) — `qr_aida_vectorial.svg` (el bueno para imprenta), `qr_aida_25/30/40mm.pdf`, `tarjeta_85x54_con_sangre.pdf`.
-- **`regalo_para_imprimir.png`** — A4 para imprimir en casa: 6 llaveros de 30 mm + 2 tarjetas.
+**Está terminado y entregable.** Si se retoma, es para un retoque, no para construir nada.
 
-**⚠️ REGLA DE ORO DE ESTE PROYECTO: un QR no se da por bueno hasta DECODIFICARLO.** Se hizo siempre, y salvó dos cosas: un logo al 14 % que lo rompía (se quedó al 10 %) y la comprobación a tamaño real de impresión (25, 30 y 36 mm: los tres se leen). El SVG se verificó además **módulo a módulo** dibujándolo en un canvas y comparándolo con la matriz: 33×33, 446 módulos oscuros, cero discrepancias.
+**Lo que hay:**
+- **El juego:** https://manu4389.github.io/aidagame-2026/ — 5 capítulos, música propia por capítulo, 4 voces distintas, el Vol. 5 en cuatro actos (dragón → la madre baja del cielo con la espada de fuego → el cliente final → liberar a los suyos), y el cierre con el currículum de Instante y las seis caras de la familia.
+- **La entrega:** página `/regalo/` que abre el QR, `HOJA_PARA_LA_IMPRENTA.pdf` para el mostrador, `COMO_IMPRIMIR_EL_REGALO.html` como guía, y `para_imprenta/` con el SVG vectorial y los PDF a medida.
+- **Todo en git:** ~75 commits, cualquier versión recuperable.
 
-**⚠️ Y AL GENERAR PDFs/PNG CON PIL: repasar tildes y ñ.** Se colaron dos veces («cumpleanos», «mi nina», «los movil es»). Es un regalo impreso: hay un repaso automático al final de `hoja_encargo.py` que busca palabras sin tilde.
+**Lo único pendiente, y es de Manuel:**
+1. Imprimir **un** llavero y escanearlo **con un iPhone** antes de encargar el lote.
+2. El **año en que Aida y Brenda fundaron Instante** → primera cartela del currículum final (no se inventa).
+3. Jugarlo entero del tirón alguna vez más, si le apetece.
 
-**Aida tiene iPhone**, y eso condiciona la entrega: escanea → juega, **sin instalar nada**. Si quiere el icono, tiene que hacerlo **desde dentro del juego** (iOS guarda la página abierta, no el `start_url`), y si ha entrado por WhatsApp, antes «Abrir en Safari».
+**Fecha del regalo: 19 de agosto de 2026.**
 
-## 🎁 CÓMO SE ENTREGA EL REGALO (26 jul, build v51)
+**Antes de tocar el código, leer las tres reglas de oro y la prueba de arranque, más abajo.**
 
-- **La QR apunta a `/regalo/`**, una página aparte (no al juego directo): tiene el botón JUGAR, las instrucciones para instalarlo como app en iPhone/Android, el propio QR para reenviarlo y cómo se juega. Para alguien que no juega a videojuegos, esa página vale más que caer directamente en el juego.
-- **`regalo_qr.png`** — QR con el ojo de Instante dentro. ⚠️ El logo va al **10 %**: se probaron cinco tamaños LEYENDO el QR con el detector de OpenCV y **a partir del 14 % deja de leerse**. No agrandarlo sin volver a comprobarlo. `regalo_qr_simple.png` es el mismo sin logo.
-- **`regalo_para_imprimir.png`** — A4 a 300 ppp con medidas reales: seis QR de 30 mm con círculo de corte (llaveros) y dos tarjetas de 85×54 mm. Los QR se verificaron leyéndolos **al tamaño real de impresión**.
-- Los scripts que generan todo esto están en el scratchpad de la sesión (`haz_qr.py`, `hoja_imprimir.py`); si hay que regenerarlos, el patrón es: generar → **decodificar para comprobar** → guardar.
-- ⚠️ **Aviso práctico que se le dio:** el juego pesa un par de megas (fotos + audio). En una fiesta con wifi malo conviene que lo abra **una vez antes** o que lo instale; luego funciona sin datos.
+---
 
 ## ⚠️ PRIMERO, al abrir la próxima conversación (26 jul — build v50)
 
