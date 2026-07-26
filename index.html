@@ -70,11 +70,10 @@
   #attack-btn{
     background:linear-gradient(145deg,var(--red),#8f1417);
     border:3px solid #ffd7d7;border-radius:50%;
-    color:#fff;font-size:15px;font-weight:900;line-height:1.05;
+    color:#fff;font-size:14px;font-weight:900;line-height:1.05;letter-spacing:.3px;
     width:78px;height:78px;box-shadow:0 4px 0 #5c0d0f;
     margin-right:8px;
   }
-  #attack-btn small{display:block;font-size:9px;font-weight:700;opacity:.85;letter-spacing:.5px;}
   #attack-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c0d0f;}
   #mute-btn{
     position:absolute;top:8px;right:8px;z-index:10;
@@ -118,14 +117,14 @@
       <button class="ctrl" id="btnLeft">◀</button>
       <button class="ctrl" id="btnRight">▶</button>
     </div>
-    <button id="attack-btn">TAJO<small>KATANA</small></button>
+    <button id="attack-btn">KATANA</button>
     <button id="jump-btn">SALTAR</button>
   </div>
   <div id="teclas" style="color:#7c8286;font-size:11px;padding:2px 0;text-align:center;line-height:1.5;flex-shrink:0;">
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
-    <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = TAJO de katana
+    <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v41 — 25 jul, arena del cliente final más grande y Brenda contigo desde el principio, pegando</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v42 — 26 jul, botón KATANA · misma voz en el móvil y en el PC, y se puede elegir</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -146,11 +145,53 @@ let attackRequested = false;
 // Aviso honesto: el navegador NO tiene voces regionales (andaluza vs. "neutra") — solo elige
 // entre las voces "es-ES"/"es" que traiga instalado el propio móvil/ordenador de Manuel.
 // No hay manera de forzar acento andaluz específico desde aquí, solo español de España si existe.
+// ⚠️ POR QUÉ CAMBIABA TANTO LA VOZ ENTRE EL MÓVIL Y EL PC:
+// antes se cogía «la primera voz española que hubiera» (`voices.find(v=>v.lang==='es-ES')`),
+// y ese orden lo decide cada aparato. En el PC salía Helena o Sabina, en Android otra, en
+// iPhone Mónica... y sonaba un juego distinto en cada sitio. Ahora se PUNTÚAN las voces con
+// una lista de preferencia, así en cada aparato se elige la más parecida, no la primera que
+// pase. Y si aun así no gusta, en el menú se puede cambiar a mano y se recuerda.
 let spanishVoice = null;
+// De mejor a peor. Son voces FEMENINAS de español de España, que es lo que pide la
+// protagonista; las de Latinoamérica quedan detrás y las masculinas, al final.
+const VOCES_PREFERIDAS = [
+  'mónica','monica','helena','sabina','elvira','laura','lucía','lucia','marisol',
+  'google español','español de españa','spanish (spain)','es-es','paulina','esperanza',
+];
+function puntuaVoz(v){
+  const n = (v.name||'').toLowerCase(), l = (v.lang||'').toLowerCase().replace('_','-');
+  let p = 0;
+  if(l === 'es-es') p += 100;                       // español de España, lo primero
+  else if(l.startsWith('es')) p += 55;
+  else return -1;                                   // que no sea española, fuera
+  const i = VOCES_PREFERIDAS.findIndex(pref => n.includes(pref));
+  if(i >= 0) p += 40 - i;                           // cuanto más arriba en la lista, mejor
+  if(/male|masculin|jorge|pablo|carlos|diego|enrique/.test(n)) p -= 25;
+  if(/female|femenin/.test(n)) p += 8;
+  if(v.localService) p += 4;                        // las locales no dependen de la conexión
+  return p;
+}
+function vocesEspanolas(){
+  if(!('speechSynthesis' in window)) return [];
+  return window.speechSynthesis.getVoices()
+    .filter(v => puntuaVoz(v) >= 0)
+    .sort((a,b) => puntuaVoz(b) - puntuaVoz(a));
+}
 function pickSpanishVoice(){
   if(!('speechSynthesis' in window)) return;
-  const voices = window.speechSynthesis.getVoices();
-  spanishVoice = voices.find(v=>v.lang==='es-ES') || voices.find(v=>v.lang && v.lang.startsWith('es')) || null;
+  const lista = vocesEspanolas();
+  if(!lista.length){ spanishVoice = null; return; }
+  let guardada = null;
+  try { guardada = localStorage.getItem('aida_voz'); } catch(e){}
+  spanishVoice = (guardada && lista.find(v => v.name === guardada)) || lista[0];
+}
+function cambiaVoz(){                               // el selector del menú
+  const lista = vocesEspanolas();
+  if(lista.length < 2) return null;
+  const i = Math.max(0, lista.findIndex(v => spanishVoice && v.name === spanishVoice.name));
+  spanishVoice = lista[(i+1) % lista.length];
+  try { localStorage.setItem('aida_voz', spanishVoice.name); } catch(e){}
+  return spanishVoice;
 }
 if('speechSynthesis' in window){
   pickSpanishVoice();
@@ -160,7 +201,8 @@ function speakPhrase(text){
   if(!('speechSynthesis' in window) || isMuted) return;
   const clean = text.replace(/[¡!¿?"]/g,'');
   const u = new SpeechSynthesisUtterance(clean);
-  u.lang = 'es-ES'; u.rate = 1.02; u.pitch = 1.1;
+  // mismos valores en todos los aparatos, para que no suene más rápida o más aguda en uno
+  u.lang = 'es-ES'; u.rate = 1.0; u.pitch = 1.08; u.volume = 1;
   if(spanishVoice) u.voice = spanishVoice;
   window.speechSynthesis.cancel(); // que no se amontonen frases
   window.speechSynthesis.speak(u);
@@ -838,8 +880,23 @@ class Menu extends Phaser.Scene {
         caja.on('pointerdown', ()=> this.scene.start('Title', {key:c.key}));
       }
     });
-    this.add.text(cx, H-26, hechos>=CAPITULOS.length ? '¡los cinco, completados! 🦄' : 'entra por donde quieras',
+    this.add.text(cx, H-44, hechos>=CAPITULOS.length ? '¡los cinco, completados! 🦄' : 'entra por donde quieras',
       {fontFamily:'Arial', fontSize:'11px', color:'#5a5d61'}).setOrigin(0.5);
+    // SELECTOR DE VOZ: cada aparato trae las suyas, así que se puede probar y quedarse con
+    // la que mejor suene. La elegida se recuerda para la próxima vez.
+    const lista = (typeof vocesEspanolas === 'function') ? vocesEspanolas() : [];
+    const nombreCorto = v => v ? v.name.replace(/^(Microsoft|Google)\s+/i,'').split(/[ (\-]/)[0] : 'la del sistema';
+    this.etiquetaVoz = this.add.text(cx, H-22,
+      lista.length ? ('voz: ' + nombreCorto(spanishVoice) + '   ▸ tocar para cambiar') : 'este aparato no trae voz en español',
+      {fontFamily:'Arial', fontSize:'11px', color:'#40ada9'}).setOrigin(0.5);
+    if(lista.length > 1){
+      this.etiquetaVoz.setInteractive({useHandCursor:true});
+      this.etiquetaVoz.on('pointerdown', ()=>{
+        const v = cambiaVoz();
+        this.etiquetaVoz.setText('voz: ' + nombreCorto(v) + '   ▸ tocar para cambiar');
+        speakPhrase('¡Qué arte, mi coño moreno!');   // para oírla al momento
+      });
+    }
   }
 }
 
