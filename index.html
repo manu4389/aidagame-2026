@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v45 — 26 jul, al liberarlos la cárcel se derrumba y deja el camino libre</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v46 — 26 jul, ARREGLADA la espada de fuego (no se reiniciaba) y peleas más duras</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -849,9 +849,9 @@ const CAPITULOS = [
     enemigos:[{t:1,tipo:'urgente'},{t:1,tipo:'burocracia',off:180},{t:3,tipo:'machirulo'},
               {t:5,tipo:'urgente'},{t:5,tipo:'machirulo2',off:180},{t:7,tipo:'burocracia'}],
     aliada:{t:0, off:60, quien:'brenda'},   // con ella DESDE EL PRINCIPIO: es su socia
-    jefe:{t:2, vidas:4},        // ACTO I   — el dragón (4 tajos: aún no tiene la espada de fuego)
+    jefe:{t:2, vidas:10},       // ACTO I   — el dragón: 10 tajos, y aún SIN espada de fuego
     angel:{t:4},                // ACTO II  — la madre baja del cielo, en su propio tramo
-    cliente:{t:6, vidas:14},    // ACTO III — el cliente final: 14 tajos, el más largo del juego
+    cliente:{t:6, vidas:26},    // ACTO III — 26: con la espada de fuego son 13 tajos, el más largo
     carcel:{t:7},               // ACTO IV  — la celda, un tramo MÁS ALLÁ: se camina antes de soltarlos
     meta:{tipo:'final', titulo:'¡INSTANTE SIGUE SIENDO SUYA!', grito:'¡No se brilla sin oscuridad!'},
     ultimo:true,
@@ -936,6 +936,20 @@ class Capitulo extends Phaser.Scene {
 
     this.score = 0; this.lives = 3; this.attacking = false; this.articulos = 0; this.phraseIndex = 0;
     this.win = false; this.respawnX = 80; this.saltoExtra = false; this.saltosDados = 0;
+    // ⚠️ FALLO REAL Y GORDO: Phaser REUTILIZA la misma instancia de escena al reintentar, así que
+    // todo lo que no se reinicie aquí sobrevive de una partida a la siguiente. `espadaFuego` se
+    // quedaba en true, y eso provocaba LOS DOS SÍNTOMAS que reportó Manuel de golpe:
+    //   1) «no le da la espada de fuego» → entregaEspadaDeFuego() salía por la puerta de atrás
+    //      (`if(this.espadaFuego) return`), así que la katana NO se repintaba en llamas: ni fuego,
+    //      ni fogonazo, ni cartel. Parecía que su madre no le daba nada.
+    //   2) «mata muy fácilmente al cliente final» → pero el daño SÍ iba doblado desde el minuto
+    //      uno, porque el daño mira esa misma bandera.
+    this.espadaFuego = false; this.llama = null;
+    this.dialogando = false; this.angelHecho = false; this.dialogoHecho = false;
+    this.dialogoDragonHecho = false; this.carcelAbierta = false;
+    this.jefeInvuln = false; this.bigoteInvuln = false; this.aliadaGolpeJefe = false;
+    this.invuln = false; this.attackCooldown = false; this.avisoCarcel = false;
+    this.physics.world.timeScale = 1; this.tweens.timeScale = 1;   // por si se salió en cámara lenta
     this.drawBackground();
 
     // MÚSICA PROPIA DE CADA CAPÍTULO (Manuel: "en la de Corpus, flamenquito, no la de siempre").
@@ -1513,7 +1527,7 @@ class Capitulo extends Phaser.Scene {
   golpearBigote(deBrenda){
     if(this.carcelAbierta || (this.bigoteInvuln && !deBrenda)) return;
     this.bigoteInvuln = true;
-    this.time.delayedCall(400, ()=> this.bigoteInvuln=false);
+    this.time.delayedCall(620, ()=> this.bigoteInvuln=false);   // no se le puede machacar a botonazos
     this.carcelVidas -= this.espadaFuego ? 2 : 1;   // con la espada de su madre, el doble
     if(this.carcelVidas < 0) this.carcelVidas = 0;
     playImpact(this);
@@ -2078,7 +2092,7 @@ class Capitulo extends Phaser.Scene {
   golpearJefe(deBrenda){
     if(this.jefeVidas<=0 || (this.jefeInvuln && !deBrenda)) return;
     this.jefeInvuln = true;
-    this.time.delayedCall(420, ()=> this.jefeInvuln=false);
+    this.time.delayedCall(520, ()=> this.jefeInvuln=false);
     this.jefeVidas -= this.espadaFuego ? 2 : 1;   // la espada que le dio su madre pega el doble
     if(this.jefeVidas < 0) this.jefeVidas = 0;
     playImpact(this);
