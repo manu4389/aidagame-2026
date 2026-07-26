@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v47 — 26 jul, al dragón ya se le puede pegar sin comerse el golpe (alcance vs. su caja)</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v48 — 26 jul, BRENDA TIRA RAYOS LÁSER POR LOS OJOS</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -1530,7 +1530,7 @@ class Capitulo extends Phaser.Scene {
     if(this.carcelAbierta || (this.bigoteInvuln && !deBrenda)) return;
     this.bigoteInvuln = true;
     this.time.delayedCall(560, ()=> this.bigoteInvuln=false);   // no se le puede machacar a botonazos
-    this.carcelVidas -= this.espadaFuego ? 2 : 1;   // con la espada de su madre, el doble
+    this.carcelVidas -= deBrenda ? 2 : (this.espadaFuego ? 2 : 1);   // el rayo de Brenda quita 2
     if(this.carcelVidas < 0) this.carcelVidas = 0;
     playImpact(this);
     this.cameras.main.shake(200, 0.014);
@@ -2095,7 +2095,7 @@ class Capitulo extends Phaser.Scene {
     if(this.jefeVidas<=0 || (this.jefeInvuln && !deBrenda)) return;
     this.jefeInvuln = true;
     this.time.delayedCall(420, ()=> this.jefeInvuln=false);
-    this.jefeVidas -= this.espadaFuego ? 2 : 1;   // la espada que le dio su madre pega el doble
+    this.jefeVidas -= deBrenda ? 2 : (this.espadaFuego ? 2 : 1);   // el rayo de Brenda quita 2
     if(this.jefeVidas < 0) this.jefeVidas = 0;
     playImpact(this);
     this.cameras.main.shake(180, 0.013);
@@ -2172,6 +2172,41 @@ class Capitulo extends Phaser.Scene {
     }
     this.add.circle(30, 62, 23, 0x000000, 0).setStrokeStyle(2, PALETTE.turquoise).setScrollFactor(0).setDepth(60);
     this.add.text(56, 62, 'contigo', {fontFamily:'Impact', fontSize:'11px', color:'#40ada9'}).setOrigin(0,0.5).setScrollFactor(0).setDepth(60);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  //  EL RAYO LÁSER DE BRENDA — dos haces que le salen de los ojos
+  //  Idea de Manuel. Sale de la altura de SUS ojos (no del centro del cuerpo) y
+  //  acaba en el bicho, con fogonazo en el impacto y su nombre encima.
+  // ══════════════════════════════════════════════════════════════════════════
+  rayoDeBrenda(objetivo, tipo){
+    const ojoY = GROUND_Y - 148;                        // la altura de sus ojos
+    const ox = this.aliada.x, oy = ojoY;
+    const dx = objetivo.x, dy = (tipo==='enemigo') ? objetivo.y : GROUND_Y - 150;
+    // los ojos se le encienden
+    [-6, 6].forEach(off=>{
+      const ojo = this.add.circle(ox+off, oy, 3.5, 0xffffff, 1);
+      this.tweens.add({targets:ojo, scale:1.7, alpha:0, duration:320, onComplete:()=>ojo.destroy()});
+    });
+    // los dos haces: uno grueso rosa por fuera y otro fino blanco por dentro
+    const haz = this.add.graphics().setDepth(40);
+    [[-6, PALETTE.pink, 6], [6, PALETTE.pink, 6], [-6, 0xffffff, 2.2], [6, 0xffffff, 2.2]].forEach(([off,col,gr])=>{
+      haz.lineStyle(gr, col, 0.95);
+      haz.beginPath(); haz.moveTo(ox+off, oy); haz.lineTo(dx, dy); haz.strokePath();
+    });
+    this.tweens.add({targets:haz, alpha:0, duration:260, onComplete:()=>haz.destroy()});
+    // fogonazo en el impacto
+    const boom = this.add.circle(dx, dy, 26, PALETTE.pink, 0.85).setDepth(41);
+    this.tweens.add({targets:boom, scale:2.4, alpha:0, duration:340, onComplete:()=>boom.destroy()});
+    playBlip(this, 1400, 260, 0.22, 'sawtooth', 0.3);   // el "zzzap"
+    const t = this.add.text(dx, GROUND_Y-215, 'BRENDA', {
+      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor:'#e4378c', padding:{left:6,right:6,top:2,bottom:2}
+    }).setOrigin(0.5).setDepth(41);
+    this.tweens.add({targets:t, y:t.y-22, alpha:0, duration:900, onComplete:()=>t.destroy()});
+    // y el daño
+    if(tipo==='enemigo') this.defeatEnemy(objetivo);
+    else if(tipo==='dragon') this.golpearJefe(true);
+    else this.golpearBigote(true);
   }
 
   // el golpe de Brenda a un jefe — con destello y su nombre, que se vea que ha entrado ella
@@ -2379,26 +2414,21 @@ class Capitulo extends Phaser.Scene {
       this.aliadaLabel.x = this.aliada.x;
       this.aliadaShadow.x = this.aliada.x;
       if(this.aliadaMueble) this.aliadaMueble.x = this.aliada.x;
+      // ══ BRENDA TIRA RAYOS LÁSER POR LOS OJOS ══
+      // Idea de Manuel, y resuelve de paso que los monstruos costaran mucho de matar: ahora
+      // las dos pegan a la vez y de lejos. Un rayo cada 1,1 s: revienta a los enemigos
+      // normales de un tiro y les quita 2 de vida a los jefes.
       if(!this.aliadaCooldown){
-        const target = this.enemies.getChildren().find(e => Math.abs(e.x-this.aliada.x) < 55);
-        if(target){
-          this.defeatEnemy(target);
+        let objetivo = this.enemies.getChildren().find(e => Math.abs(e.x-this.aliada.x) < 250);
+        let tipo = objetivo ? 'enemigo' : null;
+        if(!objetivo && this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
+           Math.abs(this.jefeCuerpo.x - this.aliada.x) < 260){ objetivo = this.jefeCuerpo; tipo='dragon'; }
+        if(!objetivo && this.bigote && this.carcelVidas > 0 && this.dialogoHecho &&
+           Math.abs(this.bigote.x - this.aliada.x) < 260){ objetivo = this.bigote; tipo='cliente'; }
+        if(objetivo){
           this.aliadaCooldown = true;
-          this.time.delayedCall(450, ()=> this.aliadaCooldown=false);
-        }
-      }
-      // Y TAMBIÉN ENTRA A LOS JEFES: Manuel — "Brenda puede intervenir dando golpes".
-      // Pega más flojo y más espaciado que Aida (uno cada 1,6 s), pero se nota y se ve.
-      if(!this.aliadaGolpeJefe){
-        let jefe = null;
-        if(this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
-           Math.abs(this.jefeCuerpo.x - this.aliada.x) < 150) jefe = 'dragon';
-        else if(this.bigote && this.carcelVidas > 0 && this.dialogoHecho &&
-           Math.abs(this.bigote.x - this.aliada.x) < 150) jefe = 'cliente';
-        if(jefe){
-          this.aliadaGolpeJefe = true;
-          this.time.delayedCall(1600, ()=> this.aliadaGolpeJefe=false);
-          this.golpeDeBrenda(jefe);
+          this.time.delayedCall(1100, ()=> this.aliadaCooldown=false);
+          this.rayoDeBrenda(objetivo, tipo);
         }
       }
     }
