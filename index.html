@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v42 — 26 jul, botón KATANA · misma voz en el móvil y en el PC, y se puede elegir</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v43 — 26 jul, voz de dragón y de malo · los malos, más grandes y se ve lo que son</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -197,13 +197,33 @@ if('speechSynthesis' in window){
   pickSpanishVoice();
   window.speechSynthesis.onvoiceschanged = pickSpanishVoice;
 }
-function speakPhrase(text){
+// LOS MALOS NO HABLAN COMO ELLA. Cada personaje tiene su timbre: se juega con el tono
+// (pitch) y la velocidad, y para los villanos se busca una voz MASCULINA si el aparato la
+// tiene. Si no la tiene, se compensa bajando mucho el tono de la que haya — no suena igual
+// de bien, pero se distingue perfectamente de la voz de Aida.
+const TIMBRES = {
+  ella:    {rate:1.00, pitch:1.08, hombre:false},   // Aida
+  madre:   {rate:0.90, pitch:1.00, hombre:false},   // la madre, más calmada
+  malo:    {rate:0.84, pitch:0.35, hombre:true},    // el cliente final y los machirulos
+  dragon:  {rate:0.70, pitch:0.10, hombre:true},    // el dragón: lo más grave que se puede
+};
+let vozHombre = null;
+function pickVozHombre(){
+  if(!('speechSynthesis' in window)) return;
+  const esp = vocesEspanolas();
+  vozHombre = esp.find(v => /jorge|pablo|carlos|diego|enrique|male|masculin|raul|miguel/i.test(v.name)) || null;
+}
+function speakPhrase(text, timbre){
   if(!('speechSynthesis' in window) || isMuted) return;
+  const t = TIMBRES[timbre] || TIMBRES.ella;
   const clean = text.replace(/[¡!¿?"]/g,'');
   const u = new SpeechSynthesisUtterance(clean);
-  // mismos valores en todos los aparatos, para que no suene más rápida o más aguda en uno
-  u.lang = 'es-ES'; u.rate = 1.0; u.pitch = 1.08; u.volume = 1;
-  if(spanishVoice) u.voice = spanishVoice;
+  u.lang = 'es-ES'; u.rate = t.rate; u.pitch = t.pitch; u.volume = 1;
+  if(t.hombre){
+    if(!vozHombre) pickVozHombre();
+    u.voice = vozHombre || spanishVoice || null;
+    if(!vozHombre) u.pitch = Math.max(0, t.pitch - 0.05);   // sin voz de hombre, aún más grave
+  } else if(spanishVoice) u.voice = spanishVoice;
   window.speechSynthesis.cancel(); // que no se amontonen frases
   window.speechSynthesis.speak(u);
 }
@@ -948,7 +968,7 @@ class Capitulo extends Phaser.Scene {
     C.enemigos.forEach(e=>{
       const s = this.segs[e.t];
       const x = centro(s) + (e.off||0);
-      this.spawnEnemy(x, GROUND_Y-40, e.tipo, Math.max(s.x+50, x-150), Math.min(s.x+s.w-50, x+150));
+      this.spawnEnemy(x, GROUND_Y-54, e.tipo, Math.max(s.x+50, x-150), Math.min(s.x+s.w-50, x+150));
     });
     this.physics.add.overlap(this.player, this.enemies, (pl,en)=>this.onEnemyTouch(en), null, this);
 
@@ -1425,7 +1445,7 @@ class Capitulo extends Phaser.Scene {
         const bicho = b.sacude && this[b.sacude];
         if(bicho) this.tweens.add({targets:bicho, scaleX:1.14, scaleY:0.9, duration:220, yoyo:true, repeat:3});
       }
-      speakPhrase(b.txt);
+      speakPhrase(b.txt, b.voz);        // cada personaje con su timbre
       if(reloj) reloj.remove();
       reloj = this.time.delayedCall(b.risa ? 4000 : 3400, pasa);   // MUY lento, es lo que pidió
     };
@@ -1665,7 +1685,7 @@ class Capitulo extends Phaser.Scene {
       const b = BEATS[i];
       linea.setText(b.t).setAlpha(0);
       this.tweens.add({targets:linea, alpha:1, duration:600});
-      speakPhrase(b.t.replace(/\n/g,' '));
+      speakPhrase(b.t.replace(/\n/g,' '), 'madre');
       if(b.espada) this.entregaEspadaDeFuego();
       if(reloj) reloj.remove();
       reloj = this.time.delayedCall(3800, pasa);   // MUY lento: es el centro del capítulo
@@ -1897,16 +1917,22 @@ class Capitulo extends Phaser.Scene {
   /* ---------- entidades ---------- */
   spawnEnemy(x,y,tipo,min,max){
     const E = ENEMIGOS[tipo];
-    const shadow = this.add.ellipse(x,y+38,70,17,0x000000,0.35);
-    const label = this.add.text(x,y-70, E.etiqueta, {
-      fontFamily:'Impact', fontSize:'13px', color:'#ffffff', backgroundColor: E.color, padding:{left:6,right:6,top:2,bottom:2}
-    }).setOrigin(0.5);
-    const t = E.cara ? this.add.image(x,y,E.cara).setDisplaySize(76,76)
-                     : this.add.text(x,y, E.icono, {fontSize:'70px'}).setOrigin(0.5);
+    // MÁS GRANDES Y MÁS LEGIBLES (Manuel: "están muy guays y casi no se aprecia lo que son").
+    // Van de 76 a 96 px, con un disco oscuro detrás que los recorta del fondo y un aro del
+    // color de su bando, para que se lean de un vistazo aunque el fondo tenga movimiento.
+    const shadow = this.add.ellipse(x,y+48,88,20,0x000000,0.4);
+    const label = this.add.text(x,y-76, E.etiqueta, {
+      fontFamily:'Impact', fontSize:'15px', color:'#ffffff', backgroundColor: E.color,
+      padding:{left:8,right:8,top:3,bottom:3}
+    }).setOrigin(0.5).setStroke('#000000', 3);
+    const disco = this.add.circle(x, y, 52, 0x0d0d10, 0.55);
+    const aro   = this.add.circle(x, y, 52, 0x000000, 0).setStrokeStyle(3, Phaser.Display.Color.HexStringToColor(E.color).color);
+    const t = E.cara ? this.add.image(x,y,E.cara).setDisplaySize(96,96)
+                     : this.add.text(x,y, E.icono, {fontSize:'86px'}).setOrigin(0.5);
     this.physics.add.existing(t);
     t.body.setAllowGravity(false);
     t.dir = -1; t.min = min; t.max = max; t.type = tipo;
-    t.shadow = shadow; t.label = label;
+    t.shadow = shadow; t.label = label; t.disco = disco; t.aro = aro;
     this.enemies.add(t);
   }
 
@@ -1986,7 +2012,10 @@ class Capitulo extends Phaser.Scene {
       : (E.taunt || '¡FUERA DE AQUÍ!');
     speakPhrase(label);
     playImpact(this);
-    en.shadow.destroy(); en.label.destroy(); en.destroy();
+    en.shadow.destroy(); en.label.destroy();
+    if(en.disco) en.disco.destroy();
+    if(en.aro) en.aro.destroy();
+    en.destroy();
     this.score += 2;
     this.updateHud();
     for(let i=0;i<8;i++){
@@ -2262,6 +2291,8 @@ class Capitulo extends Phaser.Scene {
       if(e.x>e.max){ e.x=e.max; e.dir=-1; }
       e.setFlipX(e.dir>0);
       e.shadow.x = e.x; e.label.x = e.x;
+      if(e.disco) e.disco.x = e.x;
+      if(e.aro) e.aro.x = e.x;
     });
 
     // EL DRAGÓN: quieto en su tramo hasta que se habla con él, y sin salirse nunca de él.
@@ -2326,16 +2357,16 @@ class Capitulo extends Phaser.Scene {
 // Manuel: "esa pantalla está hecha un lío; haz dos subpantallas, una enfrentándose al dragón
 // y otra con el cliente final, que es el hombre del bigote, y que haya diálogo en las dos".
 const BEATS_DRAGON = [
-  {quien:'EL DRAGÓN', txt:'MUAJAJAJAJAJAJA...',                    color:'#d83335', risa:true, sacude:'jefeCuerpo'},
-  {quien:'EL DRAGÓN', txt:'SOY LO QUE HAY\nDETRÁS DE LA OFERTA.',  color:'#d83335'},
-  {quien:'EL DRAGÓN', txt:'NADIE HA LLEGADO\nNUNCA HASTA AQUÍ.',   color:'#d83335'},
+  {quien:'EL DRAGÓN', txt:'MUAJAJAJAJAJAJA...',                    color:'#d83335', risa:true, sacude:'jefeCuerpo', voz:'dragon'},
+  {quien:'EL DRAGÓN', txt:'SOY LO QUE HAY\nDETRÁS DE LA OFERTA.',  color:'#d83335', voz:'dragon'},
+  {quien:'EL DRAGÓN', txt:'NADIE HA LLEGADO\nNUNCA HASTA AQUÍ.',   color:'#d83335', voz:'dragon'},
   {quien:'AIDA',      txt:'PUES YA HE LLEGADO.',                   color:'#f2c749'},
   {quien:'AIDA',      txt:'APARTA ESAS BARBAS\nDE MI PUERTA.',     color:'#f2c749'},
 ];
 const BEATS_CLIENTE = [
-  {quien:'EL CLIENTE FINAL', txt:'MUAJAJAJAJAJAJA...',                 color:'#d83335', risa:true, sacude:'bigote'},
-  {quien:'EL CLIENTE FINAL', txt:'VOY A DESTROZAR TU EMPRESA...',      color:'#d83335'},
-  {quien:'EL CLIENTE FINAL', txt:'...Y A TU FAMILIA.',                 color:'#d83335'},
+  {quien:'EL CLIENTE FINAL', txt:'MUAJAJAJAJAJAJA...',                 color:'#d83335', risa:true, sacude:'bigote', voz:'malo'},
+  {quien:'EL CLIENTE FINAL', txt:'VOY A DESTROZAR TU EMPRESA...',      color:'#d83335', voz:'malo'},
+  {quien:'EL CLIENTE FINAL', txt:'...Y A TU FAMILIA.',                 color:'#d83335', voz:'malo'},
   {quien:'AIDA',             txt:'¡ME CAGO EN TU PUTA MADRE, CABRÓN!', color:'#f2c749'},
   {quien:'AIDA',             txt:'¡SUÉLTAME EL BRAZO!',                color:'#f2c749'},
   {quien:'AIDA',             txt:'TE VOY A REBANAR EL BICHOTE.',       color:'#f2c749'},
