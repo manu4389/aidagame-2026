@@ -120,15 +120,19 @@
   <!-- solo se muestra si el navegador no permite instalar de un toque (iPhone) -->
   <div id="pasosManual" style="display:none">
     <div class="pasos" id="pasosIOS">
-      <h3>En iPhone hay que hacerlo a mano — son 3 toques</h3>
+      <h3>En iPhone se hace a mano — son 4 toques</h3>
       <ol>
-        <li>Con esta página abierta en <b>Safari</b>, toca el botón de <b>Compartir</b>
-            <span class="icono">⬆︎</span> (abajo, en el centro)</li>
-        <li>Baja un poco y toca <b>«Añadir a pantalla de inicio»</b> <span class="icono">⊞</span></li>
+        <li>Primero entra al juego con el botón amarillo de arriba: <b>▶ JUGAR AHORA</b></li>
+        <li>Ya dentro, abajo en el centro, toca <b>Compartir</b> <span class="icono">⬆︎</span></li>
+        <li>Desliza y toca <b>«Añadir a pantalla de inicio»</b> <span class="icono">⊞</span></li>
         <li>Arriba a la derecha, <b>«Añadir»</b></li>
       </ol>
-      <p class="nota">Apple no deja que una web se instale sola: es el único camino en iPhone.
-         Y no hace falta para jugar — con el botón amarillo de arriba ya funciona.</p>
+      <p class="nota"><b>El paso 1 importa:</b> el iPhone guarda la página que tengas abierta,
+         así que si lo haces desde aquí el icono te abriría esta página en vez del juego.
+         Dentro del juego hay un botón <b>«ponlo en tu pantalla»</b> que te recuerda estos pasos.</p>
+      <p class="nota">Si has llegado por WhatsApp o Instagram, toca antes <b>«Abrir en Safari»</b>:
+         en esos navegadores no aparece la opción. Y ojo, que <b>no hace falta instalar nada
+         para jugar</b> — con el botón amarillo ya funciona.</p>
     </div>
     <div class="pasos" id="pasosOtros" style="display:none">
       <h3>Desde el menú del navegador</h3>
@@ -179,8 +183,13 @@
   }
   // En iPhone no se puede instalar de un toque: se dice de frente y se enseñan los pasos
   if(window.appEsIOS){
-    btn.textContent = '📲 CÓMO INSTALARLA EN TU IPHONE';
-    estado.textContent = 'son tres toques';
+    // en iPhone no hay instalacion de un toque, asi que se ensenan los pasos ya,
+    // sin esconderlos detras de un boton que no puede hacer nada
+    btn.style.display = 'none';
+    estado.style.display = 'none';
+    manual.style.display = 'block';
+    pasosIOS.style.display = 'block';
+    pasosOtros.style.display = 'none';
   }
   document.addEventListener('sePuedeInstalar', ()=>{
     btn.textContent = '📲 INSTALAR AQUÍ';

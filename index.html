@@ -11,6 +11,9 @@
 <meta name="theme-color" content="#141617">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="AIDA">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <style>
   :root{
     --turquoise:#40ada9; --pink:#e4378c; --yellow:#f2c749; --purple:#68416c; --red:#d83335;
@@ -90,6 +93,30 @@
     color:var(--yellow);font-size:16px;line-height:1;
     display:flex;align-items:center;justify-content:center;
   }
+  /* FIJO A LA PANTALLA, no al hueco del juego: dentro del holder la tarjeta salia de
+     118 px de ancho y 898 de alto, o sea que no cabia. Y con scroll, por si el movil
+     es pequeno o el texto crece. */
+  #ios-ayuda{
+    position:fixed;inset:0;z-index:30;display:none;
+    background:rgba(6,7,8,.94);align-items:center;justify-content:center;padding:12px;
+  }
+  #ios-ayuda.show{display:flex;}
+  #ios-ayuda .tarjeta{
+    background:#141617;border:2px solid var(--turquoise);border-radius:16px;
+    padding:16px 14px;width:100%;max-width:330px;text-align:left;
+    max-height:92vh;overflow-y:auto;
+  }
+  #ios-ayuda h3{font-family:Impact,sans-serif;color:var(--turquoise);font-size:17px;margin:0 0 8px;text-align:center;}
+  #ios-ayuda p{font-family:Arial;font-size:12.5px;line-height:1.5;color:#dfe3e6;margin:0 0 10px;}
+  #ios-ayuda ol{margin:0 0 10px;padding-left:20px;}
+  #ios-ayuda li{font-family:Arial;font-size:13px;line-height:1.6;color:#fff;margin-bottom:7px;}
+  #ios-ayuda li b{color:var(--yellow);}
+  #ios-ayuda li span{background:rgba(255,255,255,.15);border-radius:5px;padding:0 6px;}
+  #ios-ayuda .ojo{color:#8a8f94;font-size:11.5px;}
+  #ios-ayuda button{
+    display:block;width:100%;margin-top:6px;background:var(--yellow);border:none;border-radius:10px;
+    padding:11px;font-family:Impact,sans-serif;font-size:16px;color:#141617;
+  }
   #thesis-overlay{
     position:absolute;inset:0;z-index:20;display:none;
     background:rgba(6,7,8,.94);flex-direction:column;align-items:center;justify-content:center;
@@ -114,6 +141,20 @@
   <div id="game-holder">
     <button id="mute-btn">🔊</button>
     <button id="install-btn" hidden>📲 instalar</button>
+    <div id="ios-ayuda">
+      <div class="tarjeta">
+        <h3>📲 Ponlo en tu pantalla de inicio</h3>
+        <p>Con su icono, a pantalla completa y sin gastar datos.</p>
+        <ol>
+          <li>Abajo en el centro, toca <b>Compartir</b> <span>⬆︎</span></li>
+          <li>Desliza y toca <b>«Añadir a pantalla de inicio»</b> <span>⊞</span></li>
+          <li>Arriba a la derecha, <b>«Añadir»</b></li>
+        </ol>
+        <p class="ojo">Hazlo <b>desde aquí</b>: el iPhone guarda la página que tengas abierta.
+           Si has entrado desde WhatsApp, toca antes <b>«Abrir en Safari»</b>.</p>
+        <button id="ios-cerrar">VALE</button>
+      </div>
+    </div>
     <div id="thesis-overlay">
       <h3 id="thesis-title">📚 EL TUTOR</h3>
       <p id="thesis-msg">Antes de depositar, un artículo más.</p>
@@ -133,7 +174,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v52 — 26 jul, botón de INSTALAR de un solo toque (en Android)</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v53 — 26 jul, instalación pensada para el iPhone de Aida</div>
 </div>
 
 <script src="instalar.js"></script>
@@ -2728,6 +2769,17 @@ document.getElementById('mute-btn').addEventListener('click', toggleMute);
    permite: para eso están los pasos explicados en la página /regalo/. */
 const btnInstalar = document.getElementById('install-btn');
 document.addEventListener('sePuedeInstalar', ()=>{ if(!window.appYaInstalada) btnInstalar.hidden = false; });
+// EN iPHONE el aviso de instalar no existe (Apple no lo da), pero el boton SI tiene sentido
+// aqui: en iOS "Anadir a pantalla de inicio" guarda LA PAGINA ABIERTA, asi que hay que hacerlo
+// estando DENTRO del juego. Si se hiciera desde la pagina del regalo, el icono abriria esa.
+if(window.appEsIOS && !window.appYaInstalada){
+  btnInstalar.hidden = false;
+  btnInstalar.textContent = '📲 ponlo en tu pantalla';
+  btnInstalar.addEventListener('click', ()=>{
+    const cap = document.getElementById('ios-ayuda');
+    cap.classList.add('show');
+  });
+}
 document.addEventListener('appInstalada', ()=>{ btnInstalar.hidden = true; });
 btnInstalar.addEventListener('click', async ()=>{
   const r = await window.instalarApp();
@@ -2741,6 +2793,9 @@ function submitArticle(){
   overlay.classList.remove('show');
   if(activeChapter1) activeChapter1.onArticleSubmitted(input.value);
 }
+document.getElementById('ios-cerrar').addEventListener('click', ()=>{
+  document.getElementById('ios-ayuda').classList.remove('show');
+});
 document.getElementById('thesis-submit').addEventListener('click', submitArticle);
 document.getElementById('thesis-input').addEventListener('keydown', e=>{
   if(e.key==='Enter') submitArticle();
