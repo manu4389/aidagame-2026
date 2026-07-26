@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v48 — 26 jul, BRENDA TIRA RAYOS LÁSER POR LOS OJOS</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v49 — 26 jul, los rayos solo para los jefes · Brenda habla con SU voz</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -191,6 +191,7 @@ function cambiaVoz(){                               // el selector del menú
   const i = Math.max(0, lista.findIndex(v => spanishVoice && v.name === spanishVoice.name));
   spanishVoice = lista[(i+1) % lista.length];
   try { localStorage.setItem('aida_voz', spanishVoice.name); } catch(e){}
+  vozBrenda = null; pickVozBrenda();   // que no se queden las dos con la misma
   return spanishVoice;
 }
 if('speechSynthesis' in window){
@@ -202,16 +203,25 @@ if('speechSynthesis' in window){
 // tiene. Si no la tiene, se compensa bajando mucho el tono de la que haya — no suena igual
 // de bien, pero se distingue perfectamente de la voz de Aida.
 const TIMBRES = {
-  ella:    {rate:1.00, pitch:1.08, hombre:false},   // Aida
-  madre:   {rate:0.90, pitch:1.00, hombre:false},   // la madre, más calmada
-  malo:    {rate:0.84, pitch:0.35, hombre:true},    // el cliente final y los machirulos
-  dragon:  {rate:0.70, pitch:0.10, hombre:true},    // el dragón: lo más grave que se puede
+  ella:    {rate:1.00, pitch:1.08, quien:'ella'},     // Aida
+  brenda:  {rate:1.07, pitch:0.88, quien:'brenda'},   // su socia: OTRA voz, más grave que la de Aida
+  madre:   {rate:0.90, pitch:1.00, quien:'ella'},     // la madre, más calmada
+  malo:    {rate:0.84, pitch:0.35, quien:'hombre'},   // el cliente final
+  dragon:  {rate:0.70, pitch:0.10, quien:'hombre'},   // el dragón: lo más grave que se puede
 };
-let vozHombre = null;
+let vozHombre = null, vozBrenda = null;
+const esMasculina = v => /jorge|pablo|carlos|diego|enrique|male|masculin|raul|miguel/i.test(v.name);
 function pickVozHombre(){
   if(!('speechSynthesis' in window)) return;
-  const esp = vocesEspanolas();
-  vozHombre = esp.find(v => /jorge|pablo|carlos|diego|enrique|male|masculin|raul|miguel/i.test(v.name)) || null;
+  vozHombre = vocesEspanolas().find(esMasculina) || null;
+}
+// BRENDA HABLA CON OTRA VOZ (pedido de Manuel): se busca la mejor voz femenina
+// española que NO sea la de Aida. Si el aparato solo trae una, se distingue por
+// el tono (0,88 frente a 1,08) y el ritmo, que ya se nota bastante.
+function pickVozBrenda(){
+  if(!('speechSynthesis' in window)) return;
+  const esp = vocesEspanolas().filter(v => !esMasculina(v));
+  vozBrenda = esp.find(v => !spanishVoice || v.name !== spanishVoice.name) || null;
 }
 function speakPhrase(text, timbre){
   if(!('speechSynthesis' in window) || isMuted) return;
@@ -219,10 +229,13 @@ function speakPhrase(text, timbre){
   const clean = text.replace(/[¡!¿?"]/g,'');
   const u = new SpeechSynthesisUtterance(clean);
   u.lang = 'es-ES'; u.rate = t.rate; u.pitch = t.pitch; u.volume = 1;
-  if(t.hombre){
+  if(t.quien === 'hombre'){
     if(!vozHombre) pickVozHombre();
     u.voice = vozHombre || spanishVoice || null;
     if(!vozHombre) u.pitch = Math.max(0, t.pitch - 0.05);   // sin voz de hombre, aún más grave
+  } else if(t.quien === 'brenda'){
+    if(!vozBrenda) pickVozBrenda();
+    u.voice = vozBrenda || spanishVoice || null;
   } else if(spanishVoice) u.voice = spanishVoice;
   window.speechSynthesis.cancel(); // que no se amontonen frases
   window.speechSynthesis.speak(u);
@@ -948,6 +961,7 @@ class Capitulo extends Phaser.Scene {
     this.dialogando = false; this.angelHecho = false; this.dialogoHecho = false;
     this.dialogoDragonHecho = false; this.carcelAbierta = false;
     this.jefeInvuln = false; this.bigoteInvuln = false; this.aliadaGolpeJefe = false;
+    this.aliadaCooldown = false; this.aliadaRayoChico = false;
     this.invuln = false; this.attackCooldown = false; this.avisoCarcel = false;
     this.physics.world.timeScale = 1; this.tweens.timeScale = 1;   // por si se salió en cámara lenta
     this.drawBackground();
@@ -2149,7 +2163,8 @@ class Capitulo extends Phaser.Scene {
     else { this.lives = Math.min(4, this.lives+1); sub = 'BRENDA: «¿Qué pasa, chocho?\n¡Vamos a machacarles!»   +1 ❤️'; }
     this.updateHud();
     // lo dice BRENDA, no Aida, y se tiene que ESCUCHAR (pedido de Manuel)
-    speakPhrase(esConchita ? '¡Arriba, que tú puedes!' : '¿Qué pasa, chocho? ¡Vamos a machacarles!');
+    speakPhrase(esConchita ? '¡Arriba, que tú puedes!' : '¿Qué pasa, chocho? ¡Vamos a machacarles!',
+                esConchita ? 'ella' : 'brenda');   // Brenda habla con SU voz, no con la de Aida
     // ficha de personaje a media pantalla, con su nombre — que se vea quién es
     const card = this.add.container(W/2, H*0.42).setScrollFactor(0).setDepth(70);
     const ring = this.add.circle(0, 0, 64, PALETTE.purple, 1).setStrokeStyle(4, PALETTE.turquoise);
@@ -2418,17 +2433,31 @@ class Capitulo extends Phaser.Scene {
       // Idea de Manuel, y resuelve de paso que los monstruos costaran mucho de matar: ahora
       // las dos pegan a la vez y de lejos. Un rayo cada 1,1 s: revienta a los enemigos
       // normales de un tiro y les quita 2 de vida a los jefes.
+      // ══ LOS RAYOS SON PARA LOS JEFES ══
+      // Manuel: "que sea solo para los monstruos finales; si Brenda mata a todos, ella casi no
+      // le da a ninguno". Tenía razón: le estaba quitando el trabajo a Aida. Contra los jefes
+      // dispara siempre (es la ayuda que hace falta); contra los enemigos normales, SOLO si uno
+      // se le echa encima a ella y de higos a brevas.
       if(!this.aliadaCooldown){
-        let objetivo = this.enemies.getChildren().find(e => Math.abs(e.x-this.aliada.x) < 250);
-        let tipo = objetivo ? 'enemigo' : null;
-        if(!objetivo && this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
+        let objetivo = null, tipo = null;
+        if(this.jefeCuerpo && this.jefeVidas > 0 && this.dialogoDragonHecho &&
            Math.abs(this.jefeCuerpo.x - this.aliada.x) < 260){ objetivo = this.jefeCuerpo; tipo='dragon'; }
-        if(!objetivo && this.bigote && this.carcelVidas > 0 && this.dialogoHecho &&
+        else if(this.bigote && this.carcelVidas > 0 && this.dialogoHecho &&
            Math.abs(this.bigote.x - this.aliada.x) < 260){ objetivo = this.bigote; tipo='cliente'; }
         if(objetivo){
           this.aliadaCooldown = true;
           this.time.delayedCall(1100, ()=> this.aliadaCooldown=false);
           this.rayoDeBrenda(objetivo, tipo);
+        }
+      }
+      // a los pequeños, solo si se le pegan a ELLA, y con seis segundos de espera:
+      // así de vez en cuando se ve el rayo, pero la faena sigue siendo de Aida
+      if(!this.aliadaRayoChico){
+        const encima = this.enemies.getChildren().find(e => Math.abs(e.x-this.aliada.x) < 80);
+        if(encima){
+          this.aliadaRayoChico = true;
+          this.time.delayedCall(6000, ()=> this.aliadaRayoChico=false);
+          this.rayoDeBrenda(encima, 'enemigo');
         }
       }
     }
