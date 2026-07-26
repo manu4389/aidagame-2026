@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo imprimir el regalo de Aida</title>
+<style>
+  :root{ --turq:#40ada9; --rosa:#e4378c; --amar:#f2c749; --mora:#68416c; --tinta:#241028; }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0 0 60px; background:#faf7f5; color:#241028;
+    font-family:-apple-system,'Segoe UI',Arial,sans-serif; line-height:1.6;
+  }
+  .cab{background:var(--tinta); color:#fff; padding:28px 24px 22px;}
+  .cab h1{margin:0; font-size:26px; letter-spacing:.3px;}
+  .cab p{margin:6px 0 0; color:#c9b8ce; font-size:14px;}
+  .franja{display:flex; height:6px;}
+  .franja i{flex:1}
+  main{max-width:820px; margin:0 auto; padding:0 24px;}
+  h2{
+    font-size:19px; margin:34px 0 4px; padding-top:18px;
+    border-top:2px solid #e6dfe2; color:var(--tinta);
+  }
+  h2 small{display:block; font-weight:400; font-size:13px; color:#7a6b80; margin-top:2px;}
+  h3{font-size:15px; margin:20px 0 4px; color:var(--mora);}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px;}
+  th,td{text-align:left; padding:9px 10px; border-bottom:1px solid #e6dfe2; vertical-align:top;}
+  th{background:#f1ebee; font-size:13px;}
+  code{background:#f1ebee; padding:2px 6px; border-radius:5px; font-size:13px;}
+  .aviso{
+    background:#fff6f6; border-left:5px solid var(--rosa); padding:14px 16px;
+    margin:16px 0; border-radius:0 8px 8px 0; font-size:14px;
+  }
+  .ok{background:#f2fbfa; border-left-color:var(--turq);}
+  .aviso b{color:var(--tinta)}
+  ol,ul{padding-left:22px; font-size:14px;}
+  li{margin-bottom:7px;}
+  .reco{
+    background:var(--tinta); color:#fff; padding:18px 20px; border-radius:10px;
+    margin:18px 0; font-size:14.5px;
+  }
+  .reco h3{color:var(--amar); margin:0 0 8px; font-size:16px;}
+  .reco a{color:var(--turq)}
+  footer{max-width:820px; margin:40px auto 0; padding:0 24px; color:#8a7d90; font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="cab">
+  <h1>Cómo imprimir el regalo</h1>
+  <p>Llavero con QR + tarjeta · para el 19 de agosto de 2026</p>
+</div>
+<div class="franja">
+  <i style="background:var(--turq)"></i><i style="background:var(--rosa)"></i>
+  <i style="background:var(--amar)"></i><i style="background:var(--mora)"></i>
+</div>
+
+<main>
+
+<h2>1. Qué fichero es para qué
+  <small>Todo está en la carpeta <code>para_imprenta</code>, dentro de la carpeta del juego.</small></h2>
+
+<table>
+  <tr><th>Fichero</th><th>Para qué sirve</th></tr>
+  <tr>
+    <td><code>qr_aida_vectorial.svg</code></td>
+    <td><b>El que hay que mandar a una imprenta.</b> Es vectorial: se puede hacer del tamaño
+        que quieran y nunca se pixela. Si te piden «un archivo vectorial» o «en curvas», es este.</td>
+  </tr>
+  <tr>
+    <td><code>qr_aida_25mm.pdf</code><br><code>qr_aida_30mm.pdf</code><br><code>qr_aida_40mm.pdf</code></td>
+    <td>El QR ya a tamaño exacto, en PDF a 600 ppp. Si la tienda te pide una medida concreta,
+        le mandas el que toque y no hay que tocar nada.</td>
+  </tr>
+  <tr>
+    <td><code>tarjeta_85x54_con_sangre.pdf</code></td>
+    <td>La tarjeta del tamaño de una tarjeta de visita, con 2&nbsp;mm de sangre y marcas de corte,
+        que es como las piden las imprentas.</td>
+  </tr>
+  <tr>
+    <td><code>regalo_para_imprimir.png</code><br><small>(está en la carpeta de arriba)</small></td>
+    <td>Hoja A4 para imprimir <b>tú mismo</b>: seis llaveros de 30&nbsp;mm y dos tarjetas.
+        Es la opción rápida.</td>
+  </tr>
+</table>
+
+<div class="aviso">
+  <b>Los tres avisos que salvan un QR.</b> Si algo falla, casi siempre es uno de estos:
+  <ol style="margin:8px 0 0">
+    <li><b>No recortar el margen blanco.</b> Ese borde forma parte del código; sin él, muchos
+        móviles no lo leen. Ya va incluido en todos los ficheros: que no lo «ajusten».</li>
+    <li><b>Imprimir al 100 %</b>, nunca «ajustar a página» ni «encajar».</li>
+    <li><b>Oscuro sobre blanco, y mate.</b> Ni degradados, ni fondo de color, ni brillos.
+        El plastificado brillante da reflejos y cuesta escanear.</li>
+  </ol>
+</div>
+
+<h2>2. Dónde encargarlo
+  <small>Cuatro caminos, del más rápido al más bonito.</small></h2>
+
+<div class="reco">
+  <h3>⭐ Lo que yo haría</h3>
+  Ir a una <b>copistería de Granada</b> con la hoja A4 y pedir que la impriman en cartulina
+  gruesa o en vinilo adhesivo, y comprar aparte <b>llaveros de metacrilato transparentes</b>
+  (los de 30–35 mm, con la ranura para meter un disco de papel). Pegas o metes el círculo y ya
+  está. Es lo más barato, lo tienes el mismo día y no dependes de ningún envío.
+</div>
+
+<h3>a) Copistería o imprenta de barrio</h3>
+<ul>
+  <li>Les llevas la <b>hoja A4</b> (o el PDF) en un pendrive o por correo.</li>
+  <li>Diles: <i>«a tamaño real, al 100 %, sin ajustar»</i>. En cartulina de 300 g o vinilo.</li>
+  <li>Lo suyo es <b>mate</b>, no brillo.</li>
+</ul>
+
+<h3>b) Tiendas online de personalizados (llaveros ya montados)</h3>
+<ul>
+  <li>Buscadores donde encargar llaveros con tu diseño: <b>Camaloon</b> (española),
+      <b>Vistaprint</b>, <b>360imprimir</b>, <b>Helloprint</b>, <b>Zazzle</b>.</li>
+  <li>También <b>Etsy</b>: hay vendedores que hacen llaveros de metacrilato con el diseño que
+      les mandes, y suelen cuidar bastante el acabado.</li>
+  <li>Subes <code>qr_aida_vectorial.svg</code> (o el PDF de 30 mm) y eliges acabado mate.</li>
+  <li>⚠️ <b>Mira el plazo de entrega antes de pagar.</b> Hoy es 26 de julio y el cumple es el 19
+      de agosto: hay tiempo, pero en agosto los envíos se estiran.</li>
+</ul>
+
+<h3>c) Chapas de 58 mm con enganche de llavero</h3>
+<ul>
+  <li>Es la opción más barata y la más resistente. Cualquier sitio de «chapas personalizadas»
+      las hace en un rato, y hay máquinas en centros comerciales.</li>
+  <li>A 58 mm el QR se lee sin ninguna duda: es casi el doble de lo que hace falta.</li>
+</ul>
+
+<h3>d) Grabado en metal — con cuidado</h3>
+<ul>
+  <li>Queda muy bonito, pero <b>es el que más falla</b>: el láser sobre metal deja poco
+      contraste y los móviles se atascan.</li>
+  <li>Si lo haces, pide <b>relleno blanco o esmaltado</b> en la parte clara, no metal desnudo,
+      y <b>que te dejen escanearlo antes de pagar</b>.</li>
+</ul>
+
+<h2>3. La prueba que no te puedes saltar
+  <small>Dos minutos que evitan un regalo que no funciona.</small></h2>
+
+<ol>
+  <li>Imprime <b>uno solo</b> en tu casa, del tamaño final.</li>
+  <li>Escanéalo con la cámara <b>de un iPhone</b> —Aida tiene iPhone— y con luz normal de casa.</li>
+  <li>Comprueba que abre <code>manu4389.github.io/aidagame-2026/regalo/</code> y que sale el
+      botón amarillo de JUGAR.</li>
+  <li>Solo entonces encarga el lote.</li>
+</ol>
+
+<div class="aviso ok">
+  <b>Por si el QR falla el día del cumpleaños</b>, en la hoja A4 y en la tarjeta va escrita
+  también la dirección. Siempre se puede teclear. Y si quieres, mándale además el enlace por
+  WhatsApp la misma mañana, como red de seguridad.
+</div>
+
+<h2>4. Cómo se lo das</h2>
+<ol>
+  <li>El <b>llavero</b> es el regalo físico: se ve, se toca, se lleva.</li>
+  <li>La <b>tarjeta</b> en el sobre explica lo que es y lleva el QR más grande.</li>
+  <li>Ella apunta con la cámara, se abre la página y le da al botón amarillo. <b>Ya está
+      jugando</b>: no hay que instalar nada.</li>
+  <li>Si le gusta y lo quiere con icono en el móvil, el propio juego se lo explica en tres
+      toques (botón «ponlo en tu pantalla»).</li>
+</ol>
+
+<div class="aviso">
+  <b>Un detalle práctico:</b> el juego pesa un par de megas entre fotos y música. Si en la
+  comida la wifi va justa, mejor que lo abra <b>una vez antes</b> con datos buenos; después
+  funciona incluso sin cobertura.
+</div>
+
+<h2>5. Si hay que cambiar algo del diseño</h2>
+<p>
+  Los ficheros se generan con dos scripts, así que cualquier cambio —otro tamaño, otro texto en
+  la tarjeta, otro color— es rápido. Y el QR <b>siempre se verifica leyéndolo</b> antes de dar
+  nada por bueno: es lo que evitó que se colara un logo demasiado grande que lo rompía.
+</p>
+
+</main>
+
+<footer>
+  Preparado el 26 de julio de 2026. La dirección del regalo es
+  <code>manu4389.github.io/aidagame-2026/regalo/</code> — si algún día cambia, hay que volver a
+  generar el QR.
+</footer>
+
+</body>
+</html>
