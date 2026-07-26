@@ -1,6 +1,53 @@
 # HANDOFF — Juego de cumpleaños de Aida (continuar aquí)
 
-## ⚠️ PRIMERO, al abrir la próxima conversación (25 jul, cierre del día — build v41)
+## ⚠️ PRIMERO, al abrir la próxima conversación (26 jul — build v50)
+
+**📍 CARPETA:** `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA` · **URL:** https://manu4389.github.io/aidagame-2026/
+**🔗 Pasarle SIEMPRE el enlace con `?v=NN`** (GitHub Pages manda `Cache-Control: max-age=600` y sin eso ve builds viejos).
+**🔬 Y pasar SIEMPRE la prueba de `_PRUEBA_ARRANQUE.md`** (`game.step()` ejecuta el juego de verdad) antes de subir cualquier cambio en los capítulos.
+
+---
+
+### 🩸 LAS TRES REGLAS DE ORO QUE SALIERON DE FALLOS REALES
+
+**1. UN JEFE NO ES DIFÍCIL, ES IMPOSIBLE, SI SU CAJA DE DAÑO PASA DEL ALCANCE DEL TAJO.** Pasó dos veces. Medir siempre:
+```
+te toca a  = |offset izquierdo de su body| + 28   (medio cuerpo de ella)
+franja segura = alcance del tajo − te toca a
+```
+Si sale ≤ 0, **hay que meterse en su zona de daño para poder pegarle**: la pelea no se puede ganar. Con el dragón salía **−44 px**. Ahora: dragón 47 px de franja, cliente 81 px, alcance del tajo 175 px, y el tajo automático salta a 168 px (**antes** del contacto, no después).
+
+**2. PHASER REUTILIZA LA INSTANCIA DE ESCENA AL REINTENTAR.** Todo lo que no se reinicie en `create()` sobrevive de una partida a la siguiente. `espadaFuego` no se reiniciaba y provocaba **dos síntomas a la vez**: la katana no se repintaba en llamas (parecía que su madre no le daba nada) y el daño iba doblado desde el minuto uno (el cliente final caía en un suspiro). En `create()` hay ya un bloque que reinicia todas las banderas — **si se añade una nueva, va ahí**.
+
+**3. EMPALMAR CÓDIGO POR ANCLAS DE TEXTO ES PELIGROSO.** Sustituir «de `liberarFamilia` a `construyeMonedas`» se llevó por delante **todo el bloque del ángel** (5 métodos) y el Vol. 5 reventaba al pulsar EMPEZAR. Mirar SIEMPRE qué vive dentro del tramo que se reemplaza.
+
+---
+
+### 🎮 ESTADO (v50): terminado y jugable de punta a punta
+
+Cinco capítulos, todos abiertos desde el principio (nada de candados). Instalable en el móvil (PWA).
+
+**Vol. 5 «Instante HQ» — 6.500 px, el culmen, cuatro actos separados ~1.200 px:**
+entrada narrada → **ACTO I el dragón** (5 tajos) → **ACTO II la madre baja del cielo** (silencio → música `angel` → espada de fuego, ×2 de daño) → **ACTO III el cliente final** (esmoquin y cara de demonio, 20 de vida = 10 tajos) → **ACTO IV los suyos** (la cárcel **se derrumba** al liberarlos) → meta → currículum de Instante → cumpleaños.
+
+**Brenda:** va con Aida **desde el primer tramo** y **tira rayos láser por los ojos** — **solo a los jefes** (2 de daño cada 1,1 s) y a los bichos normales **solo si se le echan encima** (< 80 px, cada 6 s). Esto último importa: si dispara a todo, **le quita el trabajo a Aida y la katana pierde la gracia** (fue una petición explícita suya). Su mostrador lleva **el ojo de Instante**, no el nombre escrito.
+
+**CUATRO VOCES distintas**, elegidas por puntuación (no «la primera es-ES que haya», que era lo que hacía sonar distinto cada aparato): Aida (femenina, 1.08) · **Brenda (OTRA voz femenina, 0.88)** · la madre (la de Aida, más lenta) · los villanos (masculina; el cliente 0.35, el dragón 0.10 y muy lento). En el menú hay un selector de voz que se recuerda.
+
+**Música propia por capítulo**, sintetizada (sin ficheros ni licencias): `flamenco` (tangos con cadencia andaluza y palmas, para el Corpus), `neon`, `carrera`, `oficina`, `angel`, `jefe`.
+
+---
+
+### 🟡 LO ÚNICO QUE FALTA
+
+1. **El año de fundación de Instante** → primera cartela del currículum final. **No se inventa.**
+2. Que Manuel lo juegue **entero, del tirón**, y diga.
+3. Si aparecen: foto de **Conchita** (ahora gimnasta dibujada) y de **Brenda de cuerpo entero** (quitaría la muleta del mostrador).
+4. **Tono:** hay tacos fuertes y su madre es personaje. Los dictó él palabra por palabra y está avisado: es su decisión, no un descuido.
+
+**Fecha: 19 de agosto de 2026.** Quedan 24 días.
+
+## Cierre del 25 jul (build v41)
 
 **📍 LA CARPETA:** `C:\Users\Manuel\Desktop\Mis Apps\JUEGO_AIDA` (se movió a mitad de sesión; ya NO está en el Escritorio suelto).
 **🔗 URL:** https://manu4389.github.io/aidagame-2026/
