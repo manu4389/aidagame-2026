@@ -7,6 +7,10 @@
 <meta name="theme-color" content="#40ada9">
 <meta http-equiv="Cache-Control" content="no-cache">
 <link rel="apple-touch-icon" href="../icon-192.png">
+<!-- el manifiesto vive en la raíz: se enlaza para que el navegador vea esta página como
+     parte de la misma app y pueda ofrecer instalarla de un toque. Tiene que ir en el
+     <head>: dentro del <body> algunos navegadores lo ignoran. -->
+<link rel="manifest" href="../manifest.json">
 <style>
   :root{
     --turquesa:#40ada9; --rosa:#e4378c; --amarillo:#f2c749;
@@ -61,6 +65,25 @@
     font-family:monospace; font-size:12px; color:var(--turquesa);
     word-break:break-all; margin-top:12px;
   }
+  .instalar{
+    display:block; width:100%; margin:14px 0 6px; cursor:pointer;
+    background:linear-gradient(145deg,var(--turquesa),#2b7d7a);
+    color:#06201f; font-family:Impact,sans-serif; font-size:21px; letter-spacing:.5px;
+    border:none; border-radius:14px; padding:16px 12px;
+    box-shadow:0 5px 0 #1c5b59, 0 10px 24px rgba(0,0,0,.4);
+  }
+  .instalar:active{transform:translateY(3px);}
+  .instalar[disabled]{opacity:.55; box-shadow:none; cursor:default;}
+  .pistaChica{text-align:center; color:#8a8f94; font-size:12px; margin:2px 0 0;}
+  .pasos{margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.12);}
+  .pasos h3{font-family:Impact,sans-serif; font-size:15px; color:var(--amarillo); margin:0 0 8px; text-align:center;}
+  .pasos ol{margin:0; padding-left:22px;}
+  .pasos li{margin-bottom:9px; font-size:14px; line-height:1.55; color:#dfe3e6;}
+  .icono{
+    display:inline-block; background:rgba(255,255,255,.14); border-radius:6px;
+    padding:1px 7px; font-size:15px; margin:0 2px;
+  }
+  .nota{color:#8a8f94; font-size:12.5px; line-height:1.5; margin:10px 0 0;}
   footer{margin-top:34px; color:#5a5d61; font-family:Georgia,serif; font-size:12px; font-style:italic;}
   .cumple{
     font-family:Impact,sans-serif; color:var(--rosa); font-size:16px;
@@ -88,24 +111,30 @@
 <a class="jugar" href="../index.html">▶ JUGAR AHORA</a>
 <p class="pista">cinco capítulos · se juega en el móvil o en el ordenador</p>
 
-<div class="caja">
+<div class="caja" id="cajaInstalar">
   <h2>📲 DÉJALO EN TU MÓVIL COMO UNA APP</h2>
-  <p>Así te queda con su icono en la pantalla de inicio y <b>funciona hasta sin internet</b>.</p>
-  <div class="movil">
-    <div>
-      <h3>iPhone</h3>
+  <p style="text-align:center">Te queda con su icono en la pantalla de inicio y <b>funciona hasta sin internet</b>.</p>
+  <button id="btnInstalar" class="instalar">📲 INSTALAR AQUÍ</button>
+  <p id="estadoInstalar" class="pistaChica">un toque y listo</p>
+
+  <!-- solo se muestra si el navegador no permite instalar de un toque (iPhone) -->
+  <div id="pasosManual" style="display:none">
+    <div class="pasos" id="pasosIOS">
+      <h3>En iPhone hay que hacerlo a mano — son 3 toques</h3>
       <ol>
-        <li>Ábrelo en <b>Safari</b></li>
-        <li>Toca <b>Compartir</b> (el cuadrito con la flecha)</li>
-        <li><b>Añadir a pantalla de inicio</b></li>
+        <li>Con esta página abierta en <b>Safari</b>, toca el botón de <b>Compartir</b>
+            <span class="icono">⬆︎</span> (abajo, en el centro)</li>
+        <li>Baja un poco y toca <b>«Añadir a pantalla de inicio»</b> <span class="icono">⊞</span></li>
+        <li>Arriba a la derecha, <b>«Añadir»</b></li>
       </ol>
+      <p class="nota">Apple no deja que una web se instale sola: es el único camino en iPhone.
+         Y no hace falta para jugar — con el botón amarillo de arriba ya funciona.</p>
     </div>
-    <div>
-      <h3>Android</h3>
+    <div class="pasos" id="pasosOtros" style="display:none">
+      <h3>Desde el menú del navegador</h3>
       <ol>
-        <li>Ábrelo en <b>Chrome</b></li>
-        <li>Menú <b>⋮</b> arriba a la derecha</li>
-        <li><b>Instalar aplicación</b></li>
+        <li>Menú <b>⋮</b> (o <b>···</b>) arriba a la derecha</li>
+        <li><b>«Instalar aplicación»</b> o <b>«Añadir a pantalla de inicio»</b></li>
       </ol>
     </div>
   </div>
@@ -132,6 +161,55 @@
 
 <p class="cumple">FELIZ CUMPLEAÑOS, AIDA 🦄</p>
 <footer>33 · 19 de agosto de 2026 · de tu hermano</footer>
+
+<script src="../instalar.js"></script>
+<script>
+(function(){
+  const btn    = document.getElementById('btnInstalar');
+  const estado = document.getElementById('estadoInstalar');
+  const manual = document.getElementById('pasosManual');
+  const pasosIOS   = document.getElementById('pasosIOS');
+  const pasosOtros = document.getElementById('pasosOtros');
+
+  // Si ya está instalada, no hay nada que ofrecer
+  if(window.appYaInstalada){
+    btn.disabled = true; btn.textContent = '✅ YA LA TIENES INSTALADA';
+    estado.textContent = 'búscala en tu pantalla de inicio';
+    return;
+  }
+  // En iPhone no se puede instalar de un toque: se dice de frente y se enseñan los pasos
+  if(window.appEsIOS){
+    btn.textContent = '📲 CÓMO INSTALARLA EN TU IPHONE';
+    estado.textContent = 'son tres toques';
+  }
+  document.addEventListener('sePuedeInstalar', ()=>{
+    btn.textContent = '📲 INSTALAR AQUÍ';
+    estado.textContent = 'un toque y listo';
+  });
+  document.addEventListener('appInstalada', ()=>{
+    btn.disabled = true; btn.textContent = '✅ INSTALADA';
+    estado.textContent = '¡ya la tienes en tu pantalla de inicio!';
+    manual.style.display = 'none';
+  });
+
+  btn.addEventListener('click', async ()=>{
+    const r = await window.instalarApp();
+    if(r === 'instalada'){
+      btn.disabled = true; btn.textContent = '✅ INSTALADA';
+      estado.textContent = '¡ya la tienes en tu pantalla de inicio!';
+      return;
+    }
+    if(r === 'ya'){ estado.textContent = 'ya la tenías instalada'; return; }
+    if(r === 'rechazada'){ estado.textContent = 'sin problema, se puede jugar aquí mismo'; return; }
+    // 'ios' o 'manual': se despliegan los pasos, que es lo único que queda
+    manual.style.display = 'block';
+    pasosIOS.style.display   = (r === 'ios') ? 'block' : 'none';
+    pasosOtros.style.display = (r === 'ios') ? 'none'  : 'block';
+    estado.textContent = 'este navegador no la instala solo: mira los pasos';
+    manual.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+})();
+</script>
 
 </body>
 </html>

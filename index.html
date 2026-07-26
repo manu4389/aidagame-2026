@@ -75,6 +75,14 @@
     margin-right:8px;
   }
   #attack-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #5c0d0f;}
+  /* botón de instalar: solo aparece si el navegador de verdad puede instalarla de un toque */
+  #install-btn{
+    position:absolute;top:8px;left:8px;z-index:10;
+    background:rgba(64,173,169,.92);border:2px solid #bff0ee;border-radius:10px;
+    color:#06201f;font-family:Impact,Arial Narrow,sans-serif;font-size:12px;
+    padding:6px 9px;letter-spacing:.3px;
+  }
+  #install-btn:active{transform:translateY(2px);}
   #mute-btn{
     position:absolute;top:8px;right:8px;z-index:10;
     width:34px;height:34px;border-radius:50%;
@@ -105,6 +113,7 @@
   <div id="marquee"><img src="fotos/instante_logo.png" alt="Instante"><span>INSTANTE ARCADE</span></div>
   <div id="game-holder">
     <button id="mute-btn">🔊</button>
+    <button id="install-btn" hidden>📲 instalar</button>
     <div id="thesis-overlay">
       <h3 id="thesis-title">📚 EL TUTOR</h3>
       <p id="thesis-msg">Antes de depositar, un artículo más.</p>
@@ -124,9 +133,10 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v51 — 26 jul, página del regalo + código QR para el llavero</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v52 — 26 jul, botón de INSTALAR de un solo toque (en Android)</div>
 </div>
 
+<script src="instalar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 <script>
 /* ════════════════════════════════════════════════════════
@@ -2712,6 +2722,18 @@ wireHold('jump-btn', ()=>jumpRequested=true);
 wireHold('attack-btn', ()=>attackRequested=true);
 
 document.getElementById('mute-btn').addEventListener('click', toggleMute);
+
+/* INSTALAR COMO APP con un solo toque. El botón solo se muestra cuando el navegador avisa
+   de que puede hacerlo (Android/Chrome/Edge). En iPhone no aparece, porque Apple no lo
+   permite: para eso están los pasos explicados en la página /regalo/. */
+const btnInstalar = document.getElementById('install-btn');
+document.addEventListener('sePuedeInstalar', ()=>{ if(!window.appYaInstalada) btnInstalar.hidden = false; });
+document.addEventListener('appInstalada', ()=>{ btnInstalar.hidden = true; });
+btnInstalar.addEventListener('click', async ()=>{
+  const r = await window.instalarApp();
+  if(r === 'instalada' || r === 'ya') btnInstalar.hidden = true;
+  else if(r === 'rechazada') btnInstalar.textContent = '📲 instalar';
+});
 
 function submitArticle(){
   const overlay = document.getElementById('thesis-overlay');
