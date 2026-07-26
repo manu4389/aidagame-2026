@@ -124,7 +124,7 @@
     <b style="color:#f2c749">Teclado:</b> ◀ ▶ moverse · <b style="color:#f2c749">ESPACIO</b> saltar ·
     <b style="color:#ff6b6b">X</b> o <b style="color:#ff6b6b">ENTER</b> = KATANA
   </div>
-  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v49 — 26 jul, los rayos solo para los jefes · Brenda habla con SU voz</div>
+  <div id="build-tag" style="color:#3a3d3f;font-size:10px;padding:4px 0;">build v50 — 26 jul, el ojo de Instante en el mostrador de Brenda</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
@@ -1138,7 +1138,9 @@ class Capitulo extends Phaser.Scene {
       this.aliadaMueble = this.add.container(ax, 0, [
         this.add.rectangle(0, GROUND_Y-36, 116, 72, PALETTE.purple).setStrokeStyle(2, 0x2e1b33),
         this.add.rectangle(0, GROUND_Y-70, 122, 8, PALETTE.pink),
-        this.add.text(0, GROUND_Y-40, 'INSTANTE', {fontFamily:'Impact', fontSize:'13px', color:'#ffffff'}).setOrigin(0.5),
+        // EL OJO DE INSTANTE, no el nombre escrito (Manuel: "mejor el logotipo que el nombre").
+        // El mostrador mide 116×72 y el logo tiene proporción 1,54 → 82×53 entra con margen.
+        this.add.image(0, GROUND_Y-38, 'instanteLogo').setDisplaySize(82, 53),
       ]);
       this.aliadaNombre = 'BRENDA';
       this.aliadaCara = 'brendaFace';
